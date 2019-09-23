@@ -22,7 +22,7 @@
  ***************************************************************************/
 """
 
-__author__ = 'LlactaLAB'
+__author__ = 'Johnatan Astudillo'
 __date__ = '2019-09-16'
 __copyright__ = '(C) 2019 by LlactaLAB'
 

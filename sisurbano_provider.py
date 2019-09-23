@@ -22,7 +22,7 @@
  ***************************************************************************/
 """
 
-__author__ = 'LlactaLAB'
+__author__ = 'Johnatan Astudillo'
 __date__ = '2019-09-16'
 __copyright__ = '(C) 2019 by LlactaLAB'
 
@@ -38,6 +38,16 @@ from .sisurbano_algorithm import SisurbanoAlgorithm
 
 from .algs import ( 
     IA01DensityPopulation,
+    IA02DensityHousing,
+    IA03Compacity,
+    IA07proximity2BasicUrbanServices,
+    IA08proximity2OpenPublicSpace,
+    IB05GreenPerHabitant,
+    IB06Proximity2GreenPublicSpace,
+    IC04Proximity2AlternativeTransport,
+    ZN01FuzzyVectorial,
+    ZN02AllocateValues,
+    ZN03WrapValues
     )
 
 
@@ -64,6 +74,18 @@ class SisurbanoProvider(QgsProcessingProvider):
         """
         # self.addAlgorithm(SisurbanoAlgorithm())
         self.addAlgorithm(IA01DensityPopulation.IA01DensityPopulation())
+        self.addAlgorithm(IA02DensityHousing.IA02DensityHousing())
+        self.addAlgorithm(IA03Compacity.IA03Compacity())
+        self.addAlgorithm(IA07proximity2BasicUrbanServices.IA07proximity2BasicUrbanServices())
+        self.addAlgorithm(IA08proximity2OpenPublicSpace.IA08proximity2OpenPublicSpace())
+        self.addAlgorithm(IB05GreenPerHabitant.IB05GreenPerHabitant())
+        self.addAlgorithm(IB06Proximity2GreenPublicSpace.IB06Proximity2GreenPublicSpace())
+        self.addAlgorithm(IC04Proximity2AlternativeTransport.IC04Proximity2AlternativeTransport())
+        self.addAlgorithm(ZN01FuzzyVectorial.ZN01FuzzyVectorial())
+        self.addAlgorithm(ZN02AllocateValues.ZN02AllocateValues())
+        self.addAlgorithm(ZN03WrapValues.ZN03WrapValues())
+
+
         # add additional algorithms here
         # self.addAlgorithm(MyOtherAlgorithm())
 

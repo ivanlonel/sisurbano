@@ -41,36 +41,25 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterField,
                        QgsProcessingParameterNumber,
+                       QgsProcessingParameterEnum,
                        QgsProcessingParameterFeatureSink)
 from .ZProcesses import *
 from .Zettings import *
-from .ZHelpers import *
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class IA01DensityPopulation(QgsProcessingAlgorithm):
+class ZN02AllocateValues(QgsProcessingAlgorithm):
     """
-    Mide la concentración de habitantes y evidencia indirectamente la demanda
-    de movilidad, productos y servicios. Número de habitantes por la
-    superficie de suelo de naturaleza urbana (no incluye vías
-    y equipamientos).
-    Formula: Número de habitantes / Superficie efectiva neta en hectareas
-    """
-
-    # Constants used to refer to parameters and outputs. They will be
-    # used when calling the algorithm from another algorithm, or when
-    # calling from the QGIS console.
+    Distribuye la población de las manzanas a los puntos o medidores
+    más cercanos al polígono de la manzana
+    """  
     BLOCKS = 'BLOCKS'
+    POINTS = 'POINTS'
     FIELD_POPULATION = 'FIELD_POPULATION'
-    CELL_SIZE = 'CELL_SIZE'
+    FIELD_HOUSING = 'FIELD_HOUSING'
     OUTPUT = 'OUTPUT'
 
-
     def initAlgorithm(self, config):
-
-        currentPath = getCurrentPath(self)
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA01'][1]))
-
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.BLOCKS,
@@ -88,110 +77,98 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
         )        
 
         self.addParameter(
-            QgsProcessingParameterNumber(
-                self.CELL_SIZE,
-                self.tr('Tamaño de la malla'),
-                QgsProcessingParameterNumber.Integer,
-                P_CELL_SIZE, False, 1, 99999999
+            QgsProcessingParameterField(
+                self.FIELD_HOUSING,
+                self.tr('Viviendas'),
+                'viviendas', 'BLOCKS'
             )
-        )        
+        )           
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.POINTS,
+                self.tr('Medidores'),
+                [QgsProcessing.TypeVectorPoint]
+            )
+        )
 
         self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT,
-                self.tr('Salida'),
-                QgsProcessing.TypeVectorAnyGeometry,
-                str(FULL_PATH)
+                self.tr('Salida')
             )
         )
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 11
+        totalStpes = 6
         fieldPopulation = params['FIELD_POPULATION']
+        fieldHousing = params['FIELD_HOUSING']
+        DISCARD = True
+        UNDISCARD = False
 
-        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
-
-        blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
-                               feedback)
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        grid = createGrid(params['BLOCKS'], params['CELL_SIZE'], context,
-                          feedback)    
-
-        # Eliminar celdas efecto borde
-        gridNeto = grid
+        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)    
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        gridNeto = calculateArea(gridNeto['OUTPUT'], 'area_grid', context,
-                                 feedback)
+        blocksWithId = calculateField(params['BLOCKS'], 'id_block', '$id', context,
+                                      feedback, type=1)   
+
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        gridNeto = calculateField(gridNeto['OUTPUT'], 'id_grid', '$id', context,
-                                  feedback, type=1)
+        pointsJoined = joinAttrByNear(params['POINTS'],
+                                      blocksWithId['OUTPUT'], [],
+                                      UNDISCARD,
+                                      'blk_',
+                                      5,
+                                      1,
+                                      context,
+                                      feedback)
+
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                                'area_bloc;' + fieldPopulation,
-                                'id_grid;area_grid',
-                                context, feedback)
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        segmentsArea = calculateArea(segments['OUTPUT'],
-                                     'area_seg',
-                                     context, feedback)
+        statistics = statisticsByCategories(pointsJoined['OUTPUT'], 
+                                            ['blk_id_block'],
+                                            None,
+                                            context,
+                                            feedback)
+
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
-        populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
-                                               formulaPopulationSegments,
-                                               context,
-                                               feedback)
+        pointsJoinedStast = joinByAttr(pointsJoined['OUTPUT'], 
+                                       'blk_id_block',
+                                       statistics['OUTPUT'], 
+                                       'blk_id_block',
+                                       'count',
+                                       DISCARD,
+                                       'st_',
+                                       context,
+                                       feedback)   
 
-        # Haciendo el buffer inverso aseguramos que los segmentos
-        # quden dentro de la malla
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        populationForSegmentsFixed = makeSureInside(populationForSegments['OUTPUT'],
-                                                    context,
-                                                    feedback)
 
         steps = steps+1
         feedback.setCurrentStep(steps)
+        formulaPopulationPerPoint = 'blk_' + fieldPopulation + ' / st_count' 
+        populationPerPoint = calculateField(pointsJoinedStast['OUTPUT'],
+                                       'population',
+                                       formulaPopulationPerPoint,
+                                       context,
+                                       feedback)    
 
-     
-        gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                             populationForSegmentsFixed['OUTPUT'],
-                                             'area_seg;pop_seg',                                   
-                                              [CONTIENE], [SUM],
-                                              DISCARD_NONMATCHING,
-                                              context,
-                                              feedback)   
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaNetDensityPopulationPerHa = '(pop_seg_sum/area_seg_sum)*10000'
-        densities = calculateField(gridNetoAndSegments['OUTPUT'],
-                                   NAMES_INDEX['IA01'][0],
-                                   formulaNetDensityPopulationPerHa,
-                                   context,
-                                   feedback)
+        formulaHousingPerPoint = 'blk_' + fieldHousing + ' / st_count' 
+        housingPerPoint = calculateField(populationPerPoint['OUTPUT'],
+                                       'housing',
+                                       formulaHousingPerPoint,
+                                       context,
+                                       feedback, params['OUTPUT'])    
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaGrossDensityPopulationPerHa = '(pop_seg_sum/area_grid)*10000'
-        densities = calculateField(densities['OUTPUT'],
-                                   'i_gdp',
-                                   formulaGrossDensityPopulationPerHa,
-                                   context,
-                                   feedback, params['OUTPUT'])
-
-        return densities
+        return housingPerPoint    
 
         # Return the results of the algorithm. In this case our only result is
         # the feature sink which contains the processed features, but some
@@ -200,9 +177,9 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
         # dictionary, with keys matching the feature corresponding parameter
         # or output names.
         #return {self.OUTPUT: dest_id}
-
+                                          
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'icon_servicearea_polygon.svg'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'icon_servicearea_points.svg'))
 
     def name(self):
         """
@@ -212,7 +189,7 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'A01 Densidad neta de habitantes'
+        return 'Z02 Distribuir valores polígono a puntos'
 
     def displayName(self):
         """
@@ -236,11 +213,11 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'A Ambiente construido'
+        return 'Z General'
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return IA01DensityPopulation()
+        return ZN02AllocateValues()
 

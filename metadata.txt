@@ -27,7 +27,7 @@ tags=python
 
 homepage=http://homepage
 category=Analysis
-icon=sisurbano.svg
+icon=icon_sisurbano.svg
 # experimental flag
 experimental=False
 
