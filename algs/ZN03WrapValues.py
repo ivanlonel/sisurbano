@@ -148,10 +148,17 @@ class ZN03WrapValues(QgsProcessingAlgorithm):
         #     )
         # )                
 
+
+        currentPath = getPath()
+        FULL_PATH = buildFullPathName(currentPath, 'sisurbano.shp')
+
+
         self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT,
-                self.tr('Salida')
+                self.tr('Salida'),
+                QgsProcessing.TypeVectorAnyGeometry,
+                FULL_PATH
             )
         )
 

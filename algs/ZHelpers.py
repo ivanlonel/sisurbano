@@ -131,8 +131,8 @@ def exploreNames(name):
 	return result 
 
 
-def getMaxMin(attr):
-	values = ''
+def getMaxMin(attr=''):
+	values = 0, 0
 	try:
 		# pathLayer = iface.activeLayer().source()
 		# layer = QgsVectorLayer(pathLayer, 'shape', "ogr")
@@ -146,7 +146,7 @@ def getMaxMin(attr):
 		values = min, max
 	except Exception as e:
 		print(e)
-		values = ''		
+		values = 0, 0	
 	else:
 		pass
 	finally:

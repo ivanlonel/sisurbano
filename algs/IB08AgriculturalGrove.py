@@ -23,7 +23,7 @@
 """
 
 __author__ = 'Johnatan Astudillo'
-__date__ = '2019-09-16'
+__date__ = '2019-09-23'
 __copyright__ = '(C) 2019 by LlactaLAB'
 
 # This will get replaced with a git SHA1 when you do a git archive
@@ -48,24 +48,22 @@ from .ZHelpers import *
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class IA02DensityHousing(QgsProcessingAlgorithm):
+class IB08AgriculturalGrove(QgsProcessingAlgorithm):
     """
-    Mide la intensidad de uso residencial en el territorio.
-    Número de viviendas por la superficie de suelo de naturaleza
-    urbana (no incluye superficie destinada a vías y equipamientos).
-    Formula: Número de viviendas / Superficie efectiva neta en hectareas
+    Mide la capacidad de un territorio de contener actividades agrícolas
+    o huertos en relación a su superficie total.
+    Formula:(Superficie de espacios agrícolas en m2 / Superficie total en m2)*100
     """
+    AGRICULTRURAL = 'AGRICULTRURAL'
     BLOCKS = 'BLOCKS'
     # FIELD_POPULATION = 'FIELD_POPULATION'
-    FIELD_HOUSING = 'FIELD_HOUSING'
-    CELL_SIZE = 'CELL_SIZE'
+    # FIELD_HOUSING = 'FIELD_HOUSING'
+    CELL_SIZE = 'CELL_SIZE'    
     OUTPUT = 'OUTPUT'
 
-
     def initAlgorithm(self, config):
-
-        currentPath = getCurrentPath(self)  
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA02'][1]))        
+        currentPath = getCurrentPath(self)
+        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IB08'][1]))            
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -81,15 +79,15 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
         #         self.tr('Población'),
         #         'poblacion', 'BLOCKS'
         #     )
-        # )        
+        # )      
 
-        self.addParameter(
-            QgsProcessingParameterField(
-                self.FIELD_HOUSING,
-                self.tr('Viviendas'),
-                'viviendas', 'BLOCKS'
-            )
-        ) 
+        # self.addParameter(
+        #     QgsProcessingParameterField(
+        #         self.FIELD_HOUSING,
+        #         self.tr('Viviendas'),
+        #         'viviendas', 'BLOCKS'
+        #     )
+        # )         
 
         self.addParameter(
             QgsProcessingParameterNumber(
@@ -101,6 +99,14 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
         )        
 
         self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.AGRICULTRURAL,
+                self.tr('Areas verdes'),
+                [QgsProcessing.TypeVectorAnyGeometry]
+            )
+        )
+
+        self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT,
                 self.tr('Salida'),
@@ -110,90 +116,103 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-        steps = 0
-        totalStpes = 11
-        # fieldPopulation = params['FIELD_POPULATION']
-        fieldHousing = params['FIELD_HOUSING']
+      steps = 0
+      totalStpes = 13
+      # fieldPopulation = params['FIELD_POPULATION']
 
-        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
+      feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-        blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                             feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      grid = createGrid(params['BLOCKS'], params['CELL_SIZE'], context,
+                        feedback)
+
+      # Eliminar celdas efecto borde
+      gridNeto = grid
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      gridNeto = calculateArea(gridNeto['OUTPUT'], 'area_grid', context,
                                feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        grid = createGrid(params['BLOCKS'], params['CELL_SIZE'], context,
-                      feedback)        
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      gridNeto = calculateField(gridNeto['OUTPUT'], 'id_grid', '$id', context,
+                                feedback, type=1)
 
-        # Eliminar celdas efecto borde
-        gridNeto = grid
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                              'area_bloc;',
+                              'id_grid;area_grid',
+                              context, feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNeto = calculateArea(gridNeto['OUTPUT'], 'area_grid', context,
-                                 feedback)
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNeto = calculateField(gridNeto['OUTPUT'], 'id_grid', '$id', context,
-                                  feedback, type=1)
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                                'area_bloc;' + fieldHousing,
-                                'id_grid;area_grid',
-                                context, feedback)
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        segmentsArea = calculateArea(segments['OUTPUT'],
-                                     'area_seg',
-                                     context, feedback)
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
-        housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
-                                            formulaHousingSegments,
-                                            context,
-                                            feedback)
-
-        # Haciendo el buffer inverso aseguramos que los segmentos
-        # quden dentro de la malla
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        housingForSegmentsFixed = makeSureInside(housingForSegments['OUTPUT'],
-                                                 context,
-                                                 feedback)
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                             housingForSegmentsFixed['OUTPUT'],
-                                             'area_seg;hou_seg',                                  
-                                              [CONTIENE], [SUM],
-                                              DISCARD_NONMATCHING,
+      # Haciendo el buffer inverso aseguramos que los segmentos
+      # quden dentro de la malla
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsFixed = makeSureInside(segments['OUTPUT'],
                                               context,
-                                              feedback)  
+                                              feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaNetDensityHousingPerHa = '(hou_seg_sum/area_seg_sum)*10000'
-        densities = calculateField(gridNetoAndSegments['OUTPUT'],
-                                   NAMES_INDEX['IA02'][0],
-                                   formulaNetDensityHousingPerHa,
-                                   context,
-                                   feedback)
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
+                                           segmentsFixed['OUTPUT'],
+                                           [],
+                                           [CONTIENE], [SUM],    
+                                           DISCARD_NONMATCHING,                               
+                                           context,
+                                           feedback)
+      # CALCULAR AREA AGRICULTURA
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      agriPerBlocks = intersection(params['AGRICULTRURAL'], gridNeto['OUTPUT'],
+                                    [],
+                                    [],
+                                    context, feedback)    
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaGrossDensityHousingPerHa = '(hou_seg_sum/area_grid)*10000'
-        densities = calculateField(densities['OUTPUT'],
-                                   'i_gdh',
-                                   formulaGrossDensityHousingPerHa,
-                                   context,
-                                   feedback, params['OUTPUT'])
 
-        return densities
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      agriArea = calculateArea(agriPerBlocks['OUTPUT'],
+                                'area_agri',
+                                context, feedback)
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      agriAreaFixed = makeSureInside(agriArea['OUTPUT'],
+                                      context,
+                                      feedback)    
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      agriAreaAndPopulation = joinByLocation(gridNetoAndSegments['OUTPUT'],
+                                              agriAreaFixed['OUTPUT'],
+                                              'area_agri',
+                                              [CONTIENE], [SUM],
+                                              UNDISCARD_NONMATCHING,                              
+                                              context,
+                                              feedback)
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      # formulaSurfacePerHab = 'coalesce(area_agri_sum/' + fieldPopulation + '_sum, 0)'
+      formulaSurfaceAgri = 'coalesce((area_agri_sum/area_grid)*100, 0)'
+      surfaceAgri = calculateField(agriAreaAndPopulation['OUTPUT'],
+                                     NAMES_INDEX['IB08'][0],
+                                     formulaSurfaceAgri,
+                                     context,
+                                     feedback, params['OUTPUT'])
+
+      return surfaceAgri
+
 
         # Return the results of the algorithm. In this case our only result is
         # the feature sink which contains the processed features, but some
@@ -204,7 +223,7 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'icon_servicearea_polygon_multiple.svg'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'grass.png'))
 
     def name(self):
         """
@@ -214,7 +233,7 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'A02 Densidad neta de viviendas'
+        return 'B08 Superficie de área agrícola/huertos'
 
     def displayName(self):
         """
@@ -238,11 +257,11 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'A Ambiente construido'
+        return 'B Ambiente biofísico'
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return IA02DensityHousing()
+        return IB08AgriculturalGrove()
 

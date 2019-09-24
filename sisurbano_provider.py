@@ -40,10 +40,14 @@ from .algs import (
     IA01DensityPopulation,
     IA02DensityHousing,
     IA03Compacity,
+    IA05EmptyProperties,
     IA07proximity2BasicUrbanServices,
     IA08proximity2OpenPublicSpace,
+    IA09CoverageDailyBusinessActivities,
     IB05GreenPerHabitant,
     IB06Proximity2GreenPublicSpace,
+    IB07SoilPermeability,
+    IB08AgriculturalGrove,
     IC04Proximity2AlternativeTransport,
     ZN01FuzzyVectorial,
     ZN02AllocateValues,
@@ -76,10 +80,14 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(IA01DensityPopulation.IA01DensityPopulation())
         self.addAlgorithm(IA02DensityHousing.IA02DensityHousing())
         self.addAlgorithm(IA03Compacity.IA03Compacity())
+        self.addAlgorithm(IA05EmptyProperties.IA05EmptyProperties())
         self.addAlgorithm(IA07proximity2BasicUrbanServices.IA07proximity2BasicUrbanServices())
         self.addAlgorithm(IA08proximity2OpenPublicSpace.IA08proximity2OpenPublicSpace())
+        self.addAlgorithm(IA09CoverageDailyBusinessActivities.IA09CoverageDailyBusinessActivities())
         self.addAlgorithm(IB05GreenPerHabitant.IB05GreenPerHabitant())
         self.addAlgorithm(IB06Proximity2GreenPublicSpace.IB06Proximity2GreenPublicSpace())
+        self.addAlgorithm(IB07SoilPermeability.IB07SoilPermeability())
+        self.addAlgorithm(IB08AgriculturalGrove.IB08AgriculturalGrove())
         self.addAlgorithm(IC04Proximity2AlternativeTransport.IC04Proximity2AlternativeTransport())
         self.addAlgorithm(ZN01FuzzyVectorial.ZN01FuzzyVectorial())
         self.addAlgorithm(ZN02AllocateValues.ZN02AllocateValues())

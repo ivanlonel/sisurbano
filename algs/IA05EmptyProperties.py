@@ -48,24 +48,27 @@ from .ZHelpers import *
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class IA02DensityHousing(QgsProcessingAlgorithm):
+class IA05EmptyProperties(QgsProcessingAlgorithm):
     """
-    Mide la intensidad de uso residencial en el territorio.
-    Número de viviendas por la superficie de suelo de naturaleza
-    urbana (no incluye superficie destinada a vías y equipamientos).
-    Formula: Número de viviendas / Superficie efectiva neta en hectareas
+    Mide la disgregación del espacio urbano. Relación entre la superficie
+    de predios sin edificaciones y la superficie de suelo de naturaleza
+    urbana (no incluye superficies destinadas a vías y equipamientos). 
+    Para el cálculo el área no considera el área de vías y de equipamientos
+    menores y mayores.    
+    Formula: (Superficie de predios vacíos en m2 / Superficie efectiva neta del área de estudio en m2)*100
     """
     BLOCKS = 'BLOCKS'
     # FIELD_POPULATION = 'FIELD_POPULATION'
-    FIELD_HOUSING = 'FIELD_HOUSING'
+    # FIELD_HOUSING = 'FIELD_HOUSING'
     CELL_SIZE = 'CELL_SIZE'
+    EMPTY_PROPERTIES = 'EMPTY_PROPERTIES'
     OUTPUT = 'OUTPUT'
 
 
     def initAlgorithm(self, config):
 
         currentPath = getCurrentPath(self)  
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA02'][1]))        
+        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA05'][1]))        
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -83,13 +86,13 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
         #     )
         # )        
 
-        self.addParameter(
-            QgsProcessingParameterField(
-                self.FIELD_HOUSING,
-                self.tr('Viviendas'),
-                'viviendas', 'BLOCKS'
-            )
-        ) 
+        # self.addParameter(
+        #     QgsProcessingParameterField(
+        #         self.FIELD_HOUSING,
+        #         self.tr('Viviendas'),
+        #         'viviendas', 'BLOCKS'
+        #     )
+        # ) 
 
         self.addParameter(
             QgsProcessingParameterNumber(
@@ -99,6 +102,15 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
                 P_CELL_SIZE, False, 1, 99999999
             )
         )        
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.EMPTY_PROPERTIES,
+                self.tr('Predios vacíos'),
+                [QgsProcessing.TypeVectorAnyGeometry]
+            )
+        )
+
 
         self.addParameter(
             QgsProcessingParameterFeatureSink(
@@ -111,7 +123,7 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 11
+        totalStpes = 13
         # fieldPopulation = params['FIELD_POPULATION']
         fieldHousing = params['FIELD_HOUSING']
 
@@ -141,7 +153,7 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
         steps = steps+1
         feedback.setCurrentStep(steps)
         segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                                'area_bloc;' + fieldHousing,
+                                'area_bloc;',
                                 'id_grid;area_grid',
                                 context, feedback)
         steps = steps+1
@@ -150,50 +162,70 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
                                      'area_seg',
                                      context, feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
-        housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
-                                            formulaHousingSegments,
-                                            context,
-                                            feedback)
 
         # Haciendo el buffer inverso aseguramos que los segmentos
         # quden dentro de la malla
         steps = steps+1
         feedback.setCurrentStep(steps)
-        housingForSegmentsFixed = makeSureInside(housingForSegments['OUTPUT'],
+        segmentsFixed = makeSureInside(segmentsArea['OUTPUT'],
                                                  context,
                                                  feedback)
         steps = steps+1
         feedback.setCurrentStep(steps)
         gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                             housingForSegmentsFixed['OUTPUT'],
-                                             'area_seg;hou_seg',                                  
+                                             segmentsFixed['OUTPUT'],
+                                             'area_seg;',                                  
                                               [CONTIENE], [SUM],
                                               DISCARD_NONMATCHING,
                                               context,
                                               feedback)  
 
+
+        # CALCULAR AREA PREDIOS VACIOS
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaNetDensityHousingPerHa = '(hou_seg_sum/area_seg_sum)*10000'
-        densities = calculateField(gridNetoAndSegments['OUTPUT'],
-                                   NAMES_INDEX['IA02'][0],
-                                   formulaNetDensityHousingPerHa,
-                                   context,
-                                   feedback)
+        emptyPropertiesInGrid = intersection(params['EMPTY_PROPERTIES'], gridNeto['OUTPUT'],
+                                    [],
+                                    [],
+                                    context, feedback)    
+
+
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaGrossDensityHousingPerHa = '(hou_seg_sum/area_grid)*10000'
-        densities = calculateField(densities['OUTPUT'],
-                                   'i_gdh',
-                                   formulaGrossDensityHousingPerHa,
+        emptyArea = calculateArea(emptyPropertiesInGrid['OUTPUT'],
+                                'area_emp',
+                                context, feedback)
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        emptyAreaFixed = makeSureInside(emptyArea['OUTPUT'],
+                                      context,
+                                      feedback)    
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        emptyProperties = joinByLocation(gridNetoAndSegments['OUTPUT'],
+                                              emptyAreaFixed['OUTPUT'],
+                                              'area_emp',
+                                              [CONTIENE], [SUM],
+                                              UNDISCARD_NONMATCHING,                              
+                                              context,
+                                              feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaEmptyPropertiesSurface = '(area_emp_sum/area_seg_sum) * 100'
+        emptyPropertiesSurface = calculateField(emptyProperties['OUTPUT'],
+                                    NAMES_INDEX['IA05'][0],
+                                   formulaEmptyPropertiesSurface,
                                    context,
                                    feedback, params['OUTPUT'])
 
-        return densities
+
+
+        return emptyPropertiesSurface
 
         # Return the results of the algorithm. In this case our only result is
         # the feature sink which contains the processed features, but some
@@ -204,7 +236,7 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'icon_servicearea_polygon_multiple.svg'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'green_grid.png'))
 
     def name(self):
         """
@@ -214,7 +246,7 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'A02 Densidad neta de viviendas'
+        return 'A05 Área de predios vacíos'
 
     def displayName(self):
         """
@@ -244,5 +276,5 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return IA02DensityHousing()
+        return IA05EmptyProperties()
 
