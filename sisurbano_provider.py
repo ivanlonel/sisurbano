@@ -49,6 +49,7 @@ from .algs import (
     IB07SoilPermeability,
     IB08AgriculturalGrove,
     IC04Proximity2AlternativeTransport,
+    ID11Theft,
     ZN01FuzzyVectorial,
     ZN02AllocateValues,
     ZN03WrapValues
@@ -89,6 +90,7 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(IB07SoilPermeability.IB07SoilPermeability())
         self.addAlgorithm(IB08AgriculturalGrove.IB08AgriculturalGrove())
         self.addAlgorithm(IC04Proximity2AlternativeTransport.IC04Proximity2AlternativeTransport())
+        self.addAlgorithm(ID11Theft.ID11Theft())
         self.addAlgorithm(ZN01FuzzyVectorial.ZN01FuzzyVectorial())
         self.addAlgorithm(ZN02AllocateValues.ZN02AllocateValues())
         self.addAlgorithm(ZN03WrapValues.ZN03WrapValues())

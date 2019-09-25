@@ -514,7 +514,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'C09 Cobertura de actividades comerciales cotinianas'
+        return 'A09 Cobertura de actividades comerciales cotinianas'
 
     def displayName(self):
         """
@@ -538,7 +538,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'B Ambiente biofísico'
+        return 'A Ambiente construido'
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
