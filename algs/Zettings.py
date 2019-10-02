@@ -53,7 +53,7 @@ NAMES_INDEX = {
 	'IB08': ['ib08','ib08','B08 Superficie de área agrícola/huertos'],
 	'IC01': ['ic01','ic01',''],
 	'IC02': ['ic02','ic02',''],
-	'IC03': ['ic03','ic02',''],
+	'IC03': ['ic03','ic03',''],
 	'IC04': ['ic04','ic04','C04 Proximidad a redes de transporte alternativo'],
 	'IC05': ['ic05','ic05',''],
 	'IC06': ['ic06','ic06',''],

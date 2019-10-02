@@ -18,6 +18,25 @@ from qgis.core import QgsProcessing
 import processing
 
 
+def sumLineLen(inputLines, inputPolygons, countField,
+                   lenField, context, feedback,
+                   output=QgsProcessing.TEMPORARY_OUTPUT):
+    if feedback.isCanceled():
+        return {}
+
+    alg_params = {
+        'LINES' : inputLines,
+        'POLYGONS' : inputPolygons,
+        'COUNT_FIELD' : countField,
+        'LEN_FIELD' : lenField,        
+        'OUTPUT': output
+    }
+    result = processing.run('qgis:sumlinelengths', alg_params,
+                            context=context,
+                            feedback=feedback, is_child_algorithm=True)
+    return result
+
+
 def joinAttrByLocation(input, inputJoin, fields, predicate,
                    discard, context, feedback,
                    output=QgsProcessing.TEMPORARY_OUTPUT):
