@@ -64,6 +64,7 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
     CELL_SIZE = 'CELL_SIZE'    
     OUTPUT = 'OUTPUT'
     DISTANCE_BUFFER = 500
+    STUDY_AREA_GRID = 'STUDY_AREA_GRID'    
 
 
 
@@ -97,19 +98,29 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
         )         
 
         self.addParameter(
-            QgsProcessingParameterNumber(
-                self.CELL_SIZE,
-                self.tr('Tamaño de la malla'),
-                QgsProcessingParameterNumber.Integer,
-                P_CELL_SIZE, False, 1, 99999999
+            QgsProcessingParameterFeatureSource(
+                self.STUDY_AREA_GRID,
+                self.tr(TEXT_GRID_INPUT),
+                [QgsProcessing.TypeVectorPolygon],
+                '', OPTIONAL_GRID_INPUT
             )
-        )        
+        )
+
+        if OPTIONAL_GRID_INPUT:
+            self.addParameter(
+                QgsProcessingParameterNumber(
+                    self.CELL_SIZE,
+                    self.tr('Tamaño de la malla'),
+                    QgsProcessingParameterNumber.Integer,
+                    P_CELL_SIZE, False, 1, 99999999
+                )
+            )   
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.EQUIPMENT,
                 self.tr('Espacios públicos abiertos'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorPoint]
             )
         )
 
@@ -183,16 +194,11 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
       """
       steps = steps+1
       feedback.setCurrentStep(steps)
-      grid = createGrid(params['BLOCKS'], params['CELL_SIZE'], context,
-                        feedback)    
-
-      # Eliminar celdas efecto borde
-      gridNeto = grid
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNeto = calculateField(gridNeto['OUTPUT'], 'id_grid', '$id', context,
-                                feedback, type=1)
+      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                         params['STUDY_AREA_GRID'],
+                                         context, feedback)
+      gridNeto = grid      
 
       steps = steps+1
       feedback.setCurrentStep(steps)
@@ -214,7 +220,7 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
       gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                            facilitiesForSegmentsFixed['OUTPUT'],
                                            'osp_idx_count;' + fieldHousing,
-                                           [CONTIENE], [SUM], DISCARD_NONMATCHING,                 
+                                           [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
                                            context,
                                            feedback)
 

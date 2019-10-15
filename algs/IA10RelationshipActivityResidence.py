@@ -50,11 +50,12 @@ pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
     """
-    Mide la relación entre el espacio verde y la población, donde se
-    considera como espacio verde aquellas áreas de la ciudad que
-    presentan cobertura vegetal tanto de tenencia pública como privada.
-    NDVI a partir de imagenes satelitales
-    Formula: Superficie verde en m2 / Población total
+    Mide la variedad y equilibrio urbano a través de la cantidad de
+    actividades lucrativas no residenciales. Este indicador se relaciona
+    además con la capacidad de autocontención de un territorio en términos
+    de movilidad. Relación entre la superficie construida designada a usos
+    terciarios (comercio, servicios u oficinas) y la cantidad de vivienda.
+    Formula: Área construida de usos terciarios en m2 / Número total de viviendas
     """
     TERTIARYUSES = 'TERTIARYUSES'
     BLOCKS = 'BLOCKS'
@@ -63,6 +64,7 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
     CONSTRUCTION_AREA = 'CONSTRUCTION_AREA'
     CELL_SIZE = 'CELL_SIZE'    
     OUTPUT = 'OUTPUT'
+    STUDY_AREA_GRID = 'STUDY_AREA_GRID'    
 
     def initAlgorithm(self, config):
         currentPath = getCurrentPath(self)
@@ -93,13 +95,23 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
         )         
 
         self.addParameter(
-            QgsProcessingParameterNumber(
-                self.CELL_SIZE,
-                self.tr('Tamaño de la malla'),
-                QgsProcessingParameterNumber.Integer,
-                P_CELL_SIZE, False, 1, 99999999
+            QgsProcessingParameterFeatureSource(
+                self.STUDY_AREA_GRID,
+                self.tr(TEXT_GRID_INPUT),
+                [QgsProcessing.TypeVectorPolygon],
+                '', OPTIONAL_GRID_INPUT
             )
         )        
+
+        if OPTIONAL_GRID_INPUT:
+            self.addParameter(
+                QgsProcessingParameterNumber(
+                    self.CELL_SIZE,
+                    self.tr('Tamaño de la malla'),
+                    QgsProcessingParameterNumber.Integer,
+                    P_CELL_SIZE, False, 1, 99999999
+                )
+            )        
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -148,16 +160,11 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      grid = createGrid(params['BLOCKS'], params['CELL_SIZE'], context,
-                        feedback)
-
-      # Eliminar celdas efecto borde
-      gridNeto = grid
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNeto = calculateField(gridNeto['OUTPUT'], 'id_grid', '$id', context,
-                                feedback, type=1)
+      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                         params['STUDY_AREA_GRID'],
+                                         context, feedback)
+      gridNeto = grid  
 
       steps = steps+1
       feedback.setCurrentStep(steps)
@@ -180,7 +187,7 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
                                            segmentsFixed['OUTPUT'],
                                            fieldHousing,
                                            [CONTIENE], [SUM],    
-                                           DISCARD_NONMATCHING,                               
+                                           UNDISCARD_NONMATCHING,                               
                                            context,
                                            feedback)
 

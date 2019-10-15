@@ -65,6 +65,7 @@ class ID03HousingRisk(QgsProcessingAlgorithm):
     RISK = 'RISK'
     CELL_SIZE = 'CELL_SIZE'    
     OUTPUT = 'OUTPUT'
+    STUDY_AREA_GRID = 'STUDY_AREA_GRID'    
 
 
     def initAlgorithm(self, config):
@@ -97,13 +98,24 @@ class ID03HousingRisk(QgsProcessingAlgorithm):
         )         
 
         self.addParameter(
-            QgsProcessingParameterNumber(
-                self.CELL_SIZE,
-                self.tr('Tamaño de la malla'),
-                QgsProcessingParameterNumber.Integer,
-                P_CELL_SIZE, False, 1, 99999999
+            QgsProcessingParameterFeatureSource(
+                self.STUDY_AREA_GRID,
+                self.tr(TEXT_GRID_INPUT),
+                [QgsProcessing.TypeVectorPolygon],
+                '', OPTIONAL_GRID_INPUT
             )
-        )        
+        )
+
+
+        if OPTIONAL_GRID_INPUT:
+            self.addParameter(
+                QgsProcessingParameterNumber(
+                    self.CELL_SIZE,
+                    self.tr('Tamaño de la malla'),
+                    QgsProcessingParameterNumber.Integer,
+                    P_CELL_SIZE, False, 1, 99999999
+                )
+            )        
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -152,7 +164,7 @@ class ID03HousingRisk(QgsProcessingAlgorithm):
       counterRisk = joinByLocation(blocksWithId['OUTPUT'],
                                     riskWithId['OUTPUT'],
                                     'idx', [INTERSECTA], [COUNT],
-                                    DISCARD_NONMATCHING,
+                                    UNDISCARD_NONMATCHING,
                                     context,
                                     feedback)
  
@@ -174,16 +186,11 @@ class ID03HousingRisk(QgsProcessingAlgorithm):
       """
       steps = steps+1
       feedback.setCurrentStep(steps)
-      grid = createGrid(params['BLOCKS'], params['CELL_SIZE'], context,
-                        feedback)    
-
-      # Eliminar celdas efecto borde
-      gridNeto = grid
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNeto = calculateField(gridNeto['OUTPUT'], 'id_grid', '$id', context,
-                                feedback, type=1)
+      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                         params['STUDY_AREA_GRID'],
+                                         context, feedback)
+      gridNeto = grid  
 
       steps = steps+1
       feedback.setCurrentStep(steps)
@@ -205,7 +212,7 @@ class ID03HousingRisk(QgsProcessingAlgorithm):
       gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                            riskForSegmentsFixed['OUTPUT'],
                                            'rk_' + fieldHousing + ';' + fieldHousing,
-                                           [CONTIENE], [SUM], DISCARD_NONMATCHING,                 
+                                           [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
                                            context,
                                            feedback)
 

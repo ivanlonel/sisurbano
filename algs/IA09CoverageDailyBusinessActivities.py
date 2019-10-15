@@ -75,6 +75,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
     BAKERY = 'BAKERY'    
     STATIONERY = 'STATIONERY'    
     OUTPUT = 'OUTPUT'
+    STUDY_AREA_GRID = 'STUDY_AREA_GRID'    
 
 
 
@@ -97,21 +98,30 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
             )
         )      
     
-
         self.addParameter(
-            QgsProcessingParameterNumber(
-                self.CELL_SIZE,
-                self.tr('Tamaño de la malla'),
-                QgsProcessingParameterNumber.Integer,
-                P_CELL_SIZE, False, 1, 99999999
+            QgsProcessingParameterFeatureSource(
+                self.STUDY_AREA_GRID,
+                self.tr(TEXT_GRID_INPUT),
+                [QgsProcessing.TypeVectorPolygon],
+                '', OPTIONAL_GRID_INPUT
             )
-        )        
+        )
+
+        if OPTIONAL_GRID_INPUT:
+            self.addParameter(
+                QgsProcessingParameterNumber(
+                    self.CELL_SIZE,
+                    self.tr('Tamaño de la malla'),
+                    QgsProcessingParameterNumber.Integer,
+                    P_CELL_SIZE, False, 1, 99999999
+                )
+            )         
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.SHOP,
                 self.tr('Tiendas de abarrotes'),
-                [QgsProcessing.TypeVectorAnyGeometry],
+                [QgsProcessing.TypeVectorPoint],
                 '', True
             )
         )
@@ -120,7 +130,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.MINIMARKET,
                 self.tr('Minimercados'),
-                [QgsProcessing.TypeVectorAnyGeometry],
+                [QgsProcessing.TypeVectorPoint],
                 '', True
             )
         )
@@ -129,7 +139,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.PHARMACY,
                 self.tr('Farmacias'),
-                [QgsProcessing.TypeVectorAnyGeometry],
+                [QgsProcessing.TypeVectorPoint],
                 '', True
             )
         )
@@ -138,7 +148,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.BAKERY,
                 self.tr('Panaderías'),
-                [QgsProcessing.TypeVectorAnyGeometry],
+                [QgsProcessing.TypeVectorPoint],
                 '', True
             )
         )
@@ -147,7 +157,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.STATIONERY,
                 self.tr('Papelerías-bazar'),
-                [QgsProcessing.TypeVectorAnyGeometry],
+                [QgsProcessing.TypeVectorPoint],
                 '', True
             )
         )                                
@@ -419,11 +429,11 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
       """
       steps = steps+1
       feedback.setCurrentStep(steps)
-      grid = createGrid(params['BLOCKS'], params['CELL_SIZE'], context,
-                        feedback) 
-
-      # Eliminar celdas efecto borde
-      gridNeto = grid
+      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                         params['STUDY_AREA_GRID'],
+                                         context, feedback)
+      gridNeto = grid  
 
       steps = steps+1
       feedback.setCurrentStep(steps)
@@ -450,7 +460,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
       gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                            facilitiesForSegmentsFixed['OUTPUT'],
                                            'sh_idx_count;mk_idx_count;pha_idx_count;bk_idx_count;st_idx_count;facilities;' + fieldPopulateOrHousing,
-                                           [CONTIENE], [MAX, SUM], DISCARD_NONMATCHING,                 
+                                           [CONTIENE], [MAX, SUM], UNDISCARD_NONMATCHING,                 
                                            context,
                                            feedback)
 
@@ -477,7 +487,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
       totalHousing = joinByAttr(gridNetoAndSegments['OUTPUT'], 'id_grid',
                                 gridNetoAndSegmentsSimulta['OUTPUT'], 'id_grid',
                                 fieldPopulateOrHousing+'_sum',
-                                DISCARD_NONMATCHING,
+                                UNDISCARD_NONMATCHING,
                                 'net_',
                                 context,
                                 feedback)

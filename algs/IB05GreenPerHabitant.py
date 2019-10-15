@@ -62,6 +62,7 @@ class IB05GreenPerHabitant(QgsProcessingAlgorithm):
     FIELD_HOUSING = 'FIELD_HOUSING'
     CELL_SIZE = 'CELL_SIZE'    
     OUTPUT = 'OUTPUT'
+    STUDY_AREA_GRID = 'STUDY_AREA_GRID'    
 
     def initAlgorithm(self, config):
         currentPath = getCurrentPath(self)
@@ -92,13 +93,23 @@ class IB05GreenPerHabitant(QgsProcessingAlgorithm):
         )         
 
         self.addParameter(
-            QgsProcessingParameterNumber(
-                self.CELL_SIZE,
-                self.tr('Tamaño de la malla'),
-                QgsProcessingParameterNumber.Integer,
-                P_CELL_SIZE, False, 1, 99999999
+            QgsProcessingParameterFeatureSource(
+                self.STUDY_AREA_GRID,
+                self.tr(TEXT_GRID_INPUT),
+                [QgsProcessing.TypeVectorPolygon],
+                '', OPTIONAL_GRID_INPUT
             )
-        )        
+        )
+
+        if OPTIONAL_GRID_INPUT:
+            self.addParameter(
+                QgsProcessingParameterNumber(
+                    self.CELL_SIZE,
+                    self.tr('Tamaño de la malla'),
+                    QgsProcessingParameterNumber.Integer,
+                    P_CELL_SIZE, False, 1, 99999999
+                )
+            )           
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -129,21 +140,11 @@ class IB05GreenPerHabitant(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      grid = createGrid(params['BLOCKS'], params['CELL_SIZE'], context,
-                        feedback)
-
-      # Eliminar celdas efecto borde
-      gridNeto = grid
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNeto = calculateArea(gridNeto['OUTPUT'], 'area_grid', context,
-                               feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNeto = calculateField(gridNeto['OUTPUT'], 'id_grid', '$id', context,
-                                feedback, type=1)
+      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                         params['STUDY_AREA_GRID'],
+                                         context, feedback)
+      gridNeto = grid   
 
       steps = steps+1
       feedback.setCurrentStep(steps)
@@ -166,7 +167,7 @@ class IB05GreenPerHabitant(QgsProcessingAlgorithm):
                                            segmentsFixed['OUTPUT'],
                                            fieldPopulation,
                                            [CONTIENE], [SUM],    
-                                           DISCARD_NONMATCHING,                               
+                                           UNDISCARD_NONMATCHING,                               
                                            context,
                                            feedback)
       # CALCULAR AREA VERDE
