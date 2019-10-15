@@ -91,3 +91,4 @@ NAMES_INDEX = {
 }
 
 TEXT_GRID_INPUT = 'Malla (Si ya tienes una malla de estudio)'
+OPTIONAL_GRID_INPUT = False

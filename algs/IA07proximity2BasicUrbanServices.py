@@ -68,6 +68,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
     FIELD_HOUSING = 'FIELD_HOUSING'
     CELL_SIZE = 'CELL_SIZE'    
     OUTPUT = 'OUTPUT'
+    STUDY_AREA_GRID = 'STUDY_AREA_GRID'
 
  
 
@@ -99,19 +100,29 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         )         
 
         self.addParameter(
-            QgsProcessingParameterNumber(
-                self.CELL_SIZE,
-                self.tr('Tamaño de la malla'),
-                QgsProcessingParameterNumber.Integer,
-                P_CELL_SIZE, False, 1, 99999999
+            QgsProcessingParameterFeatureSource(
+                self.STUDY_AREA_GRID,
+                self.tr(TEXT_GRID_INPUT),
+                [QgsProcessing.TypeVectorPolygon],
+                '', OPTIONAL_GRID_INPUT
             )
-        )        
+        )
+
+        if OPTIONAL_GRID_INPUT:
+            self.addParameter(
+                QgsProcessingParameterNumber(
+                    self.CELL_SIZE,
+                    self.tr('Tamaño de la malla'),
+                    QgsProcessingParameterNumber.Integer,
+                    P_CELL_SIZE, False, 1, 99999999
+                )
+            )       
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.EDUCATION,
                 self.tr('Educación'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorPoint]
             )
         )
 
@@ -119,7 +130,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.HEALTH,
                 self.tr('Salud'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorPoint]
             )
         )  
 
@@ -127,7 +138,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.CULTURE,
                 self.tr('Cultura'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorPoint]
             )
         )    
 
@@ -135,7 +146,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.SPORTS,
                 self.tr('Bienestar social'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorPoint]
             )
         )                           
 
@@ -317,16 +328,11 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         """
         steps = steps+1
         feedback.setCurrentStep(steps)
-        grid = createGrid(params['BLOCKS'], params['CELL_SIZE'], context,
-                          feedback)        
-
-        # Eliminar celdas efecto borde
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE        
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
         gridNeto = grid
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNeto = calculateField(gridNeto['OUTPUT'], 'id_grid', '$id', context,
-                                  feedback, type=1)
 
         steps = steps+1
         feedback.setCurrentStep(steps)
@@ -349,7 +355,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
                                              facilitiesForSegmentsFixed['OUTPUT'],
                                              'edu_idx_count;hea_idx_count;cul_idx_count;spo_idx_count;facilities;' + fieldHousing,
                                              [CONTIENE],
-                                             [MAX, SUM], DISCARD_NONMATCHING,                 
+                                             [MAX, SUM], UNDISCARD_NONMATCHING,                 
                                              context,
                                              feedback)
         # tomar solo los que tienen cercania simultanea (descartar NULL)
@@ -374,7 +380,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         totalHousing = joinByAttr(gridNetoAndSegments['OUTPUT'], 'id_grid',
                                   gridNetoAndSegmentsNotNull['OUTPUT'], 'id_grid',
                                   fieldHousing+'_sum',
-                                  DISCARD_NONMATCHING,
+                                  UNDISCARD_NONMATCHING,
                                   'net_',
                                   context,
                                   feedback)

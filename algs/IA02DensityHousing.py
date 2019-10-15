@@ -97,19 +97,19 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
                 self.STUDY_AREA_GRID,
                 self.tr(TEXT_GRID_INPUT),
                 [QgsProcessing.TypeVectorPolygon],
-                '', True
+                '', OPTIONAL_GRID_INPUT
             )
         )
 
-
-        self.addParameter(
-            QgsProcessingParameterNumber(
-                self.CELL_SIZE,
-                self.tr('Tamaño de la malla'),
-                QgsProcessingParameterNumber.Integer,
-                P_CELL_SIZE, False, 1, 99999999
-            )
-        )        
+        if OPTIONAL_GRID_INPUT:
+            self.addParameter(
+                QgsProcessingParameterNumber(
+                    self.CELL_SIZE,
+                    self.tr('Tamaño de la malla'),
+                    QgsProcessingParameterNumber.Integer,
+                    P_CELL_SIZE, False, 1, 99999999
+                )
+            )     
 
         self.addParameter(
             QgsProcessingParameterFeatureSink(
@@ -132,6 +132,7 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
                                feedback)
         steps = steps+1
         feedback.setCurrentStep(steps)
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE        
         grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
                                            params['STUDY_AREA_GRID'],
                                            context, feedback)

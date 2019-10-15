@@ -63,6 +63,7 @@ class IA05EmptyProperties(QgsProcessingAlgorithm):
     CELL_SIZE = 'CELL_SIZE'
     EMPTY_PROPERTIES = 'EMPTY_PROPERTIES'
     OUTPUT = 'OUTPUT'
+    STUDY_AREA_GRID = 'STUDY_AREA_GRID'
 
 
     def initAlgorithm(self, config):
@@ -95,14 +96,25 @@ class IA05EmptyProperties(QgsProcessingAlgorithm):
         # ) 
 
         self.addParameter(
-            QgsProcessingParameterNumber(
-                self.CELL_SIZE,
-                self.tr('Tamaño de la malla'),
-                QgsProcessingParameterNumber.Integer,
-                P_CELL_SIZE, False, 1, 99999999
+            QgsProcessingParameterFeatureSource(
+                self.STUDY_AREA_GRID,
+                self.tr(TEXT_GRID_INPUT),
+                [QgsProcessing.TypeVectorPolygon],
+                '', OPTIONAL_GRID_INPUT
             )
         )        
 
+        if OPTIONAL_GRID_INPUT:
+            self.addParameter(
+                QgsProcessingParameterNumber(
+                    self.CELL_SIZE,
+                    self.tr('Tamaño de la malla'),
+                    QgsProcessingParameterNumber.Integer,
+                    P_CELL_SIZE, False, 1, 99999999
+                )
+            )
+
+            
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.EMPTY_PROPERTIES,
@@ -125,7 +137,7 @@ class IA05EmptyProperties(QgsProcessingAlgorithm):
         steps = 0
         totalStpes = 13
         # fieldPopulation = params['FIELD_POPULATION']
-        fieldHousing = params['FIELD_HOUSING']
+        # fieldHousing = params['FIELD_HOUSING']
 
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
@@ -134,21 +146,11 @@ class IA05EmptyProperties(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        grid = createGrid(params['BLOCKS'], params['CELL_SIZE'], context,
-                      feedback)        
-
-        # Eliminar celdas efecto borde
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE        
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
         gridNeto = grid
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNeto = calculateArea(gridNeto['OUTPUT'], 'area_grid', context,
-                                 feedback)
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNeto = calculateField(gridNeto['OUTPUT'], 'id_grid', '$id', context,
-                                  feedback, type=1)
 
         steps = steps+1
         feedback.setCurrentStep(steps)
@@ -176,7 +178,7 @@ class IA05EmptyProperties(QgsProcessingAlgorithm):
                                              segmentsFixed['OUTPUT'],
                                              'area_seg;',                                  
                                               [CONTIENE], [SUM],
-                                              DISCARD_NONMATCHING,
+                                              UNDISCARD_NONMATCHING,
                                               context,
                                               feedback)  
 
