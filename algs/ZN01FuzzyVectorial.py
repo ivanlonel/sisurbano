@@ -300,3 +300,18 @@ class ZN01FuzzyVectorial(QgsProcessingAlgorithm):
     def createInstance(self):
         return ZN01FuzzyVectorial()
 
+    def shortHelpString(self):
+        image1 = os.path.join(pluginPath, 'sisurbano', 'icons', 'normalize1.jpg')
+        image2 = os.path.join(pluginPath, 'sisurbano', 'icons', 'normalize2.jpg')
+        image3 = os.path.join(pluginPath, 'sisurbano', 'icons', 'normalize3.jpg')
+        return  "<b>General:</b><br>"\
+                "<b>Normalization by linear interpolation: smaller is better (SB).</b><br>"\
+                "<img  height='150' src='"+image1+"' /><br>"\
+                "<b>Normalization by linear interpolation: larger is better (LB).</b><br>"\
+                "<img  height='150' src='"+image2+"' /><br>"\
+                "Normailizar indicadores on a given <b>texto en resaltados</b>.<br>"\
+                "<img  height='150' src='"+image3+"' /><br>"\
+                " Normalization by linear interpolation: nominal is best (NB)</b>.<br>"\
+                "<b>Parameters (required):</b><br>"\
+                "Los siguientes parametros son necesarios para el algortimo:"\
+                "<ul><li>Valor</li><li>Otro Layer</li><li>Unique Point ID Field (numerical)</li></ul><br>"\

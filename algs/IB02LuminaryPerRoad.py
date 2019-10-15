@@ -150,11 +150,6 @@ class IB02LuminaryPerRoad(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      grid = createGrid(params['BLOCKS'], params['CELL_SIZE'], context,
-                        feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
       if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
       grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
                                          params['STUDY_AREA_GRID'],

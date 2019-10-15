@@ -127,7 +127,7 @@ class ZN00CreateGrid(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
                                           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'green4.jpeg'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'create_grid.png'))
 
     def name(self):
         """
