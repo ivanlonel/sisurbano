@@ -60,6 +60,7 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
     FIELD_HOUSING = 'FIELD_HOUSING'
     CELL_SIZE = 'CELL_SIZE'
     OUTPUT = 'OUTPUT'
+    STUDY_AREA_GRID = 'STUDY_AREA_GRID'
 
 
     def initAlgorithm(self, config):
@@ -92,6 +93,16 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
         ) 
 
         self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.STUDY_AREA_GRID,
+                self.tr(TEXT_GRID_INPUT),
+                [QgsProcessing.TypeVectorPolygon],
+                '', True
+            )
+        )
+
+
+        self.addParameter(
             QgsProcessingParameterNumber(
                 self.CELL_SIZE,
                 self.tr('Tamaño de la malla'),
@@ -119,24 +130,12 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
 
         blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
                                feedback)
-
         steps = steps+1
         feedback.setCurrentStep(steps)
-        grid = createGrid(params['BLOCKS'], params['CELL_SIZE'], context,
-                      feedback)        
-
-        # Eliminar celdas efecto borde
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
         gridNeto = grid
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNeto = calculateArea(gridNeto['OUTPUT'], 'area_grid', context,
-                                 feedback)
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNeto = calculateField(gridNeto['OUTPUT'], 'id_grid', '$id', context,
-                                  feedback, type=1)
 
         steps = steps+1
         feedback.setCurrentStep(steps)
@@ -171,7 +170,7 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
                                              housingForSegmentsFixed['OUTPUT'],
                                              'area_seg;hou_seg',                                  
                                               [CONTIENE], [SUM],
-                                              DISCARD_NONMATCHING,
+                                              UNDISCARD_NONMATCHING,
                                               context,
                                               feedback)  
 

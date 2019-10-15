@@ -89,3 +89,5 @@ NAMES_INDEX = {
 	'ID16': ['id16','id16',''],
 	'ID17': ['id17','id17',''],
 }
+
+TEXT_GRID_INPUT = 'Malla (Si ya tienes una malla de estudio)'

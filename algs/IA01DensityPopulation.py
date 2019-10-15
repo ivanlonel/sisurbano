@@ -64,6 +64,7 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
     FIELD_POPULATION = 'FIELD_POPULATION'
     CELL_SIZE = 'CELL_SIZE'
     OUTPUT = 'OUTPUT'
+    STUDY_AREA_GRID = 'STUDY_AREA_GRID'
 
 
     def initAlgorithm(self, config):
@@ -86,6 +87,15 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
                 'poblacion', 'BLOCKS'
             )
         )        
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.STUDY_AREA_GRID,
+                self.tr(TEXT_GRID_INPUT),
+                [QgsProcessing.TypeVectorPolygon],
+                '', True
+            )
+        )
 
         self.addParameter(
             QgsProcessingParameterNumber(
@@ -117,21 +127,12 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        grid = createGrid(params['BLOCKS'], params['CELL_SIZE'], context,
-                          feedback)    
-
-        # Eliminar celdas efecto borde
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
         gridNeto = grid
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNeto = calculateArea(gridNeto['OUTPUT'], 'area_grid', context,
-                                 feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNeto = calculateField(gridNeto['OUTPUT'], 'id_grid', '$id', context,
-                                  feedback, type=1)
 
         steps = steps+1
         feedback.setCurrentStep(steps)
@@ -139,6 +140,7 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
                                 'area_bloc;' + fieldPopulation,
                                 'id_grid;area_grid',
                                 context, feedback)
+
         steps = steps+1
         feedback.setCurrentStep(steps)
         segmentsArea = calculateArea(segments['OUTPUT'],
@@ -169,7 +171,7 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
                                              populationForSegmentsFixed['OUTPUT'],
                                              'area_seg;pop_seg',                                   
                                               [CONTIENE], [SUM],
-                                              DISCARD_NONMATCHING,
+                                              UNDISCARD_NONMATCHING,
                                               context,
                                               feedback)   
 

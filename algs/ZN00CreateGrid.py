@@ -41,54 +41,28 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterField,
                        QgsProcessingParameterNumber,
+                       QgsProcessingParameterEnum,
                        QgsProcessingParameterFeatureSink)
 from .ZProcesses import *
 from .Zettings import *
-from .ZHelpers import *
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class IA03Compacity(QgsProcessingAlgorithm):
+class ZN00CreateGrid(QgsProcessingAlgorithm):
     """
-    Mide la intensidad edificatoria del territorio; donde el resultado
-    representa la altura media de edificación. Relación entre el volumen
-    total edificado y la superficie de suelo del área de estudio.
-    Formula: Volumen edificado en m3 /
-    Superficie total del área de estudio en m2
-    """ 
-    CADASTRE = 'CADASTRE'
-    CONSTRUCTION_AREA = 'CONSTRUCTION_AREA'
-    CELL_SIZE = 'CELL_SIZE'
+    Distribuye la población de las manzanas a los puntos o medidores
+    más cercanos al polígono de la manzana
+    """  
+    STUDY = 'STUDY'
+    CELL_SIZE = 'CELL_SIZE' 
     OUTPUT = 'OUTPUT'
-    STUDY_AREA_GRID = 'STUDY_AREA_GRID'
- 
 
     def initAlgorithm(self, config):
-        currentPath = getCurrentPath(self)
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA03'][1]))    
-
         self.addParameter(
             QgsProcessingParameterFeatureSource(
-                self.CADASTRE,
-                self.tr('Catastro'),
+                self.STUDY,
+                self.tr('Área de estudio'),
                 [QgsProcessing.TypeVectorPolygon]
-            )
-        )
-
-        self.addParameter(
-            QgsProcessingParameterField(
-                self.CONSTRUCTION_AREA,
-                self.tr('Area de construcción'),
-                'area_const', 'CADASTRE'
-            )
-        )      
-
-        self.addParameter(
-            QgsProcessingParameterFeatureSource(
-                self.STUDY_AREA_GRID,
-                self.tr(TEXT_GRID_INPUT),
-                [QgsProcessing.TypeVectorPolygon],
-                '', True
             )
         )
 
@@ -99,72 +73,50 @@ class IA03Compacity(QgsProcessingAlgorithm):
                 QgsProcessingParameterNumber.Integer,
                 P_CELL_SIZE, False, 1, 99999999
             )
-        )        
+        )  
 
         self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT,
-                self.tr('Salida'),
-                QgsProcessing.TypeVectorAnyGeometry,
-                str(FULL_PATH)                
+                self.tr('Salida')
             )
         )
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 6
-        fieldConstructionArea = params['CONSTRUCTION_AREA']
-        # todos tienen un piso. El area de contruccion esta tomado por pisos
-        fieldFloorsNumber = '1'
-        heightFloor = '3'
+        totalStpes = 4
+        DISCARD = True
+        UNDISCARD = False
 
-        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
+        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)    
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['CADASTRE'],
-                                           params['STUDY_AREA_GRID'],
-                                           context, feedback)
+        grid = createGrid(params['STUDY'], params['CELL_SIZE'], context,
+                          feedback)
+
         gridNeto = grid
 
-        # multiplicar area de contruccion por la altura
-        # base del area de cada piso (al parecer porque el ac > at)
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaBuiltVolume = fieldConstructionArea + ' * ' + heightFloor
-        cadastreBuiltVolume = calculateField(params['CADASTRE'], 'built_volume',
-                                             formulaBuiltVolume,
-                                             context,
-                                             feedback)
-
-        # no es necesario intersectar
         # steps = steps+1
         # feedback.setCurrentStep(steps)
-        # segments = intersection(cadastreBuiltVolume['OUTPUT'], gridNeto['OUTPUT'],
-        #                         'built_volume;'+fieldConstructionArea,
-        #                         'id_grid;area_grid',
-        #                         context, feedback, params['OUTPUT'])
-
+        # gridNeto = calculateArea(gridNeto['OUTPUT'], 'area_grid', context,
+        #                          feedback)
 
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        gridIntersectCadaster = joinByLocation(gridNeto['OUTPUT'],
-                                               cadastreBuiltVolume['OUTPUT'],
-                                               'built_volume',
-                                               [INTERSECTA], [SUM],
-                                               UNDISCARD_NONMATCHING,
-                                               context,
-                                               feedback)  
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaCompacity = 'built_volume_sum / area_grid'
-        compacity = calculateField(gridIntersectCadaster['OUTPUT'], NAMES_INDEX['IA03'][0],
-                                   formulaCompacity,
-                                   context,
-                                   feedback, params['OUTPUT'])
+        gridNeto = selectByLocation(gridNeto['OUTPUT'], params['STUDY'],
+                                [INTERSECTA],
+                                context, feedback, params['OUTPUT'])
 
-        return compacity
+
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # gridNeto = calculateField(gridNeto['OUTPUT'], 'id_grid', '$id', context,
+        #                           feedback, params['OUTPUT'], type=1)        
+
+
+        return gridNeto
 
         # Return the results of the algorithm. In this case our only result is
         # the feature sink which contains the processed features, but some
@@ -173,9 +125,9 @@ class IA03Compacity(QgsProcessingAlgorithm):
         # dictionary, with keys matching the feature corresponding parameter
         # or output names.
         #return {self.OUTPUT: dest_id}
-
+                                          
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'icon_servicearea_points_multiple.svg'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'green4.jpeg'))
 
     def name(self):
         """
@@ -185,7 +137,7 @@ class IA03Compacity(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'A03 Compacidad absoluta'
+        return 'Z00 Crear Celdas'
 
     def displayName(self):
         """
@@ -209,11 +161,11 @@ class IA03Compacity(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'A Ambiente construido'
+        return 'Z General'
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return IA03Compacity()
+        return ZN00CreateGrid()
 

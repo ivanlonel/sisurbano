@@ -16,6 +16,58 @@ __copyright__ = '(C) 2019, Llactalab'
 
 from qgis.core import QgsProcessing
 import processing
+from .Zettings import *
+
+def buildStudyArea(cellSize, mainInput, studyArea, context, feedback):
+    # feedback.pushConsoleInfo("La salida es: *" + str(studyArea) +"*")
+    isStudyArea = False
+    if(studyArea == None):        
+        feedback.pushConsoleInfo(str(('Creando celdas a partir de la capa principal')))    
+        grid = createGrid(mainInput, cellSize, context, feedback)
+        grid = grid['OUTPUT']
+        grid = selectByLocation(grid, mainInput,
+                                [INTERSECTA],
+                                context, 
+                                feedback)        
+        grid = grid['OUTPUT']
+
+    else:
+        feedback.pushConsoleInfo(str(('Se usará las celdas del área de estudio para el análisis')))    
+        grid = studyArea
+        isStudyArea = True
+        
+    grid = calculateArea(grid, 'area_grid', context, feedback)
+    grid = grid['OUTPUT']
+    grid = calculateField(grid, 'id_grid', '$id', context, feedback, type=1) 
+    return grid, isStudyArea
+
+
+def selectByLocation(input, intersect, predicate, context, feedback,
+                     output=QgsProcessing.TEMPORARY_OUTPUT):
+    if feedback.isCanceled():
+        return {}
+    alg_params = {
+        'INPUT': input,
+        'INTERSECT': intersect,
+        'METHOD': 0,
+        'PREDICATE': predicate,
+        'OUTPUT': output
+    }
+    result = processing.run('native:selectbylocation', alg_params,
+                            context=context, feedback=feedback,
+                            is_child_algorithm=True)
+
+    # Extraer los objetos espaciales seleccionados
+    alg_params = {
+        'INPUT': result['OUTPUT'],
+        'OUTPUT': output
+    }
+
+    result = processing.run('native:saveselectedfeatures', alg_params,
+                            context=context, feedback=feedback,
+                            is_child_algorithm=True)
+
+    return result
 
 
 def sumLineLen(inputLines, inputPolygons, countField,
