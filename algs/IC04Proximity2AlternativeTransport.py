@@ -126,7 +126,7 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.BUSSTOP,
                 self.tr('Paradas de bus'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorPoint]
             )
         )
 
@@ -134,7 +134,7 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.TRAMSTOP,
                 self.tr('Tranvía'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorPoint]
             )
         )
 
@@ -142,7 +142,7 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.BIKESTOP,
                 self.tr('Bici pública'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorPoint]
             )
         )
 
@@ -150,7 +150,7 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.BIKEWAY,
                 self.tr('Ciclovía'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorLine]
             )
         )
 
@@ -158,7 +158,7 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.CROSSWALK,
                 self.tr('Caminos peatonales'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorLine]
             )
         )                                
 
@@ -509,7 +509,7 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'green3.jpeg'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'tram.png'))
 
     def name(self):
         """

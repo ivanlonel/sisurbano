@@ -88,6 +88,7 @@ class ZN03WrapValues(QgsProcessingAlgorithm):
     """  
 
     OUTPUT = 'OUTPUT'
+    prefix = ''
 
 
     def initAlgorithm(self, config):
@@ -97,9 +98,21 @@ class ZN03WrapValues(QgsProcessingAlgorithm):
 
         # FULL_PATH = buildFullPathName(currentPath, 'n_'+attrName+'.shp')
 
+        layer = iface.activeLayer()
+        nameLayer = layer.name()
+        isNormalIndex =  len(nameLayer.split("n_i")) == 2
+
+        if isNormalIndex: 
+          self.prefix = 'n_'
+        else: 
+          self.prefix = ''
+
+        print(isNormalIndex)
+
+
         for key in NAMES_INDEX:     
           currentPath = getPath()
-          FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension('n_'+ NAMES_INDEX[key][1]))       
+          FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(self.prefix+ NAMES_INDEX[key][1]))       
           if not isExistFile(FULL_PATH): 
             FULL_PATH = ''
           self.addParameter(
@@ -169,7 +182,7 @@ class ZN03WrapValues(QgsProcessingAlgorithm):
       NAMES_INDEX_N = {}
       for k in NAMES_INDEX:
         v = NAMES_INDEX[k][0]
-        newName = 'n_' + str(v)
+        newName = self.prefix + str(v)
         NAMES_INDEX_N.update({k : newName})
         feedback.pushConsoleInfo(str(newName))
 
@@ -218,7 +231,7 @@ class ZN03WrapValues(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
                                           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'green1.jpeg'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'joinlayers.png'))
 
     def name(self):
         """
@@ -228,7 +241,7 @@ class ZN03WrapValues(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Z03 Unir indicadores normalizados'
+        return 'Z03 Unir indicadores'
 
     def displayName(self):
         """

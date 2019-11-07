@@ -39,7 +39,7 @@ from .sisurbano_algorithm import SisurbanoAlgorithm
 from .algs import ( 
     IA01DensityPopulation,
     IA02DensityHousing,
-    IA03Compacity,
+    IA03Compactness,
     IA05EmptyProperties,
     IA07proximity2BasicUrbanServices,
     IA08proximity2OpenPublicSpace,
@@ -50,8 +50,11 @@ from .algs import (
     IB06Proximity2GreenPublicSpace,
     IB07SoilPermeability,
     IB08AgriculturalGrove,
+    IC01PublicPedestrianRoadDistribution,
     IC03RoadsPerHabitant,
     IC04Proximity2AlternativeTransport,
+    IC08ParkedVehicles,
+    IC13Sewerage,
     ID03HousingRisk,
     ID10Proximity2PublicMarket,
     ID11Theft,
@@ -86,7 +89,7 @@ class SisurbanoProvider(QgsProcessingProvider):
         # self.addAlgorithm(SisurbanoAlgorithm())
         self.addAlgorithm(IA01DensityPopulation.IA01DensityPopulation())
         self.addAlgorithm(IA02DensityHousing.IA02DensityHousing())
-        self.addAlgorithm(IA03Compacity.IA03Compacity())
+        self.addAlgorithm(IA03Compactness.IA03Compactness())
         self.addAlgorithm(IA05EmptyProperties.IA05EmptyProperties())
         self.addAlgorithm(IA07proximity2BasicUrbanServices.IA07proximity2BasicUrbanServices())
         self.addAlgorithm(IA08proximity2OpenPublicSpace.IA08proximity2OpenPublicSpace())
@@ -97,8 +100,11 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(IB06Proximity2GreenPublicSpace.IB06Proximity2GreenPublicSpace())
         self.addAlgorithm(IB07SoilPermeability.IB07SoilPermeability())
         self.addAlgorithm(IB08AgriculturalGrove.IB08AgriculturalGrove())
+        self.addAlgorithm(IC01PublicPedestrianRoadDistribution.IC01PublicPedestrianRoadDistribution())
         self.addAlgorithm(IC03RoadsPerHabitant.IC03RoadsPerHabitant())
         self.addAlgorithm(IC04Proximity2AlternativeTransport.IC04Proximity2AlternativeTransport())
+        self.addAlgorithm(IC08ParkedVehicles.IC08ParkedVehicles())
+        self.addAlgorithm(IC13Sewerage.IC13Sewerage())
         self.addAlgorithm(ID03HousingRisk.ID03HousingRisk())
         self.addAlgorithm(ID10Proximity2PublicMarket.ID10Proximity2PublicMarket())
         self.addAlgorithm(ID11Theft.ID11Theft())

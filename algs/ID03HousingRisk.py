@@ -238,7 +238,7 @@ class ID03HousingRisk(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'riesgo.png'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'risk2.jpeg'))
 
     def name(self):
         """

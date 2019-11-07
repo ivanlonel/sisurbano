@@ -179,7 +179,7 @@ class ZN02AllocateValues(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
                                           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'icon_servicearea_points.svg'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'many2.png'))
 
     def name(self):
         """

@@ -494,7 +494,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaProximity = '(coalesce(net_'+fieldPopulateOrHousing+'_sum,0) /  coalesce('+fieldPopulateOrHousing+'_sum,0))*100'
+      formulaProximity = 'coalesce((coalesce(net_'+fieldPopulateOrHousing+'_sum,0) /  coalesce('+fieldPopulateOrHousing+'_sum,0))*100,0)'
       proximity2AlternativeTransport = calculateField(totalHousing['OUTPUT'], NAMES_INDEX['IA09'][0],
                                         formulaProximity,
                                         context,
@@ -514,7 +514,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'green3.jpeg'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'proximityshops.png'))
 
     def name(self):
         """

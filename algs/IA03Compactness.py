@@ -48,7 +48,7 @@ from .ZHelpers import *
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class IA03Compacity(QgsProcessingAlgorithm):
+class IA03Compactness(QgsProcessingAlgorithm):
     """
     Mide la intensidad edificatoria del territorio; donde el resultado
     representa la altura media de edificación. Relación entre el volumen
@@ -58,6 +58,7 @@ class IA03Compacity(QgsProcessingAlgorithm):
     """ 
     CADASTRE = 'CADASTRE'
     CONSTRUCTION_AREA = 'CONSTRUCTION_AREA'
+    FLOORS = 'FLOORS'
     CELL_SIZE = 'CELL_SIZE'
     OUTPUT = 'OUTPUT'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'
@@ -82,6 +83,14 @@ class IA03Compacity(QgsProcessingAlgorithm):
                 'area_const', 'CADASTRE'
             )
         )      
+
+        self.addParameter(
+            QgsProcessingParameterField(
+                self.FLOORS,
+                self.tr('Pisos de construcción'),
+                'pisos', 'CADASTRE'
+            )
+        )   
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -114,9 +123,9 @@ class IA03Compacity(QgsProcessingAlgorithm):
     def processAlgorithm(self, params, context, feedback):
         steps = 0
         totalStpes = 6
-        fieldConstructionArea = params['CONSTRUCTION_AREA']
+        fieldConstructionArea = str('"'+params['CONSTRUCTION_AREA']+'"')
         # todos tienen un piso. El area de contruccion esta tomado por pisos
-        fieldFloorsNumber = '1'
+        fieldFloorsNumber = str('"'+params['FLOORS']+'"')
         heightFloor = '3'
 
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
@@ -133,21 +142,12 @@ class IA03Compacity(QgsProcessingAlgorithm):
         # base del area de cada piso (al parecer porque el ac > at)
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaBuiltVolume = fieldConstructionArea + ' * ' + heightFloor
+        formulaBuiltVolume = 'coalesce(' + fieldConstructionArea + ' * ' + heightFloor + ' * ' + fieldFloorsNumber + ', 0)'
+        print(formulaBuiltVolume)
         cadastreBuiltVolume = calculateField(params['CADASTRE'], 'built_volume',
                                              formulaBuiltVolume,
                                              context,
                                              feedback)
-
-        # no es necesario intersectar
-        # steps = steps+1
-        # feedback.setCurrentStep(steps)
-        # segments = intersection(cadastreBuiltVolume['OUTPUT'], gridNeto['OUTPUT'],
-        #                         'built_volume;'+fieldConstructionArea,
-        #                         'id_grid;area_grid',
-        #                         context, feedback, params['OUTPUT'])
-
-
 
         steps = steps+1
         feedback.setCurrentStep(steps)
@@ -160,13 +160,13 @@ class IA03Compacity(QgsProcessingAlgorithm):
                                                feedback)  
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaCompacity = 'built_volume_sum / area_grid'
-        compacity = calculateField(gridIntersectCadaster['OUTPUT'], NAMES_INDEX['IA03'][0],
-                                   formulaCompacity,
+        formulaCompactness = 'coalesce(built_volume_sum / area_grid, 0)'
+        compactness = calculateField(gridIntersectCadaster['OUTPUT'], NAMES_INDEX['IA03'][0],
+                                   formulaCompactness,
                                    context,
                                    feedback, params['OUTPUT'])
 
-        return compacity
+        return compactness
 
         # Return the results of the algorithm. In this case our only result is
         # the feature sink which contains the processed features, but some
@@ -177,7 +177,7 @@ class IA03Compacity(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'icon_servicearea_points_multiple.svg'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'compact2.png'))
 
     def name(self):
         """
@@ -217,5 +217,5 @@ class IA03Compacity(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return IA03Compacity()
+        return IA03Compactness()
 

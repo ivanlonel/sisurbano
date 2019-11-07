@@ -63,7 +63,7 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
     EQUIPMENT = 'EQUIPMENT'
     CELL_SIZE = 'CELL_SIZE'    
     OUTPUT = 'OUTPUT'
-    DISTANCE_BUFFER = 500
+    DISTANCE_BUFFER = 300
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'    
 
 
@@ -120,7 +120,7 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.EQUIPMENT,
                 self.tr('Espacios públicos abiertos'),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.TypeVectorAnyGeometry]
             )
         )
 
@@ -242,7 +242,7 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaProximity = '(coalesce('+fieldHousing+'_sum_2,0) /  coalesce('+fieldHousing+'_sum,0))*100'
+      formulaProximity = 'coalesce((coalesce('+fieldHousing+'_sum_2,0) /  coalesce('+fieldHousing+'_sum,0))*100, 0)'
       proximity2OpenSpace = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['IA08'][0],
                                         formulaProximity,
                                         context,
@@ -260,7 +260,7 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'icon_servicearea_contour_multiple.svg'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'openspace.jpeg'))
 
     def name(self):
         """

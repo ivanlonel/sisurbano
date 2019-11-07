@@ -129,13 +129,13 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
             )
         )  
 
-        self.addParameter(
-            QgsProcessingParameterField(
-                self.FIELD_HOUSING,
-                self.tr('Viviendas'),
-                'viviendas', 'BLOCKS'
-            )
-        )  
+        # self.addParameter(
+        #     QgsProcessingParameterField(
+        #         self.FIELD_HOUSING,
+        #         self.tr('Viviendas'),
+        #         'viviendas', 'BLOCKS'
+        #     )
+        # )  
 
 
         self.addParameter(

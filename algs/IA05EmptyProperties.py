@@ -218,7 +218,7 @@ class IA05EmptyProperties(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaEmptyPropertiesSurface = '(area_emp_sum/area_seg_sum) * 100'
+        formulaEmptyPropertiesSurface = 'coalesce((area_emp_sum/area_seg_sum) * 100, 0)'
         emptyPropertiesSurface = calculateField(emptyProperties['OUTPUT'],
                                     NAMES_INDEX['IA05'][0],
                                    formulaEmptyPropertiesSurface,
@@ -238,7 +238,7 @@ class IA05EmptyProperties(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'green_grid.png'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'empty.jpeg'))
 
     def name(self):
         """

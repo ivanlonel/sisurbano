@@ -181,21 +181,23 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaNetDensityPopulationPerHa = '(pop_seg_sum/area_seg_sum)*10000'
+        formulaGrossDensityPopulationPerHa = 'coalesce((pop_seg_sum/area_grid)*10000, 0)'
+        densities = calculateField(densities['OUTPUT'],
+                                   'i_gdp',
+                                   formulaGrossDensityPopulationPerHa,
+                                   context,
+                                   feedback, params['OUTPUT'])
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaNetDensityPopulationPerHa = 'coalesce((pop_seg_sum/area_seg_sum)*10000, 0)'
         densities = calculateField(gridNetoAndSegments['OUTPUT'],
                                    NAMES_INDEX['IA01'][0],
                                    formulaNetDensityPopulationPerHa,
                                    context,
                                    feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaGrossDensityPopulationPerHa = '(pop_seg_sum/area_grid)*10000'
-        densities = calculateField(densities['OUTPUT'],
-                                   'i_gdp',
-                                   formulaGrossDensityPopulationPerHa,
-                                   context,
-                                   feedback, params['OUTPUT'])
+
 
         return densities
 
@@ -250,3 +252,10 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
     def createInstance(self):
         return IA01DensityPopulation()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br>"\
+                "<span>Mide la concentración de habitantes y evidencia indirectamente la demanda</span><br>"\
+                "<span>de movilidad, productos y servicios. Número de habitantes por la</span><br>"\
+                "<span>superficie de suelo de naturaleza urbana (no incluye vías y equipamientos).</span><br>"\
+                "<b>Formula:</b><br>"\
+                "<span>Número de habitantes / Superficie efectiva neta en hectareas</span><br>"\

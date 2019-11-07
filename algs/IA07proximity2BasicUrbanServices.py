@@ -387,7 +387,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaProximity = '(coalesce(net_'+fieldHousing+'_sum,0) /  coalesce('+fieldHousing+'_sum,0))*100'
+        formulaProximity = 'coalesce((coalesce(net_'+fieldHousing+'_sum,0) /  coalesce('+fieldHousing+'_sum,0))*100, 0)'
         proximity2BasicU = calculateField(totalHousing['OUTPUT'], NAMES_INDEX['IA07'][0],
                                           formulaProximity,
                                           context,
