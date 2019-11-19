@@ -45,6 +45,7 @@ from .algs import (
     IA08proximity2OpenPublicSpace,
     IA09CoverageDailyBusinessActivities,
     IA10RelationshipActivityResidence,
+    IA11UrbanComplexity,
     IB02LuminaryPerRoad,
     IB05GreenPerHabitant,
     IB06Proximity2GreenPublicSpace,
@@ -95,6 +96,7 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(IA08proximity2OpenPublicSpace.IA08proximity2OpenPublicSpace())
         self.addAlgorithm(IA09CoverageDailyBusinessActivities.IA09CoverageDailyBusinessActivities())
         self.addAlgorithm(IA10RelationshipActivityResidence.IA10RelationshipActivityResidence())
+        self.addAlgorithm(IA11UrbanComplexity.IA11UrbanComplexity())
         self.addAlgorithm(IB02LuminaryPerRoad.IB02LuminaryPerRoad())
         self.addAlgorithm(IB05GreenPerHabitant.IB05GreenPerHabitant())
         self.addAlgorithm(IB06Proximity2GreenPublicSpace.IB06Proximity2GreenPublicSpace())

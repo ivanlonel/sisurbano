@@ -18,6 +18,10 @@ from qgis.core import QgsProcessing
 import processing
 from .Zettings import *
 
+
+# def convertTempOuputToObject(output):
+#     return processing.getObject(output['OUTPUT'])
+
 def buildStudyArea(cellSize, mainInput, studyArea, context, feedback):
     # feedback.pushConsoleInfo("La salida es: *" + str(studyArea) +"*")
     isStudyArea = False
@@ -39,6 +43,7 @@ def buildStudyArea(cellSize, mainInput, studyArea, context, feedback):
     grid = calculateArea(grid, 'area_grid', context, feedback)
     grid = grid['OUTPUT']
     grid = calculateField(grid, 'id_grid', '$id', context, feedback, type=1) 
+    # grid = calculateField(grid, 'id_grid', '$id', context, feedback, type=2) 
     return grid, isStudyArea
 
 
@@ -180,6 +185,33 @@ def joinByAttr(input, field,
                             alg_params, context=context,
                             feedback=feedback, is_child_algorithm=True)
     return result
+
+
+def joinByAttr(input, field,
+               input2, field2, fieldsToCopy,
+               discard,
+               prefix,
+               method,
+               context, feedback,
+               output=QgsProcessing.TEMPORARY_OUTPUT):
+    # Unir atributos por valor de campo
+    if feedback.isCanceled():
+        return {}
+    alg_params = {
+        'DISCARD_NONMATCHING': discard,
+        'FIELD': field,
+        'FIELDS_TO_COPY': fieldsToCopy,
+        'FIELD_2': field2,
+        'INPUT': input,
+        'INPUT_2': input2,
+        'METHOD': method,
+        'PREFIX': prefix,
+        'OUTPUT': output
+    }
+    result = processing.run('native:joinattributestable',
+                            alg_params, context=context,
+                            feedback=feedback, is_child_algorithm=True)
+    return result    
 
 
 def filter(input, field, operator, value, context, feedback,
