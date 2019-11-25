@@ -19,6 +19,31 @@ import processing
 from .Zettings import *
 
 
+
+
+# def stByZona(raster, vector, band = 1, stats = [0,1,2],
+def stByZona(raster, vector, band, stats, prefix,
+             context, feedback,
+             output=QgsProcessing.TEMPORARY_OUTPUT):
+    if feedback.isCanceled():
+        return {}
+
+    alg_params = {
+        'COLUMN_PREFIX' : prefix,   
+        'INPUT_RASTER' : raster,  
+        'INPUT_VECTOR' : vector,
+        'RASTER_BAND' : band,
+        'STATS' : stats,
+        'OUTPUT': output
+    }
+    result = processing.run('qgis:zonalstatistics', alg_params,
+                            context=context,
+                            feedback=feedback, is_child_algorithm=True)
+
+    return result    
+
+
+
 # def convertTempOuputToObject(output):
 #     return processing.getObject(output['OUTPUT'])
 
@@ -187,7 +212,7 @@ def joinByAttr(input, field,
     return result
 
 
-def joinByAttr(input, field,
+def joinByAttr2(input, field,
                input2, field2, fieldsToCopy,
                discard,
                prefix,

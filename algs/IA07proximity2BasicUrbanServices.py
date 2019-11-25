@@ -62,8 +62,9 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
     BLOCKS = 'BLOCKS'
     EDUCATION = 'EDUCATION'
     HEALTH = 'HEALTH'
-    CULTURE = 'CULTURE'
+    APPROVAL = 'APPROVAL'
     SPORTS = 'SPORTS'    
+    ADMIN_PUBLIC = 'ADMIN_PUBLIC'    
     FIELD_POPULATION = 'FIELD_POPULATION'
     FIELD_HOUSING = 'FIELD_HOUSING'
     CELL_SIZE = 'CELL_SIZE'    
@@ -136,8 +137,8 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
-                self.CULTURE,
-                self.tr('Cultura'),
+                self.APPROVAL,
+                self.tr('Aprovisionamiento'),
                 [QgsProcessing.TypeVectorPoint]
             )
         )    
@@ -145,7 +146,16 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.SPORTS,
-                self.tr('Bienestar social'),
+                self.tr('Deportivos recreativos'),
+                [QgsProcessing.TypeVectorPoint]
+            )
+        )           
+
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.ADMIN_PUBLIC,
+                self.tr('Gestión Pública'),
                 [QgsProcessing.TypeVectorPoint]
             )
         )                           
@@ -161,13 +171,14 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 28
+        totalStpes = 31
         fieldPopulation = params['FIELD_POPULATION']
         fieldHousing = params['FIELD_HOUSING']
         DISTANCE_EDUCATION = 500
         DISTANCE_HEALTH = 1200
-        DISTANCE_CULTURE = 400
+        DISTANCE_APPROVAL = 500
         DISTANCE_SPORTS = 1000
+        DISTANCE_ADMIN_PUBLIC = 1000
 
 
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
@@ -201,13 +212,19 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        blockBuffer4Culture = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_CULTURE, context,
+        blockBuffer4Approval = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_APPROVAL, context,
                                            feedback)
 
         steps = steps+1
         feedback.setCurrentStep(steps)
         BlockBuffer4Sports = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_SPORTS,
                                           context, feedback)
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        BlockBuffer4Admin = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_ADMIN_PUBLIC,
+                                          context, feedback)        
 
 
         steps = steps+1
@@ -224,7 +241,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        layerCulture = calculateField(params['CULTURE'], 'idx', '$id', context,
+        layerApproval = calculateField(params['APPROVAL'], 'idx', '$id', context,
                                       feedback, type=1)                                             
 
 
@@ -233,11 +250,17 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         layerSports = calculateField(params['SPORTS'], 'idx', '$id', context,
                                      feedback, type=1) 
 
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        layerAdmin = calculateField(params['ADMIN_PUBLIC'], 'idx', '$id', context,
+                                     feedback, type=1)         
+
 
         layerEducation = layerEducation['OUTPUT']
         layerHealth = layerHealth['OUTPUT']
-        layerCulture = layerCulture['OUTPUT']
+        layerApproval = layerApproval['OUTPUT']
         layerSports = layerSports['OUTPUT']
+        layerAdmin = layerAdmin['OUTPUT']
 
 
         steps = steps+1
@@ -258,8 +281,8 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
                                        feedback)
         steps = steps+1
         feedback.setCurrentStep(steps)
-        counterCulture = joinByLocation(blockBuffer4Culture['OUTPUT'],
-                                        layerCulture,
+        counterApproval = joinByLocation(blockBuffer4Approval['OUTPUT'],
+                                        layerApproval,
                                         'idx', [CONTIENE], [COUNT],
                                         UNDISCARD_NONMATCHING,
                                         context,
@@ -272,6 +295,15 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
                                       UNDISCARD_NONMATCHING,
                                       context,
                                       feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        counterAdmin = joinByLocation(BlockBuffer4Admin['OUTPUT'],
+                                      layerAdmin,
+                                      'idx', [CONTIENE], [COUNT],
+                                      UNDISCARD_NONMATCHING,
+                                      context,
+                                      feedback)        
 
         steps = steps+1
         feedback.setCurrentStep(steps)
@@ -296,10 +328,10 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         steps = steps+1
         feedback.setCurrentStep(steps)
         blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
-                                  counterCulture['OUTPUT'], 'id_block',
+                                  counterApproval['OUTPUT'], 'id_block',
                                   'idx_count',
                                   UNDISCARD_NONMATCHING,
-                                  'cul_',
+                                  'app_',
                                   context,
                                   feedback)
 
@@ -313,9 +345,20 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
                                   context,
                                   feedback)
 
+
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaFacilities = 'edu_idx_count * hea_idx_count * cul_idx_count * spo_idx_count'
+        blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
+                                  counterAdmin['OUTPUT'], 'id_block',
+                                  'idx_count',
+                                  UNDISCARD_NONMATCHING,
+                                  'adm_',
+                                  context,
+                                  feedback)        
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaFacilities = 'edu_idx_count * hea_idx_count * app_idx_count * spo_idx_count * adm_idx_count'
         blocksFacilities = calculateField(blocksJoined['OUTPUT'], 'facilities',
                                           formulaFacilities,
                                           context,
@@ -337,7 +380,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         steps = steps+1
         feedback.setCurrentStep(steps)
         segments = intersection(blocksFacilities['OUTPUT'], gridNeto['OUTPUT'],
-                                'edu_idx_count;hea_idx_count;cul_idx_count;spo_idx_count;facilities;' + fieldHousing,
+                                'edu_idx_count;hea_idx_count;app_idx_count;spo_idx_count;adm_idx_count;facilities;' + fieldHousing,
                                 'id_grid',
                                 context, feedback)
 
@@ -353,7 +396,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         feedback.setCurrentStep(steps)
         gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                              facilitiesForSegmentsFixed['OUTPUT'],
-                                             'edu_idx_count;hea_idx_count;cul_idx_count;spo_idx_count;facilities;' + fieldHousing,
+                                             'edu_idx_count;hea_idx_count;app_idx_count;spo_idx_count;adm_idx_count;facilities;' + fieldHousing,
                                              [CONTIENE],
                                              [MAX, SUM], UNDISCARD_NONMATCHING,                 
                                              context,

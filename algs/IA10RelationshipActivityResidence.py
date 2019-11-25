@@ -55,13 +55,12 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
     además con la capacidad de autocontención de un territorio en términos
     de movilidad. Relación entre la superficie construida designada a usos
     terciarios (comercio, servicios u oficinas) y la cantidad de vivienda.
-    Formula: Área construida de usos terciarios en m2 / Número total de viviendas
+    Formula: Número total de usos terciarios / Número total de viviendas
     """
     TERTIARYUSES = 'TERTIARYUSES'
     BLOCKS = 'BLOCKS'
     FIELD_POPULATION = 'FIELD_POPULATION'
     FIELD_HOUSING = 'FIELD_HOUSING'
-    CONSTRUCTION_AREA = 'CONSTRUCTION_AREA'
     CELL_SIZE = 'CELL_SIZE'    
     OUTPUT = 'OUTPUT'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'    
@@ -117,25 +116,9 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.TERTIARYUSES,
                 self.tr('Uos terciarios (comercio, servicios u oficinas)'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorPoint]
             )
         )
-
-        self.addParameter(
-            QgsProcessingParameterField(
-                self.CONSTRUCTION_AREA,
-                self.tr('Area de construcción de usos terciarios'),
-                'area_const', 'TERTIARYUSES'
-            )
-        )  
-
-        # self.addParameter(
-        #     QgsProcessingParameterField(
-        #         self.FIELD_HOUSING,
-        #         self.tr('Viviendas'),
-        #         'viviendas', 'BLOCKS'
-        #     )
-        # )  
 
 
         self.addParameter(
@@ -149,9 +132,8 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
 
     def processAlgorithm(self, params, context, feedback):
       steps = 0
-      totalStpes = 13
+      totalStpes = 9
       fieldHousing = params['FIELD_HOUSING']
-      fieldConstructionArea = params['CONSTRUCTION_AREA']
 
       feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
@@ -191,35 +173,27 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
                                            context,
                                            feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      tertiaryPerBlocks = intersection(params['TERTIARYUSES'], gridNeto['OUTPUT'],
-                                    [],
-                                    [],
-                                    context, feedback)   
-
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      tertiaryAreaFixed = makeSureInside(tertiaryPerBlocks['OUTPUT'],
-                                      context,
-                                      feedback)    
+      layerTertiary = calculateField(params['TERTIARYUSES'], 'idx', '$id', context,
+                                   feedback, type=1) 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      tertiaryAreaAndPopulation = joinByLocation(gridNetoAndSegments['OUTPUT'],
-                                              tertiaryAreaFixed['OUTPUT'],
-                                              [fieldConstructionArea],
-                                              [CONTIENE], [SUM],
-                                              UNDISCARD_NONMATCHING,                              
-                                              context,
-                                              feedback)
 
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaRelationship = 'coalesce('+fieldConstructionArea+'_sum/' + fieldHousing + '_sum, 0)'
-      relationship = calculateField(tertiaryAreaAndPopulation['OUTPUT'],
+      gridAndTertiary = joinByLocation(gridNetoAndSegments['OUTPUT'],
+                                        layerTertiary['OUTPUT'],
+                                        'idx', [CONTIENE], [COUNT],
+                                        UNDISCARD_NONMATCHING,
+                                        context,
+                                        feedback)      
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaRelationship = 'coalesce(idx_count/' + fieldHousing + '_sum, 0)'
+      relationship = calculateField(gridAndTertiary['OUTPUT'],
                                      NAMES_INDEX['IA10'][0],
                                      formulaRelationship,
                                      context,

@@ -179,14 +179,6 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
                                               context,
                                               feedback)   
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaGrossDensityPopulationPerHa = 'coalesce((pop_seg_sum/area_grid)*10000, 0)'
-        densities = calculateField(densities['OUTPUT'],
-                                   'i_gdp',
-                                   formulaGrossDensityPopulationPerHa,
-                                   context,
-                                   feedback, params['OUTPUT'])
 
         steps = steps+1
         feedback.setCurrentStep(steps)
@@ -196,6 +188,16 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
                                    formulaNetDensityPopulationPerHa,
                                    context,
                                    feedback)
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaGrossDensityPopulationPerHa = 'coalesce((pop_seg_sum/area_grid)*10000, 0)'
+        densities = calculateField(densities['OUTPUT'],
+                                   'i_gdp',
+                                   formulaGrossDensityPopulationPerHa,
+                                   context,
+                                   feedback, params['OUTPUT'])
 
 
 
@@ -210,7 +212,7 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'icon_servicearea_polygon.svg'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'population.png'))
 
     def name(self):
         """

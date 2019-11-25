@@ -46,7 +46,9 @@ from .algs import (
     IA09CoverageDailyBusinessActivities,
     IA10RelationshipActivityResidence,
     IA11UrbanComplexity,
+    IB01AirQuality,
     IB02LuminaryPerRoad,
+    IB03AcousticComfort,
     IB05GreenPerHabitant,
     IB06Proximity2GreenPublicSpace,
     IB07SoilPermeability,
@@ -97,7 +99,9 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(IA09CoverageDailyBusinessActivities.IA09CoverageDailyBusinessActivities())
         self.addAlgorithm(IA10RelationshipActivityResidence.IA10RelationshipActivityResidence())
         self.addAlgorithm(IA11UrbanComplexity.IA11UrbanComplexity())
+        self.addAlgorithm(IB01AirQuality.IB01AirQuality())
         self.addAlgorithm(IB02LuminaryPerRoad.IB02LuminaryPerRoad())
+        self.addAlgorithm(IB03AcousticComfort.IB03AcousticComfort())
         self.addAlgorithm(IB05GreenPerHabitant.IB05GreenPerHabitant())
         self.addAlgorithm(IB06Proximity2GreenPublicSpace.IB06Proximity2GreenPublicSpace())
         self.addAlgorithm(IB07SoilPermeability.IB07SoilPermeability())

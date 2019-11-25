@@ -58,6 +58,7 @@ class ZN02AllocateValues(QgsProcessingAlgorithm):
     FIELD_POPULATION = 'FIELD_POPULATION'
     FIELD_HOUSING = 'FIELD_HOUSING'
     OUTPUT = 'OUTPUT'
+    STUDY_AREA_GRID = 'STUDY_AREA_GRID'
 
     def initAlgorithm(self, config):
         self.addParameter(
@@ -91,6 +92,16 @@ class ZN02AllocateValues(QgsProcessingAlgorithm):
                 [QgsProcessing.TypeVectorPoint]
             )
         )
+
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.STUDY_AREA_GRID,
+                self.tr(TEXT_GRID_INPUT),
+                [QgsProcessing.TypeVectorPolygon],
+                '', OPTIONAL_GRID_INPUT
+            )
+        )        
 
         self.addParameter(
             QgsProcessingParameterFeatureSink(
@@ -166,9 +177,18 @@ class ZN02AllocateValues(QgsProcessingAlgorithm):
                                        'housing',
                                        formulaHousingPerPoint,
                                        context,
-                                       feedback, params['OUTPUT'])    
+                                       feedback)    
 
-        return housingPerPoint    
+
+        gridPopulation= joinByLocation(params['STUDY_AREA_GRID'],
+                                             housingPerPoint['OUTPUT'],
+                                             'population;housing',                                   
+                                              [CONTIENE], [SUM],
+                                              UNDISCARD_NONMATCHING,
+                                              context,
+                                              feedback,  params['OUTPUT'])   
+
+        return gridPopulation    
 
         # Return the results of the algorithm. In this case our only result is
         # the feature sink which contains the processed features, but some

@@ -99,8 +99,13 @@ class ZN03WrapValues(QgsProcessingAlgorithm):
         # FULL_PATH = buildFullPathName(currentPath, 'n_'+attrName+'.shp')
 
         layer = iface.activeLayer()
-        nameLayer = layer.name()
-        isNormalIndex =  len(nameLayer.split("n_i")) == 2
+
+        try:
+          nameLayer = layer.name()
+          isNormalIndex =  len(nameLayer.split("n_i")) == 2          
+        except Exception as e:
+          isNormalIndex =  False
+
 
         if isNormalIndex: 
           self.prefix = 'n_'

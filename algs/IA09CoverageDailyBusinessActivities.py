@@ -120,16 +120,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.SHOP,
-                self.tr('Tiendas de abarrotes'),
-                [QgsProcessing.TypeVectorPoint],
-                '', True
-            )
-        )
-
-        self.addParameter(
-            QgsProcessingParameterFeatureSource(
-                self.MINIMARKET,
-                self.tr('Minimercados'),
+                self.tr('Tiendas de abarrotes, despensas, minimercado'),
                 [QgsProcessing.TypeVectorPoint],
                 '', True
             )
@@ -138,16 +129,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.PHARMACY,
-                self.tr('Farmacias'),
-                [QgsProcessing.TypeVectorPoint],
-                '', True
-            )
-        )
-
-        self.addParameter(
-            QgsProcessingParameterFeatureSource(
-                self.BAKERY,
-                self.tr('Panaderías'),
+                self.tr('Farmacias y droguerías'),
                 [QgsProcessing.TypeVectorPoint],
                 '', True
             )
@@ -156,11 +138,30 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.STATIONERY,
-                self.tr('Papelerías-bazar'),
+                self.tr('Papelerías y bazares'),
                 [QgsProcessing.TypeVectorPoint],
                 '', True
             )
-        )                                
+        )     
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.BAKERY,
+                self.tr('Panaderías, heladería y pastelería'),
+                [QgsProcessing.TypeVectorPoint],
+                '', True
+            )
+        )
+        # MINIMARKET ES REEMPLAZADO POR DEPOSITOS DE DE DISTRIBUACION DE CILINDROS DE GAS
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.MINIMARKET,
+                self.tr('Depósitos de distribución de cilindros de gas'),
+                [QgsProcessing.TypeVectorPoint],
+                '', True
+            )
+        )
+
 
         self.addParameter(
             QgsProcessingParameterFeatureSink(
@@ -176,6 +177,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
       totalStpes = 37
       fieldPopulateOrHousing = params['FIELD_POPULATE_HOUSING']
       DISTANCE_SHOP = 300
+      #MINIMARKET SON DEPOSITOS DE CILINDRO DE GAS
       DISTANCE_MINIMARKET =300
       DISTANCE_PHARMACY = 300
       DISTANCE_BAKERY = 300

@@ -271,7 +271,7 @@ class IA11UrbanComplexity(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      gridShannon = joinByAttr(gridDummy['OUTPUT'], 'griid',
+      gridShannon = joinByAttr2(gridDummy['OUTPUT'], 'griid',
                                 outputCsv, 'id_grid',
                                 'shannon',
                                 UNDISCARD_NONMATCHING,
@@ -322,7 +322,7 @@ class IA11UrbanComplexity(QgsProcessingAlgorithm):
 
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'activity.png'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'complex.png'))
 
     def name(self):
         """
