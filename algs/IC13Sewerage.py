@@ -207,7 +207,7 @@ class IC13Sewerage(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaSewer = '(coalesce('+fieldHousing+'_sum_2,0) /  coalesce('+fieldHousing+'_sum,0))*100'
+      formulaSewer = 'coalesce((coalesce('+fieldHousing+'_sum_2,0) /  coalesce('+fieldHousing+'_sum,0))*100, "")'
       sewer = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['IC13'][0],
                                         formulaSewer,
                                         context,

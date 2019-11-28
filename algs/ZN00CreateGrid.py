@@ -137,7 +137,7 @@ class ZN00CreateGrid(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Z00 Crear Celdas'
+        return 'Z00 Crear malla'
 
     def displayName(self):
         """

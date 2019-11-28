@@ -213,7 +213,7 @@ class ID11Theft(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaThefPerHab = 'coalesce(idx_count/' + fieldPopulation + '_sum, 0)'
+        formulaThefPerHab = 'coalesce(idx_count/' + fieldPopulation + '_sum, "")'
         thefPerHab = calculateField(gridNetoAndSegments['OUTPUT'],
                                    NAMES_INDEX['ID11'][0],
                                    formulaThefPerHab,

@@ -187,7 +187,7 @@ class IC08ParkedVehicles(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaParkingRoad = 'coalesce((idx_count*'+ areaPerParking+')/(area_road_sum), 0)'
+      formulaParkingRoad = 'coalesce((idx_count*'+ areaPerParking+')/(area_road_sum), "")'
       parkingPerRoad = calculateField(gridNetoAndSegmentsSumLinesLum['OUTPUT'],
                                      NAMES_INDEX['IC08'][0],
                                      formulaParkingRoad,

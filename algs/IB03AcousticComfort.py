@@ -251,7 +251,7 @@ class IB03AcousticComfort(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaNoise = 'coalesce((coalesce('+fieldHousing+'_sum_2,0) /  coalesce('+fieldHousing+'_sum,0))*100, 0)'
+      formulaNoise = 'coalesce((coalesce('+fieldHousing+'_sum_2,0) /  coalesce('+fieldHousing+'_sum,0))*100, "")'
       noise = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['IB03'][0],
                                         formulaNoise,
                                         context,

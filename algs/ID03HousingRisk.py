@@ -220,7 +220,7 @@ class ID03HousingRisk(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaProximity = '(coalesce(rk_'+fieldHousing+'_sum,0) /  coalesce('+fieldHousing+'_sum,0))*100'
+      formulaProximity = 'coalesce((coalesce(rk_'+fieldHousing+'_sum,0) /  coalesce('+fieldHousing+'_sum,0))*100, "")'
       riskHousing = calculateField(gridNetoAndSegments['OUTPUT'], NAMES_INDEX['ID03'][0],
                                         formulaProximity,
                                         context,

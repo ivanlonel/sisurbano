@@ -192,7 +192,7 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaRelationship = 'coalesce(idx_count/' + fieldHousing + '_sum, 0)'
+      formulaRelationship = 'coalesce(idx_count/' + fieldHousing + '_sum, "")'
       relationship = calculateField(gridAndTertiary['OUTPUT'],
                                      NAMES_INDEX['IA10'][0],
                                      formulaRelationship,

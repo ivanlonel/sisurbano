@@ -40,6 +40,7 @@ from .algs import (
     IA01DensityPopulation,
     IA02DensityHousing,
     IA03Compactness,
+    IA04EfficiencyUseTerritory,
     IA05EmptyProperties,
     IA07proximity2BasicUrbanServices,
     IA08proximity2OpenPublicSpace,
@@ -64,7 +65,8 @@ from .algs import (
     ZN00CreateGrid,
     ZN01FuzzyVectorial,
     ZN02AllocateValues,
-    ZN03WrapValues
+    ZN03WrapValues,
+    ZN04AllocateValuesToPoints
     )
 
 
@@ -93,6 +95,7 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(IA01DensityPopulation.IA01DensityPopulation())
         self.addAlgorithm(IA02DensityHousing.IA02DensityHousing())
         self.addAlgorithm(IA03Compactness.IA03Compactness())
+        self.addAlgorithm(IA04EfficiencyUseTerritory.IA04EfficiencyUseTerritory())
         self.addAlgorithm(IA05EmptyProperties.IA05EmptyProperties())
         self.addAlgorithm(IA07proximity2BasicUrbanServices.IA07proximity2BasicUrbanServices())
         self.addAlgorithm(IA08proximity2OpenPublicSpace.IA08proximity2OpenPublicSpace())
@@ -118,6 +121,7 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(ZN01FuzzyVectorial.ZN01FuzzyVectorial())
         self.addAlgorithm(ZN02AllocateValues.ZN02AllocateValues())
         self.addAlgorithm(ZN03WrapValues.ZN03WrapValues())
+        self.addAlgorithm(ZN04AllocateValuesToPoints.ZN04AllocateValuesToPoints())
 
 
         # add additional algorithms here

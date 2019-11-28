@@ -194,7 +194,7 @@ class IC01PublicPedestrianRoadDistribution(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaSurfaceWalk = 'coalesce((area_walk_sum/area_road_sum)*100, 0)'
+      formulaSurfaceWalk = 'coalesce((area_walk_sum/area_road_sum)*100, "")'
       surfaceWalk = calculateField(walkAreaAndRoads['OUTPUT'],
                                      NAMES_INDEX['IC01'][0],
                                      formulaSurfaceWalk,

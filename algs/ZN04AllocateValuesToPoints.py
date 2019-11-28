@@ -48,60 +48,43 @@ from .Zettings import *
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class ZN02AllocateValues(QgsProcessingAlgorithm):
+class ZN04AllocateValuesToPoints(QgsProcessingAlgorithm):
     """
     Distribuye la población de las manzanas a los puntos o medidores
     más cercanos al polígono de la manzana
     """  
-    BLOCKS = 'BLOCKS'
+    INPUT = 'INPUT'
     POINTS = 'POINTS'
-    FIELD_POPULATION = 'FIELD_POPULATION'
-    FIELD_HOUSING = 'FIELD_HOUSING'
+    FIELD = 'FIELD'
     OUTPUT = 'OUTPUT'
-    STUDY_AREA_GRID = 'STUDY_AREA_GRID'
 
     def initAlgorithm(self, config):
         self.addParameter(
             QgsProcessingParameterFeatureSource(
-                self.BLOCKS,
-                self.tr('Manzanas'),
+                self.INPUT,
+                self.tr('Polígono'),
                 [QgsProcessing.TypeVectorPolygon]
             )
         )
 
         self.addParameter(
             QgsProcessingParameterField(
-                self.FIELD_POPULATION,
-                self.tr('Población'),
-                'poblacion', 'BLOCKS'
+                self.FIELD,
+                self.tr('Campo con valor'),
+                'poblacion', 'INPUT'
             )
         )        
-
-        self.addParameter(
-            QgsProcessingParameterField(
-                self.FIELD_HOUSING,
-                self.tr('Viviendas'),
-                'viviendas', 'BLOCKS'
-            )
-        )           
+       
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.POINTS,
-                self.tr('Medidores'),
+                self.tr('Puntos'),
                 [QgsProcessing.TypeVectorPoint]
             )
         )
 
-
-        self.addParameter(
-            QgsProcessingParameterFeatureSource(
-                self.STUDY_AREA_GRID,
-                self.tr(TEXT_GRID_INPUT),
-                [QgsProcessing.TypeVectorPolygon],
-                '', OPTIONAL_GRID_INPUT
-            )
-        )        
+     
 
         self.addParameter(
             QgsProcessingParameterFeatureSink(
@@ -113,8 +96,7 @@ class ZN02AllocateValues(QgsProcessingAlgorithm):
     def processAlgorithm(self, params, context, feedback):
         steps = 0
         totalStpes = 6
-        fieldPopulation = params['FIELD_POPULATION']
-        fieldHousing = params['FIELD_HOUSING']
+        field = params['FIELD']
         DISCARD = True
         UNDISCARD = False
 
@@ -122,9 +104,8 @@ class ZN02AllocateValues(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        blocksWithId = calculateField(params['BLOCKS'], 'id_block', '$id', context,
+        blocksWithId = calculateField(params['INPUT'], 'id_block', '$id', context,
                                       feedback, type=1)   
-
 
         steps = steps+1
         feedback.setCurrentStep(steps)
@@ -162,33 +143,16 @@ class ZN02AllocateValues(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaPopulationPerPoint = 'blk_' + fieldPopulation + ' / st_count' 
-        populationPerPoint = calculateField(pointsJoinedStast['OUTPUT'],
-                                       'population',
-                                       formulaPopulationPerPoint,
+        formulaValuePerPoint = 'blk_' + field + ' / st_count' 
+        valuePerPoint = calculateField(pointsJoinedStast['OUTPUT'],
+                                       'result',
+                                       formulaValuePerPoint,
                                        context,
-                                       feedback)    
+                                       feedback, params['OUTPUT'])    
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaHousingPerPoint = 'blk_' + fieldHousing + ' / st_count' 
-        housingPerPoint = calculateField(populationPerPoint['OUTPUT'],
-                                       'housing',
-                                       formulaHousingPerPoint,
-                                       context,
-                                       feedback)    
 
-
-        gridPopulation= joinByLocation(params['STUDY_AREA_GRID'],
-                                             housingPerPoint['OUTPUT'],
-                                             'population;housing',                                   
-                                              [CONTIENE], [SUM],
-                                              UNDISCARD_NONMATCHING,
-                                              context,
-                                              feedback,  params['OUTPUT'])   
-
-        return gridPopulation    
+        return valuePerPoint    
 
         # Return the results of the algorithm. In this case our only result is
         # the feature sink which contains the processed features, but some
@@ -209,7 +173,7 @@ class ZN02AllocateValues(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Z02 Distribuir valores polígono a malla'
+        return 'Z02 Distribuir valores polígono a puntos'
 
     def displayName(self):
         """
@@ -239,5 +203,5 @@ class ZN02AllocateValues(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return ZN02AllocateValues()
+        return ZN04AllocateValuesToPoints()
 

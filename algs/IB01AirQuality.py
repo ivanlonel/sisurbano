@@ -289,7 +289,7 @@ class IB01AirQuality(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaPull = 'coalesce((coalesce('+fieldHousing+'_sum_2,0) /  coalesce('+fieldHousing+'_sum,0))*100, 0)'
+      formulaPull = 'coalesce((coalesce('+fieldHousing+'_sum_2,0) /  coalesce('+fieldHousing+'_sum,0))*100, "")'
       pull = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['IB01'][0],
                                         formulaPull,
                                         context,

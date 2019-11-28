@@ -189,7 +189,7 @@ class IC03RoadsPerHabitant(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaLenPerHab = 'coalesce(LENGTH/' + fieldPopulation + '_sum, 0)'
+      formulaLenPerHab = 'coalesce(LENGTH/' + fieldPopulation + '_sum, "")'
       lenPerHab = calculateField(gridNetoAndSegmentsSumLines['OUTPUT'],
                                      NAMES_INDEX['IC03'][0],
                                      formulaLenPerHab,

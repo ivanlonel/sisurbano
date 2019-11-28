@@ -489,7 +489,7 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaProximity = '(coalesce(net_'+fieldPopulateOrHousing+'_sum,0) /  coalesce('+fieldPopulateOrHousing+'_sum,0))*100'
+      formulaProximity = 'coalesce((coalesce(net_'+fieldPopulateOrHousing+'_sum,0) /  coalesce('+fieldPopulateOrHousing+'_sum,0))*100,"")'
       proximity2AlternativeTransport = calculateField(totalHousing['OUTPUT'], NAMES_INDEX['IC04'][0],
                                         formulaProximity,
                                         context,

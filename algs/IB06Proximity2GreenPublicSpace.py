@@ -244,7 +244,7 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaProximity = '(coalesce('+fieldHousing+'_sum_2,0) /  coalesce('+fieldHousing+'_sum,0))*100'
+      formulaProximity = 'coalesce((coalesce('+fieldHousing+'_sum_2,0) /  coalesce('+fieldHousing+'_sum,""))*100,"")'
       proximity2OpenSpace = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['IB06'][0],
                                         formulaProximity,
                                         context,
