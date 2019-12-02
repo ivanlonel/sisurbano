@@ -122,7 +122,7 @@ class IA03Compactness(QgsProcessingAlgorithm):
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 6
+        totalStpes = 8
         fieldConstructionArea = str('"'+params['CONSTRUCTION_AREA']+'"')
         # todos tienen un piso. El area de contruccion esta tomado por pisos
         fieldFloorsNumber = str('"'+params['FLOORS']+'"')
@@ -149,18 +149,49 @@ class IA03Compactness(QgsProcessingAlgorithm):
                                              context,
                                              feedback)
 
+
+        # obtener la proporción del constucción en base al área del segmento
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        blocks = calculateArea(cadastreBuiltVolume['OUTPUT'], 'area_bloc', context,
+                               feedback)
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                                'area_bloc;built_volume',
+                                'id_grid;area_grid',
+                                context, feedback)
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaPopulationSegments = '(area_seg/area_bloc) * built_volume'
+        compactnessForSegments = calculateField(segmentsArea['OUTPUT'], 'compact_seg',
+                                          formulaPopulationSegments,
+                                          context,
+                                          feedback)
+
+
         steps = steps+1
         feedback.setCurrentStep(steps)
         gridIntersectCadaster = joinByLocation(gridNeto['OUTPUT'],
-                                               cadastreBuiltVolume['OUTPUT'],
-                                               'built_volume',
+                                               compactnessForSegments['OUTPUT'],
+                                               'compact_seg',
                                                [INTERSECTA], [SUM],
                                                UNDISCARD_NONMATCHING,
                                                context,
                                                feedback)  
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaCompactness = 'coalesce(built_volume_sum / area_grid, 0)'
+        formulaCompactness = 'coalesce(compact_seg_sum / area_grid, 0)'
         compactness = calculateField(gridIntersectCadaster['OUTPUT'], NAMES_INDEX['IA03'][0],
                                    formulaCompactness,
                                    context,

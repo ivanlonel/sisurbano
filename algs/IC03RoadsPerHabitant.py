@@ -155,11 +155,27 @@ class IC03RoadsPerHabitant(QgsProcessingAlgorithm):
                               'id_grid;area_grid',
                               context, feedback)
 
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
+      populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
+                                          formulaPopulationSegments,
+                                          context,
+                                          feedback)
+
+
       # Haciendo el buffer inverso aseguramos que los segmentos
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      segmentsFixed = makeSureInside(segments['OUTPUT'],
+      segmentsFixed = makeSureInside(populationForSegments['OUTPUT'],
                                               context,
                                               feedback)
 
@@ -167,7 +183,7 @@ class IC03RoadsPerHabitant(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                            segmentsFixed['OUTPUT'],
-                                           fieldPopulation,
+                                           'pop_seg',
                                            [CONTIENE], [SUM],    
                                            UNDISCARD_NONMATCHING,                               
                                            context,
@@ -189,7 +205,7 @@ class IC03RoadsPerHabitant(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaLenPerHab = 'coalesce(LENGTH/' + fieldPopulation + '_sum, "")'
+      formulaLenPerHab = 'coalesce(LENGTH/pop_seg_sum, "")'
       lenPerHab = calculateField(gridNetoAndSegmentsSumLines['OUTPUT'],
                                      NAMES_INDEX['IC03'][0],
                                      formulaLenPerHab,

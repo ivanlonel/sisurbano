@@ -60,7 +60,6 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
     EQUIPMENT = 'EQUIPMENT'
     BLOCKS = 'BLOCKS'
     FIELD_POPULATION = 'FIELD_POPULATION'
-    FIELD_HOUSING = 'FIELD_HOUSING'
     CELL_SIZE = 'CELL_SIZE'    
     OUTPUT = 'OUTPUT'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'    
@@ -88,15 +87,7 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
                 'poblacion', 'BLOCKS'
             )
         )      
-
-        self.addParameter(
-            QgsProcessingParameterField(
-                self.FIELD_HOUSING,
-                self.tr('Viviendas'),
-                'viviendas', 'BLOCKS'
-            )
-        )         
-
+      
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.STUDY_AREA_GRID,
@@ -137,7 +128,6 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
       steps = 0
       totalStpes = 14
       fieldPopulation = params['FIELD_POPULATION']
-      fieldHousing = params['FIELD_HOUSING']
       DISTANCE_WALKABILITY = 300
 
       feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
@@ -202,26 +192,47 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
                                          context, feedback)
       gridNeto = grid  
 
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)        
+      blocks = calculateArea(blocksJoined['OUTPUT'], 'area_bloc', context,
+                             feedback)
+
       steps = steps+1
       feedback.setCurrentStep(steps)
-      segments = intersection(blocksJoined['OUTPUT'], gridNeto['OUTPUT'],
-                              'gsp_idx_count;' + fieldHousing,
+      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                              'gsp_idx_count;area_bloc;' + fieldPopulation,
                               'id_grid',
                               context, feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
+      populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
+                                          formulaPopulationSegments,
+                                          context,
+                                          feedback)
+
 
       # Haciendo el buffer inverso aseguramos que los segmentos
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      facilitiesForSegmentsFixed = makeSureInside(segments['OUTPUT'],
+      facilitiesForSegmentsFixed = makeSureInside(populationForSegments['OUTPUT'],
                                                   context,
                                                   feedback)
-      # Con esto se saca el total de viviendas
+
       steps = steps+1
       feedback.setCurrentStep(steps)
       gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                            facilitiesForSegmentsFixed['OUTPUT'],
-                                           'gsp_idx_count;' + fieldHousing,
+                                           'gsp_idx_count;pop_seg',
                                            [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
                                            context,
                                            feedback)
@@ -237,14 +248,14 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegmentsNotNull = joinByLocation(gridNetoAndSegments['OUTPUT'],
                                                   facilitiesNotNullForSegmentsFixed['OUTPUT'],
-                                                  fieldHousing,
+                                                  'pop_seg',
                                                   [CONTIENE], [SUM], UNDISCARD_NONMATCHING,               
                                                   context,
                                                   feedback)
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaProximity = 'coalesce((coalesce('+fieldHousing+'_sum_2,0) /  coalesce('+fieldHousing+'_sum,""))*100,"")'
+      formulaProximity = 'coalesce((coalesce(pop_seg_sum_2,0) /  coalesce(pop_seg_sum,""))*100,"")'
       proximity2OpenSpace = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['IB06'][0],
                                         formulaProximity,
                                         context,

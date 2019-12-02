@@ -165,18 +165,42 @@ class IC13Sewerage(QgsProcessingAlgorithm):
                                          context, feedback)
       gridNeto = grid      
 
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)        
+      blocks = calculateArea(blocksWithSewerage['OUTPUT'], 'area_bloc', context,
+                             feedback)
+
+
       steps = steps+1
       feedback.setCurrentStep(steps)
-      segments = intersection(blocksWithSewerage['OUTPUT'], gridNeto['OUTPUT'],
-                              'idx_count;' + fieldHousing,
+      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                              'idx_count;area_bloc;' + fieldHousing,
                               'id_grid',
                               context, feedback)
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
+      housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
+                                          formulaHousingSegments,
+                                          context,
+                                          feedback)
+
+
 
       # Haciendo el buffer inverso aseguramos que los segmentos
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      sewerageForSegmentsFixed = makeSureInside(segments['OUTPUT'],
+      sewerageForSegmentsFixed = makeSureInside(housingForSegments['OUTPUT'],
                                                   context,
                                                   feedback)
       # Con esto se saca el total de viviendas
@@ -184,7 +208,7 @@ class IC13Sewerage(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                            sewerageForSegmentsFixed['OUTPUT'],
-                                           'idx_count;' + fieldHousing,
+                                           'idx_count;hou_seg',
                                            [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
                                            context,
                                            feedback)
@@ -200,14 +224,14 @@ class IC13Sewerage(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegmentsNotNull = joinByLocation(gridNetoAndSegments['OUTPUT'],
                                                   sewerageNotNullForSegmentsFixed['OUTPUT'],
-                                                  fieldHousing,
+                                                  'hou_seg',
                                                   [CONTIENE], [SUM], UNDISCARD_NONMATCHING,               
                                                   context,
                                                   feedback)
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaSewer = 'coalesce((coalesce('+fieldHousing+'_sum_2,0) /  coalesce('+fieldHousing+'_sum,0))*100, "")'
+      formulaSewer = 'coalesce((coalesce(hou_seg_sum_2,0) /  coalesce(hou_seg_sum,0))*100, "")'
       sewer = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['IC13'][0],
                                         formulaSewer,
                                         context,

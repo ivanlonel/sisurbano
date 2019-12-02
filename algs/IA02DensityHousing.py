@@ -128,8 +128,7 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
 
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-        blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
-                               feedback)
+
         steps = steps+1
         feedback.setCurrentStep(steps)
         if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE        
@@ -139,11 +138,18 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
         gridNeto = grid
 
         steps = steps+1
+        feedback.setCurrentStep(steps)        
+        blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                               feedback)
+
+
+        steps = steps+1
         feedback.setCurrentStep(steps)
         segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
                                 'area_bloc;' + fieldHousing,
                                 'id_grid;area_grid',
                                 context, feedback)
+
         steps = steps+1
         feedback.setCurrentStep(steps)
         segmentsArea = calculateArea(segments['OUTPUT'],

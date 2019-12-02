@@ -82,13 +82,13 @@ class ID10Proximity2PublicMarket(QgsProcessingAlgorithm):
             )
         )
 
-        self.addParameter(
-            QgsProcessingParameterField(
-                self.FIELD_POPULATION,
-                self.tr('Población'),
-                'poblacion', 'BLOCKS'
-            )
-        )      
+        # self.addParameter(
+        #     QgsProcessingParameterField(
+        #         self.FIELD_POPULATION,
+        #         self.tr('Población'),
+        #         'poblacion', 'BLOCKS'
+        #     )
+        # )      
 
         self.addParameter(
             QgsProcessingParameterField(
@@ -138,7 +138,7 @@ class ID10Proximity2PublicMarket(QgsProcessingAlgorithm):
     def processAlgorithm(self, params, context, feedback):
       steps = 0
       totalStpes = 14
-      fieldPopulation = params['FIELD_POPULATION']
+      # fieldPopulation = params['FIELD_POPULATION']
       fieldHousing = params['FIELD_HOUSING']
       DISTANCE_WALKABILITY = 300
 
@@ -203,19 +203,41 @@ class ID10Proximity2PublicMarket(QgsProcessingAlgorithm):
                                          params['STUDY_AREA_GRID'],
                                          context, feedback)
       gridNeto = grid  
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)        
+      blocks = calculateArea(blocksJoined['OUTPUT'], 'area_bloc', context,
+                             feedback)
+
       
       steps = steps+1
       feedback.setCurrentStep(steps)
-      segments = intersection(blocksJoined['OUTPUT'], gridNeto['OUTPUT'],
-                              'gsp_idx_count;' + fieldHousing,
+      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                              'gsp_idx_count;area_bloc;' + fieldHousing,
                               'id_grid',
                               context, feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
+      housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
+                                          formulaHousingSegments,
+                                          context,
+                                          feedback)
+
 
       # Haciendo el buffer inverso aseguramos que los segmentos
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      facilitiesForSegmentsFixed = makeSureInside(segments['OUTPUT'],
+      facilitiesForSegmentsFixed = makeSureInside(housingForSegments['OUTPUT'],
                                                   context,
                                                   feedback)
       # Con esto se saca el total de viviendas
@@ -223,7 +245,7 @@ class ID10Proximity2PublicMarket(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                            facilitiesForSegmentsFixed['OUTPUT'],
-                                           'gsp_idx_count;' + fieldHousing,
+                                           'gsp_idx_count;hou_seg',
                                            [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
                                            context,
                                            feedback)
@@ -239,14 +261,14 @@ class ID10Proximity2PublicMarket(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegmentsNotNull = joinByLocation(gridNetoAndSegments['OUTPUT'],
                                                   facilitiesNotNullForSegmentsFixed['OUTPUT'],
-                                                  fieldHousing,
+                                                  'hou_seg',
                                                   [CONTIENE], [SUM], UNDISCARD_NONMATCHING,               
                                                   context,
                                                   feedback)
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaProximity = 'coalesce((coalesce('+fieldHousing+'_sum_2,0) /  coalesce('+fieldHousing+'_sum,0))*100, "")'
+      formulaProximity = 'coalesce((coalesce(hou_seg_sum_2,0) /  coalesce(hou_seg_sum,0))*100, "")'
       proximity2OpenSpace = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['ID10'][0],
                                         formulaProximity,
                                         context,

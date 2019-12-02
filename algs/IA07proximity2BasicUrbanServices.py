@@ -191,7 +191,43 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        blocksWithId = calculateField(params['BLOCKS'], 'id_block', '$id', context,
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE        
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
+        gridNeto = grid
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)        
+        blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                               feedback)
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                                'area_bloc;'+ fieldHousing,
+                                'id_grid',
+                                context, feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                     'area_seg',
+                                     context, feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
+        housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
+                                            formulaHousingSegments,
+                                            context,
+                                            feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        blocksWithId = calculateField(housingForSegments['OUTPUT'], 'id_block', '$id', context,
                                       feedback, type=1)
 
         steps = steps+1
@@ -369,26 +405,42 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         Calcular numero de viviendas por hexagano
         -----------------------------------------------------------------
         """
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE        
-        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-                                           params['STUDY_AREA_GRID'],
-                                           context, feedback)
-        gridNeto = grid
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        segments = intersection(blocksFacilities['OUTPUT'], gridNeto['OUTPUT'],
-                                'edu_idx_count;hea_idx_count;app_idx_count;spo_idx_count;adm_idx_count;facilities;' + fieldHousing,
-                                'id_grid',
-                                context, feedback)
+
+
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)        
+        # blocks = calculateArea(blocksFacilities['OUTPUT'], 'area_bloc', context,
+        #                        feedback)
+
+
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+        #                         'edu_idx_count;hea_idx_count;app_idx_count;spo_idx_count;adm_idx_count;facilities;area_bloc;' + fieldHousing,
+        #                         'id_grid',
+        #                         context, feedback)
+
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # segmentsArea = calculateArea(segments['OUTPUT'],
+        #                              'area_seg',
+        #                              context, feedback)
+
+
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
+        # housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
+        #                                     formulaHousingSegments,
+        #                                     context,
+        #                                     feedback)
 
         # Haciendo el buffer inverso aseguramos que los segmentos
         # quden dentro de la malla
         steps = steps+1
         feedback.setCurrentStep(steps)
-        facilitiesForSegmentsFixed = makeSureInside(segments['OUTPUT'],
+        facilitiesForSegmentsFixed = makeSureInside(blocksFacilities['OUTPUT'],
                                                     context,
                                                     feedback)
 
@@ -396,7 +448,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         feedback.setCurrentStep(steps)
         gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                              facilitiesForSegmentsFixed['OUTPUT'],
-                                             'edu_idx_count;hea_idx_count;app_idx_count;spo_idx_count;adm_idx_count;facilities;' + fieldHousing,
+                                             'edu_idx_count;hea_idx_count;app_idx_count;spo_idx_count;adm_idx_count;facilities;hou_seg',
                                              [CONTIENE],
                                              [MAX, SUM], UNDISCARD_NONMATCHING,                 
                                              context,
@@ -412,7 +464,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         feedback.setCurrentStep(steps)
         gridNetoAndSegmentsNotNull = joinByLocation(gridNeto['OUTPUT'],
                                                     facilitiesNotNullForSegmentsFixed['OUTPUT'],
-                                                    fieldHousing,
+                                                    'hou_seg',
                                                     [CONTIENE],
                                                     [MAX, SUM], UNDISCARD_NONMATCHING,               
                                                     context,
@@ -422,7 +474,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         feedback.setCurrentStep(steps)
         totalHousing = joinByAttr(gridNetoAndSegments['OUTPUT'], 'id_grid',
                                   gridNetoAndSegmentsNotNull['OUTPUT'], 'id_grid',
-                                  fieldHousing+'_sum',
+                                  'hou_seg_sum',
                                   UNDISCARD_NONMATCHING,
                                   'net_',
                                   context,
@@ -430,11 +482,11 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaProximity = 'coalesce((coalesce(net_'+fieldHousing+'_sum,0) /  coalesce('+fieldHousing+'_sum,0))*100, "")'
+        formulaProximity = 'coalesce((coalesce(net_hou_seg_sum,0) /  coalesce(hou_seg_sum,0))*100, "")'
         proximity2BasicU = calculateField(totalHousing['OUTPUT'], NAMES_INDEX['IA07'][0],
                                           formulaProximity,
                                           context,
-                                          feedback,  params['OUTPUT'])
+                                          feedback, params['OUTPUT'])
 
         return proximity2BasicU
 

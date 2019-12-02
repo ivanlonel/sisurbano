@@ -59,7 +59,7 @@ class IB05GreenPerHabitant(QgsProcessingAlgorithm):
     GREEN = 'GREEN'
     BLOCKS = 'BLOCKS'
     FIELD_POPULATION = 'FIELD_POPULATION'
-    FIELD_HOUSING = 'FIELD_HOUSING'
+    # FIELD_HOUSING = 'FIELD_HOUSING'
     CELL_SIZE = 'CELL_SIZE'    
     OUTPUT = 'OUTPUT'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'    
@@ -84,13 +84,13 @@ class IB05GreenPerHabitant(QgsProcessingAlgorithm):
             )
         )      
 
-        self.addParameter(
-            QgsProcessingParameterField(
-                self.FIELD_HOUSING,
-                self.tr('Viviendas'),
-                'viviendas', 'BLOCKS'
-            )
-        )         
+        # self.addParameter(
+        #     QgsProcessingParameterField(
+        #         self.FIELD_HOUSING,
+        #         self.tr('Viviendas'),
+        #         'viviendas', 'BLOCKS'
+        #     )
+        # )         
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -153,11 +153,27 @@ class IB05GreenPerHabitant(QgsProcessingAlgorithm):
                               'id_grid;area_grid',
                               context, feedback)
 
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
+      populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
+                                          formulaPopulationSegments,
+                                          context,
+                                          feedback)      
+
       # Haciendo el buffer inverso aseguramos que los segmentos
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      segmentsFixed = makeSureInside(segments['OUTPUT'],
+      segmentsFixed = makeSureInside(populationForSegments['OUTPUT'],
                                               context,
                                               feedback)
 
@@ -165,7 +181,7 @@ class IB05GreenPerHabitant(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                            segmentsFixed['OUTPUT'],
-                                           fieldPopulation,
+                                           'pop_seg',
                                            [CONTIENE], [SUM],    
                                            UNDISCARD_NONMATCHING,                               
                                            context,
@@ -208,8 +224,8 @@ class IB05GreenPerHabitant(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       # formulaSurfacePerHab = 'coalesce(area_green_sum/' + fieldPopulation + '_sum,  0)'
 
-      formulaSurfacePerHab = 'CASE WHEN ' + fieldPopulation + '_sum = 0 THEN "" ' + \
-                            'ELSE coalesce(area_green_sum/' + fieldPopulation + '_sum, 0) END'
+      formulaSurfacePerHab = 'CASE WHEN pop_seg_sum = 0 THEN "" ' + \
+                            'ELSE coalesce(area_green_sum/pop_seg_sum, 0) END'
 
       print(formulaSurfacePerHab)
 

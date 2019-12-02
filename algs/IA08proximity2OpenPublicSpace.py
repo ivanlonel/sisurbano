@@ -200,18 +200,43 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
                                          context, feedback)
       gridNeto = grid      
 
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)        
+      blocks = calculateArea(blocksJoined['OUTPUT'], 'area_bloc', context,
+                             feedback)
+
       steps = steps+1
       feedback.setCurrentStep(steps)
-      segments = intersection(blocksJoined['OUTPUT'], gridNeto['OUTPUT'],
-                              'osp_idx_count;' + fieldHousing,
+      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                              'osp_idx_count;area_bloc;' + fieldHousing,
                               'id_grid',
-                              context, feedback)
+                              context, feedback, )
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
+      housingForSegments = calculateField(segmentsArea['OUTPUT'], 'h_s',
+                                          formulaHousingSegments,
+                                          context,
+                                          feedback)
+
+
+
 
       # Haciendo el buffer inverso aseguramos que los segmentos
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      facilitiesForSegmentsFixed = makeSureInside(segments['OUTPUT'],
+      facilitiesForSegmentsFixed = makeSureInside(housingForSegments['OUTPUT'],
                                                   context,
                                                   feedback)
       # Con esto se saca el total de viviendas
@@ -219,7 +244,7 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                            facilitiesForSegmentsFixed['OUTPUT'],
-                                           'osp_idx_count;' + fieldHousing,
+                                           'osp_idx_count;h_s',
                                            [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
                                            context,
                                            feedback)
@@ -235,14 +260,14 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegmentsNotNull = joinByLocation(gridNetoAndSegments['OUTPUT'],
                                                   facilitiesNotNullForSegmentsFixed['OUTPUT'],
-                                                  fieldHousing,
+                                                  'h_s',
                                                   [CONTIENE], [SUM], UNDISCARD_NONMATCHING,               
                                                   context,
                                                   feedback)
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaProximity = 'coalesce((coalesce('+fieldHousing+'_sum_2,0) /  coalesce('+fieldHousing+'_sum,""))*100, "")'
+      formulaProximity = 'coalesce((coalesce(h_s_sum_2,0) /  coalesce(h_s_sum,""))*100, "")'
       proximity2OpenSpace = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['IA08'][0],
                                         formulaProximity,
                                         context,

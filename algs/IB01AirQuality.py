@@ -60,8 +60,8 @@ class IB01AirQuality(QgsProcessingAlgorithm):
     SO2 = 'SO2'
     O3 = 'O3'
     BLOCKS = 'BLOCKS'
+    # FIELD_POPULATION = 'FIELD_POPULATION'
     FIELD_POPULATION = 'FIELD_POPULATION'
-    FIELD_HOUSING = 'FIELD_HOUSING'
     CELL_SIZE = 'CELL_SIZE'    
     OUTPUT = 'OUTPUT'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'    
@@ -82,19 +82,19 @@ class IB01AirQuality(QgsProcessingAlgorithm):
             )
         )
 
+        # self.addParameter(
+        #     QgsProcessingParameterField(
+        #         self.FIELD_POPULATION,
+        #         self.tr('Población'),
+        #         'poblacion', 'BLOCKS'
+        #     )
+        # )      
+
         self.addParameter(
             QgsProcessingParameterField(
                 self.FIELD_POPULATION,
                 self.tr('Población'),
                 'poblacion', 'BLOCKS'
-            )
-        )      
-
-        self.addParameter(
-            QgsProcessingParameterField(
-                self.FIELD_HOUSING,
-                self.tr('Viviendas'),
-                'viviendas', 'BLOCKS'
             )
         )         
 
@@ -165,8 +165,8 @@ class IB01AirQuality(QgsProcessingAlgorithm):
     def processAlgorithm(self, params, context, feedback):
       steps = 0
       totalStpes = 14
+      # fieldPopulation = params['FIELD_POPULATION']
       fieldPopulation = params['FIELD_POPULATION']
-      fieldHousing = params['FIELD_HOUSING']
       maxO3 = str(100)
       maxNO2 = str(40)
       maxSO2 = str(60)
@@ -248,17 +248,40 @@ class IB01AirQuality(QgsProcessingAlgorithm):
                                                                                               
 
       steps = steps+1
+      feedback.setCurrentStep(steps)        
+      blocks = calculateArea(blocksPull['OUTPUT'], 'area_bloc', context,
+                             feedback)
+
+
+      steps = steps+1
       feedback.setCurrentStep(steps)
-      segments = intersection(blocksPull['OUTPUT'], gridNeto['OUTPUT'],
-                              ['is_pull', fieldHousing],
+      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                              ['is_pull','area_bloc',fieldPopulation],
                               'id_grid',
                               context, feedback)
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
+      populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
+                                          formulaPopulationSegments,
+                                          context,
+                                          feedback)
+
 
       # Haciendo el buffer inverso aseguramos que los segmentos
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      pullForSegmentsFixed = makeSureInside(segments['OUTPUT'],
+      pullForSegmentsFixed = makeSureInside(populationForSegments['OUTPUT'],
                                                   context,
                                                   feedback)
       # Con esto se saca el total de viviendas
@@ -266,7 +289,7 @@ class IB01AirQuality(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegmentsPull = joinByLocation(gridNeto['OUTPUT'],
                                            pullForSegmentsFixed['OUTPUT'],
-                                           [fieldHousing],
+                                           ['pop_seg'],
                                            [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
                                            context,
                                            feedback)
@@ -282,14 +305,14 @@ class IB01AirQuality(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegmentsNotNull = joinByLocation(gridNetoAndSegmentsPull['OUTPUT'],
                                                   pullActiveForSegmentsFixed['OUTPUT'],
-                                                  [fieldHousing, 'is_pull'],
+                                                  ['pop_seg', 'is_pull'],
                                                   [CONTIENE], [SUM], UNDISCARD_NONMATCHING,               
                                                   context,
                                                   feedback)
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaPull = 'coalesce((coalesce('+fieldHousing+'_sum_2,0) /  coalesce('+fieldHousing+'_sum,0))*100, "")'
+      formulaPull = 'coalesce((coalesce(pop_seg_sum_2,0) /  coalesce(pop_seg_sum,0))*100, "")'
       pull = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['IB01'][0],
                                         formulaPull,
                                         context,

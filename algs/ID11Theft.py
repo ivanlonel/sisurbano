@@ -119,14 +119,14 @@ class ID11Theft(QgsProcessingAlgorithm):
             )          
 
 
-        self.addParameter(
-            QgsProcessingParameterNumber(
-                self.NUMBER_HABITANTS,
-                self.tr('Por cada número de habitantes'),
-                QgsProcessingParameterNumber.Integer,
-                100000, False, 1, 99999999
-            )
-        )   
+        # self.addParameter(
+        #     QgsProcessingParameterNumber(
+        #         self.NUMBER_HABITANTS,
+        #         self.tr('Por cada número de habitantes'),
+        #         QgsProcessingParameterNumber.Integer,
+        #         100000, False, 1, 99999999
+        #     )
+        # )   
 
         self.addParameter(
             QgsProcessingParameterFeatureSink(
@@ -141,7 +141,7 @@ class ID11Theft(QgsProcessingAlgorithm):
         steps = 0
         totalStpes = 12
         fieldPopulation = params['FIELD_POPULATION']
-        fieldHab = params['NUMBER_HABITANTS']
+        # fieldHab = params['NUMBER_HABITANTS']
 
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
@@ -163,20 +163,36 @@ class ID11Theft(QgsProcessingAlgorithm):
                                 'id_grid;area_grid',
                                 context, feedback)
 
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
+        housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
+                                          formulaPopulationSegments,
+                                          context,
+                                          feedback)
+
+
+
 
         # Haciendo el buffer inverso aseguramos que los segmentos
         # quden dentro de la malla
         steps = steps+1
         feedback.setCurrentStep(steps)
-        segments = makeSureInside(segments['OUTPUT'],
-                                                    context,
-                                                    feedback)
+        segments = makeSureInside(housingForSegments['OUTPUT'],
+                                context,
+                                feedback)
 
         steps = steps+1
         feedback.setCurrentStep(steps)
         gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                              segments['OUTPUT'],
-                                              fieldPopulation,                                   
+                                              'hou_seg',                                   
                                               [CONTIENE], [SUM],
                                               UNDISCARD_NONMATCHING,
                                               context,
@@ -213,7 +229,7 @@ class ID11Theft(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaThefPerHab = 'coalesce(idx_count/' + fieldPopulation + '_sum, "")'
+        formulaThefPerHab = 'coalesce(coalesce(idx_count, 0)/hou_seg_sum, "")'
         thefPerHab = calculateField(gridNetoAndSegments['OUTPUT'],
                                    NAMES_INDEX['ID11'][0],
                                    formulaThefPerHab,

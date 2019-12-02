@@ -173,11 +173,29 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
                               'id_grid',
                               context, feedback)
 
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
+      housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
+                                          formulaHousingSegments,
+                                          context,
+                                          feedback)
+
+
+
       # Haciendo el buffer inverso aseguramos que los segmentos
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      segmentsFixed = makeSureInside(segments['OUTPUT'],
+      segmentsFixed = makeSureInside(housingForSegments['OUTPUT'],
                                               context,
                                               feedback)
 
@@ -185,7 +203,7 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                            segmentsFixed['OUTPUT'],
-                                           fieldHousing,
+                                           'hou_seg',
                                            [CONTIENE], [SUM],    
                                            UNDISCARD_NONMATCHING,                               
                                            context,
@@ -218,7 +236,7 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaRelationship = 'coalesce('+fieldConstructionArea+'_sum/' + fieldHousing + '_sum, 0)'
+      formulaRelationship = 'coalesce('+fieldConstructionArea+'_sum/hou_seg_sum, 0)'
       relationship = calculateField(tertiaryAreaAndPopulation['OUTPUT'],
                                      NAMES_INDEX['IA10'][0],
                                      formulaRelationship,

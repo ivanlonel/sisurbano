@@ -60,7 +60,6 @@ class IB03AcousticComfort(QgsProcessingAlgorithm):
     NOISE_DAY = 'NOISE_DAY'
     BLOCKS = 'BLOCKS'
     FIELD_POPULATION = 'FIELD_POPULATION'
-    FIELD_HOUSING = 'FIELD_HOUSING'
     CELL_SIZE = 'CELL_SIZE'    
     OUTPUT = 'OUTPUT'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'    
@@ -83,14 +82,6 @@ class IB03AcousticComfort(QgsProcessingAlgorithm):
                 self.FIELD_POPULATION,
                 self.tr('Población'),
                 'poblacion', 'BLOCKS'
-            )
-        )      
-
-        self.addParameter(
-            QgsProcessingParameterField(
-                self.FIELD_HOUSING,
-                self.tr('Viviendas'),
-                'viviendas', 'BLOCKS'
             )
         )         
 
@@ -143,8 +134,8 @@ class IB03AcousticComfort(QgsProcessingAlgorithm):
     def processAlgorithm(self, params, context, feedback):
       steps = 0
       totalStpes = 14
+      # fieldPopulation = params['FIELD_POPULATION']
       fieldPopulation = params['FIELD_POPULATION']
-      fieldHousing = params['FIELD_HOUSING']
       maxDay = str(70)
       maxNight = str(65)
 
@@ -205,22 +196,43 @@ class IB03AcousticComfort(QgsProcessingAlgorithm):
       blocksNoise = calculateField(comodin['OUTPUT'], 'is_noise',
                                         condition,
                                         context,
-                                        feedback, type=1)     
+                                        feedback, type=1)  
 
-                                                                                              
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)        
+      blocks = calculateArea(blocksNoise['OUTPUT'], 'area_bloc', context,
+                             feedback)
+
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      segments = intersection(blocksNoise['OUTPUT'], gridNeto['OUTPUT'],
-                              ['is_noise', fieldHousing],
+      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                              ['is_noise','area_bloc',fieldPopulation],
                               'id_grid',
                               context, feedback)
+   
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
+      housingForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
+                                          formulaPopulationSegments,
+                                          context,
+                                          feedback)
 
       # Haciendo el buffer inverso aseguramos que los segmentos
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      noiseForSegmentsFixed = makeSureInside(segments['OUTPUT'],
+      noiseForSegmentsFixed = makeSureInside(housingForSegments['OUTPUT'],
                                                   context,
                                                   feedback)
       # Con esto se saca el total de viviendas
@@ -228,7 +240,7 @@ class IB03AcousticComfort(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegmentsNoise = joinByLocation(gridNeto['OUTPUT'],
                                            noiseForSegmentsFixed['OUTPUT'],
-                                           [fieldHousing],
+                                           ['pop_seg'],
                                            [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
                                            context,
                                            feedback)
@@ -244,14 +256,14 @@ class IB03AcousticComfort(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegmentsNotNull = joinByLocation(gridNetoAndSegmentsNoise['OUTPUT'],
                                                   pullActiveForSegmentsFixed['OUTPUT'],
-                                                  [fieldHousing, 'is_noise'],
+                                                  ['pop_seg', 'is_noise'],
                                                   [CONTIENE], [SUM], UNDISCARD_NONMATCHING,               
                                                   context,
                                                   feedback)
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaNoise = 'coalesce((coalesce('+fieldHousing+'_sum_2,0) /  coalesce('+fieldHousing+'_sum,0))*100, "")'
+      formulaNoise = 'coalesce((coalesce(pop_seg_sum_2,0) /  coalesce(pop_seg_sum,0))*100, "")'
       noise = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['IB03'][0],
                                         formulaNoise,
                                         context,

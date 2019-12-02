@@ -169,15 +169,15 @@ class ID03HousingRisk(QgsProcessingAlgorithm):
                                     feedback)
  
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      blocksJoined = joinByAttr(blocksWithId['OUTPUT'], 'id_block',
-                                counterRisk['OUTPUT'], 'id_block',
-                                [],
-                                UNDISCARD_NONMATCHING,
-                                'rk_',
-                                context,
-                                feedback)
+      # steps = steps+1
+      # feedback.setCurrentStep(steps)
+      # blocksJoined = joinByAttr(blocksWithId['OUTPUT'], 'id_block',
+      #                           counterRisk['OUTPUT'], 'id_block',
+      #                           [],
+      #                           UNDISCARD_NONMATCHING,
+      #                           'rk_',
+      #                           context,
+      #                           feedback)
 
       """
       -----------------------------------------------------------------
@@ -192,41 +192,81 @@ class ID03HousingRisk(QgsProcessingAlgorithm):
                                          context, feedback)
       gridNeto = grid  
 
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)        
+      blocks = calculateArea(counterRisk['OUTPUT'], 'area_bloc', context,
+                             feedback)
+
+
       steps = steps+1
       feedback.setCurrentStep(steps)
-      segments = intersection(blocksJoined['OUTPUT'], gridNeto['OUTPUT'],
-                              [],
+      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                              ['idx_count','area_bloc',fieldHousing],
                               'id_grid',
                               context, feedback)
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
+      housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
+                                          formulaHousingSegments,
+                                          context,
+                                          feedback)
 
       # Haciendo el buffer inverso aseguramos que los segmentos
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      riskForSegmentsFixed = makeSureInside(segments['OUTPUT'],
+      riskForSegmentsFixed = makeSureInside(housingForSegments['OUTPUT'],
                                                   context,
                                                   feedback)
+
+
       # Con esto se saca el total de viviendas
       steps = steps+1
       feedback.setCurrentStep(steps)
       gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                            riskForSegmentsFixed['OUTPUT'],
-                                           'rk_' + fieldHousing + ';' + fieldHousing,
+                                           'idx_count;hou_seg',
                                            [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
                                            context,
                                            feedback)
 
+      #descartar NULL para obtener el total de viviendas que cumple
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      riskNotNullForSegmentsFixed = filter(riskForSegmentsFixed['OUTPUT'],
+                                                 'idx_count', NOT_NULL,
+                                                 '', context, feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      gridNetoAndSegmentsNotNull = joinByLocation(gridNetoAndSegments['OUTPUT'],
+                                                  riskNotNullForSegmentsFixed['OUTPUT'],
+                                                  'hou_seg',
+                                                  [CONTIENE], [SUM], UNDISCARD_NONMATCHING,               
+                                                  context,
+                                                  feedback)
 
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaProximity = 'coalesce((coalesce(rk_'+fieldHousing+'_sum,0) /  coalesce('+fieldHousing+'_sum,0))*100, "")'
-      riskHousing = calculateField(gridNetoAndSegments['OUTPUT'], NAMES_INDEX['ID03'][0],
+      formulaProximity = 'coalesce((coalesce(hou_seg_sum_2,0) /  coalesce(hou_seg_sum,0))*100, "")'
+      riskHousing = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['ID03'][0],
                                         formulaProximity,
                                         context,
                                         feedback, params['OUTPUT'])
 
-      return riskHousing
+      return housingForSegments
 
 
         # Return the results of the algorithm. In this case our only result is

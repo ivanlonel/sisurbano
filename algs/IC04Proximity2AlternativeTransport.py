@@ -435,18 +435,40 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
                                          context, feedback)
       gridNeto = grid  
 
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)        
+      blocks = calculateArea(blocksFacilities['OUTPUT'], 'area_bloc', context,
+                             feedback)
+
       steps = steps+1
       feedback.setCurrentStep(steps)
-      segments = intersection(blocksFacilities['OUTPUT'], gridNeto['OUTPUT'],
-                              'bs_idx_count;ts_idx_count;bks_idx_count;bw_idx_count;cw_idx_count;facilities;' + fieldPopulateOrHousing,
+      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                              'bs_idx_count;ts_idx_count;bks_idx_count;bw_idx_count;cw_idx_count;facilities;area_bloc;' + fieldPopulateOrHousing,
                               'id_grid',
                               context, feedback)
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulateOrHousing
+      populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
+                                          formulaPopulationSegments,
+                                          context,
+                                          feedback)
+
 
       # Haciendo el buffer inverso aseguramos que los segmentos
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      facilitiesForSegmentsFixed = makeSureInside(segments['OUTPUT'],
+      facilitiesForSegmentsFixed = makeSureInside(populationForSegments['OUTPUT'],
                                                   context,
                                                   feedback)
 
@@ -454,7 +476,7 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                            facilitiesForSegmentsFixed['OUTPUT'],
-                                           'bs_idx_count;ts_idx_count;bks_idx_count;bw_idx_count;cw_idx_count;facilities;' + fieldPopulateOrHousing,
+                                           'bs_idx_count;ts_idx_count;bks_idx_count;bw_idx_count;cw_idx_count;facilities;pop_seg',
                                            [CONTIENE], [MAX, SUM], UNDISCARD_NONMATCHING,                 
                                            context,
                                            feedback)
@@ -472,7 +494,7 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegmentsSimulta = joinByLocation(gridNeto['OUTPUT'],
                                                   facilitiesNotNullForSegmentsFixed['OUTPUT'],
-                                                  fieldPopulateOrHousing,
+                                                  'pop_seg',
                                                   [CONTIENE], [MAX, SUM], UNDISCARD_NONMATCHING,               
                                                   context,
                                                   feedback)
@@ -481,7 +503,7 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       totalHousing = joinByAttr(gridNetoAndSegments['OUTPUT'], 'id_grid',
                                 gridNetoAndSegmentsSimulta['OUTPUT'], 'id_grid',
-                                fieldPopulateOrHousing+'_sum',
+                                'pop_seg_sum',
                                 UNDISCARD_NONMATCHING,
                                 'net_',
                                 context,
@@ -489,7 +511,7 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaProximity = 'coalesce((coalesce(net_'+fieldPopulateOrHousing+'_sum,0) /  coalesce('+fieldPopulateOrHousing+'_sum,0))*100,"")'
+      formulaProximity = 'coalesce((coalesce(net_pop_seg_sum,0) /  coalesce(pop_seg_sum,0))*100,"")'
       proximity2AlternativeTransport = calculateField(totalHousing['OUTPUT'], NAMES_INDEX['IC04'][0],
                                         formulaProximity,
                                         context,
