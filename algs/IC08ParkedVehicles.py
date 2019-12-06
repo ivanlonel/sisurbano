@@ -240,7 +240,7 @@ class IC08ParkedVehicles(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'C Movilidad Urbana'
+        return 'C Movilidad urbana'
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)

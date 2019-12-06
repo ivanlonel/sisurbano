@@ -303,7 +303,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         feedback.setCurrentStep(steps)
         counterEducation = joinByLocation(blockBuffer4Education['OUTPUT'],
                                           layerEducation,
-                                          'idx', [CONTIENE], [COUNT],
+                                          'idx', [CONTIENE, INTERSECTA], [COUNT],
                                           UNDISCARD_NONMATCHING,
                                           context,
                                           feedback)
@@ -311,7 +311,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         feedback.setCurrentStep(steps)
         counterHealth = joinByLocation(blockBuffer4Health['OUTPUT'],
                                        layerHealth,
-                                       'idx', [CONTIENE], [COUNT],
+                                       'idx', [CONTIENE, INTERSECTA], [COUNT],
                                        UNDISCARD_NONMATCHING,
                                        context,
                                        feedback)
@@ -319,7 +319,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         feedback.setCurrentStep(steps)
         counterApproval = joinByLocation(blockBuffer4Approval['OUTPUT'],
                                         layerApproval,
-                                        'idx', [CONTIENE], [COUNT],
+                                        'idx', [CONTIENE, INTERSECTA], [COUNT],
                                         UNDISCARD_NONMATCHING,
                                         context,
                                         feedback)
@@ -327,7 +327,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         feedback.setCurrentStep(steps)
         counterSport = joinByLocation(BlockBuffer4Sports['OUTPUT'],
                                       layerSports,
-                                      'idx', [CONTIENE], [COUNT],
+                                      'idx', [CONTIENE, INTERSECTA], [COUNT],
                                       UNDISCARD_NONMATCHING,
                                       context,
                                       feedback)
@@ -336,7 +336,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         feedback.setCurrentStep(steps)
         counterAdmin = joinByLocation(BlockBuffer4Admin['OUTPUT'],
                                       layerAdmin,
-                                      'idx', [CONTIENE], [COUNT],
+                                      'idx', [CONTIENE, INTERSECTA], [COUNT],
                                       UNDISCARD_NONMATCHING,
                                       context,
                                       feedback)        

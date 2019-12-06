@@ -94,7 +94,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
             QgsProcessingParameterField(
                 self.FIELD_POPULATE_HOUSING,
                 self.tr('Población o viviendas'),
-                'poblacion', 'BLOCKS'
+                'viviendas', 'BLOCKS'
             )
         )      
     
@@ -194,7 +194,48 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      blocksWithId = calculateField(params['BLOCKS'], 'id_block', '$id', context,
+      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                         params['STUDY_AREA_GRID'],
+                                         context, feedback)
+      gridNeto = grid  
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      gridNeto = calculateField(gridNeto['OUTPUT'], 'id_grid', '$id', context,
+                                feedback, type=1)
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)        
+      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                             feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                              'area_bloc;' + fieldPopulateOrHousing,
+                              'id_grid',
+                              context, feedback, )
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldPopulateOrHousing
+      housingForSegments = calculateField(segmentsArea['OUTPUT'], 'h_s',
+                                          formulaHousingSegments,
+                                          context,
+                                          feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      blocksWithId = calculateField(housingForSegments['OUTPUT'], 'id_block', '$id', context,
                                     feedback, type=1)
 
       steps = steps+1
@@ -348,7 +389,6 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
                                 context,
                                 feedback)
 
-
       steps = steps+1
       feedback.setCurrentStep(steps)
       blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
@@ -429,31 +469,18 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
       Calcular numero de viviendas por hexagano
       -----------------------------------------------------------------
       """
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-                                         params['STUDY_AREA_GRID'],
-                                         context, feedback)
-      gridNeto = grid  
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNeto = calculateField(gridNeto['OUTPUT'], 'id_grid', '$id', context,
-                                feedback, type=1)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(blocksFacilities['OUTPUT'], gridNeto['OUTPUT'],
-                              'sh_idx_count;mk_idx_count;pha_idx_count;bk_idx_count;st_idx_count;facilities;' + fieldPopulateOrHousing,
-                              'id_grid',
-                              context, feedback)
+      # steps = steps+1
+      # feedback.setCurrentStep(steps)
+      # segments = intersection(blocksFacilities['OUTPUT'], gridNeto['OUTPUT'],
+      #                         'sh_idx_count;mk_idx_count;pha_idx_count;bk_idx_count;st_idx_count;facilities;h_s',
+      #                         'id_grid',
+      #                         context, feedback)
 
       # Haciendo el buffer inverso aseguramos que los segmentos
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      facilitiesForSegmentsFixed = makeSureInside(segments['OUTPUT'],
+      facilitiesForSegmentsFixed = makeSureInside(blocksFacilities['OUTPUT'],
                                                   context,
                                                   feedback)
 
@@ -461,13 +488,13 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                            facilitiesForSegmentsFixed['OUTPUT'],
-                                           'sh_idx_count;mk_idx_count;pha_idx_count;bk_idx_count;st_idx_count;facilities;' + fieldPopulateOrHousing,
-                                           [CONTIENE], [MAX, SUM], UNDISCARD_NONMATCHING,                 
+                                           'sh_idx_count;mk_idx_count;pha_idx_count;bk_idx_count;st_idx_count;facilities;h_s',
+                                           [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
                                            context,
                                            feedback)
 
       # tomar solo los que tienen cercania simultanea (descartar lo menores de 3)
-      MIN_FACILITIES = 3
+      MIN_FACILITIES = 5
       OPERATOR_GE = 3
       steps = steps+1
       feedback.setCurrentStep(steps)
@@ -479,8 +506,8 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegmentsSimulta = joinByLocation(gridNeto['OUTPUT'],
                                                   facilitiesNotNullForSegmentsFixed['OUTPUT'],
-                                                  fieldPopulateOrHousing,
-                                                  [CONTIENE], [MAX, SUM], UNDISCARD_NONMATCHING,               
+                                                  'h_s',
+                                                  [CONTIENE], [SUM], UNDISCARD_NONMATCHING,               
                                                   context,
                                                   feedback)
 
@@ -488,7 +515,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       totalHousing = joinByAttr(gridNetoAndSegments['OUTPUT'], 'id_grid',
                                 gridNetoAndSegmentsSimulta['OUTPUT'], 'id_grid',
-                                fieldPopulateOrHousing+'_sum',
+                                'h_s_sum',
                                 UNDISCARD_NONMATCHING,
                                 'net_',
                                 context,
@@ -496,13 +523,13 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaProximity = 'coalesce((coalesce(net_'+fieldPopulateOrHousing+'_sum,0) /  coalesce('+fieldPopulateOrHousing+'_sum,0))*100,0)'
-      proximity2AlternativeTransport = calculateField(totalHousing['OUTPUT'], NAMES_INDEX['IA09'][0],
+      formulaProximity = 'coalesce((coalesce(net_h_s_sum,0)/coalesce(h_s_sum,""))*100,"")'
+      coverageDailyBusiness = calculateField(totalHousing['OUTPUT'], NAMES_INDEX['IA09'][0],
                                         formulaProximity,
                                         context,
                                         feedback, params['OUTPUT'])
 
-      return proximity2AlternativeTransport
+      return coverageDailyBusiness
 
 
 

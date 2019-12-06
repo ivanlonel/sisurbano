@@ -205,7 +205,7 @@ class IC03RoadsPerHabitant(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaLenPerHab = 'coalesce(LENGTH/pop_seg_sum, "")'
+      formulaLenPerHab = 'coalesce(coalesce(LENGTH, 0)/pop_seg_sum, "")'
       lenPerHab = calculateField(gridNetoAndSegmentsSumLines['OUTPUT'],
                                      NAMES_INDEX['IC03'][0],
                                      formulaLenPerHab,
@@ -258,7 +258,7 @@ class IC03RoadsPerHabitant(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'C Movilidad Urbana'
+        return 'C Movilidad urbana'
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)

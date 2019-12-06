@@ -156,9 +156,37 @@ class IB03AcousticComfort(QgsProcessingAlgorithm):
       gridNeto = grid  
 
       steps = steps+1
+      feedback.setCurrentStep(steps)        
+      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                             feedback)
+
+      steps = steps+1
       feedback.setCurrentStep(steps)
-      blocks = calculateField(params['BLOCKS'], 'id_blocks', '$id', context,
-                                    feedback, type=1)          
+      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                              ['area_bloc',fieldPopulation],
+                              'id_grid',
+                              context, feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
+      populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
+                                          formulaPopulationSegments,
+                                          context,
+                                          feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      blocks = calculateField(populationForSegments['OUTPUT'], 'id_blocks', '$id', context,
+                                    feedback, type=1)     
+
 
       steps = steps+1
       feedback.setCurrentStep(steps)
@@ -197,42 +225,12 @@ class IB03AcousticComfort(QgsProcessingAlgorithm):
                                         condition,
                                         context,
                                         feedback, type=1)  
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)        
-      blocks = calculateArea(blocksNoise['OUTPUT'], 'area_bloc', context,
-                             feedback)
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                              ['is_noise','area_bloc',fieldPopulation],
-                              'id_grid',
-                              context, feedback)
-   
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsArea = calculateArea(segments['OUTPUT'],
-                                   'area_seg',
-                                   context, feedback)
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
-      housingForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
-                                          formulaPopulationSegments,
-                                          context,
-                                          feedback)
-
+ 
       # Haciendo el buffer inverso aseguramos que los segmentos
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      noiseForSegmentsFixed = makeSureInside(housingForSegments['OUTPUT'],
+      noiseForSegmentsFixed = makeSureInside(blocksNoise['OUTPUT'],
                                                   context,
                                                   feedback)
       # Con esto se saca el total de viviendas

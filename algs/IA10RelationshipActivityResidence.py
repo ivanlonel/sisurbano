@@ -148,18 +148,34 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
                                          context, feedback)
       gridNeto = grid  
 
+
       steps = steps+1
       feedback.setCurrentStep(steps)
       segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                              'area_bloc;' + fieldHousing,
+                              'area_bloc;'+ fieldHousing,
                               'id_grid',
                               context, feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
+      housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
+                                          formulaHousingSegments,
+                                          context,
+                                          feedback)
+
 
       # Haciendo el buffer inverso aseguramos que los segmentos
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      segmentsFixed = makeSureInside(segments['OUTPUT'],
+      segmentsFixed = makeSureInside(housingForSegments['OUTPUT'],
                                               context,
                                               feedback)
 
@@ -167,7 +183,7 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                            segmentsFixed['OUTPUT'],
-                                           fieldHousing,
+                                           'hou_seg',
                                            [CONTIENE], [SUM],    
                                            UNDISCARD_NONMATCHING,                               
                                            context,
@@ -185,14 +201,14 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       gridAndTertiary = joinByLocation(gridNetoAndSegments['OUTPUT'],
                                         layerTertiary['OUTPUT'],
-                                        'idx', [CONTIENE], [COUNT],
+                                        'idx', [CONTIENE, INTERSECTA], [COUNT],
                                         UNDISCARD_NONMATCHING,
                                         context,
                                         feedback)      
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaRelationship = 'coalesce(idx_count/' + fieldHousing + '_sum, "")'
+      formulaRelationship = 'coalesce(coalesce(idx_count,0)/hou_seg_sum, "")'
       relationship = calculateField(gridAndTertiary['OUTPUT'],
                                      NAMES_INDEX['IA10'][0],
                                      formulaRelationship,

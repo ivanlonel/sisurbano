@@ -60,6 +60,9 @@ from .algs import (
     IC08ParkedVehicles,
     IC13Sewerage,
     ID03HousingRisk,
+    ID01HousingFullCoverageBasicServices,
+    ID02HomesConstructiveDeficiencies,
+    ID04OpenPublicSpacesNeedImprovement,
     ID10Proximity2PublicMarket,
     ID11Theft,
     ZN00CreateGrid,
@@ -114,7 +117,10 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(IC04Proximity2AlternativeTransport.IC04Proximity2AlternativeTransport())
         self.addAlgorithm(IC08ParkedVehicles.IC08ParkedVehicles())
         self.addAlgorithm(IC13Sewerage.IC13Sewerage())
+        self.addAlgorithm(ID01HousingFullCoverageBasicServices.ID01HousingFullCoverageBasicServices())
+        self.addAlgorithm(ID02HomesConstructiveDeficiencies.ID02HomesConstructiveDeficiencies())
         self.addAlgorithm(ID03HousingRisk.ID03HousingRisk())
+        self.addAlgorithm(ID04OpenPublicSpacesNeedImprovement.ID04OpenPublicSpacesNeedImprovement())
         self.addAlgorithm(ID10Proximity2PublicMarket.ID10Proximity2PublicMarket())
         self.addAlgorithm(ID11Theft.ID11Theft())
         self.addAlgorithm(ZN00CreateGrid.ZN00CreateGrid())

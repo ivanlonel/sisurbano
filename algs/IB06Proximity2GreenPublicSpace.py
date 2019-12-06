@@ -137,17 +137,50 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
       Calcular las facilidades a espacios pubicos abiertos
       -----------------------------------------------------------------
       """
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                         params['STUDY_AREA_GRID'],
+                                         context, feedback)
+      gridNeto = grid  
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)        
+      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                             feedback)
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      blocksWithId = calculateField(params['BLOCKS'], 'id_block', '$id', context,
+      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                              'area_bloc;' + fieldPopulation,
+                              'id_grid',
+                              context, feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
+      populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
+                                          formulaPopulationSegments,
+                                          context,
+                                          feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      blocksWithId = calculateField(populationForSegments['OUTPUT'], 'id_block', '$id', context,
                                     feedback, type=1)
 
       steps = steps+1
       feedback.setCurrentStep(steps)
       equipmentWithId = calculateField(params['EQUIPMENT'], 'idx', '$id', context,
                                       feedback, type=1)
-
 
       steps = steps+1
       feedback.setCurrentStep(steps)
@@ -164,7 +197,7 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       counterGreenSpace = joinByLocation(blockBuffer4GreenSapace['OUTPUT'],
                                         equipmentWithId['OUTPUT'],
-                                        'idx',[CONTIENE], [COUNT],
+                                        'idx',[CONTIENE, INTERSECTA], [COUNT],
                                         False,
                                         context,
                                         feedback)
@@ -184,47 +217,13 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
       Calcular numero de viviendas por hexagano
       -----------------------------------------------------------------
       """
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-                                         params['STUDY_AREA_GRID'],
-                                         context, feedback)
-      gridNeto = grid  
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)        
-      blocks = calculateArea(blocksJoined['OUTPUT'], 'area_bloc', context,
-                             feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                              'gsp_idx_count;area_bloc;' + fieldPopulation,
-                              'id_grid',
-                              context, feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsArea = calculateArea(segments['OUTPUT'],
-                                   'area_seg',
-                                   context, feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
-      populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
-                                          formulaPopulationSegments,
-                                          context,
-                                          feedback)
 
 
       # Haciendo el buffer inverso aseguramos que los segmentos
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      facilitiesForSegmentsFixed = makeSureInside(populationForSegments['OUTPUT'],
+      facilitiesForSegmentsFixed = makeSureInside(blocksJoined['OUTPUT'],
                                                   context,
                                                   feedback)
 

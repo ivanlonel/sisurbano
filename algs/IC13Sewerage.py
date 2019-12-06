@@ -133,7 +133,44 @@ class IC13Sewerage(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      blocksWithId = calculateField(params['BLOCKS'], 'id_block', '$id', context,
+      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                         params['STUDY_AREA_GRID'],
+                                         context, feedback)
+      gridNeto = grid      
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)        
+      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                             feedback)
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                              'area_bloc;' + fieldHousing,
+                              'id_grid',
+                              context, feedback)
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
+      housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
+                                          formulaHousingSegments,
+                                          context,
+                                          feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      blocksWithId = calculateField(housingForSegments['OUTPUT'], 'id_block', '$id', context,
                                     feedback, type=1)
 
       steps = steps+1
@@ -157,42 +194,7 @@ class IC13Sewerage(QgsProcessingAlgorithm):
       Calcular numero de viviendas por hexagano
       -----------------------------------------------------------------
       """
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-                                         params['STUDY_AREA_GRID'],
-                                         context, feedback)
-      gridNeto = grid      
 
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)        
-      blocks = calculateArea(blocksWithSewerage['OUTPUT'], 'area_bloc', context,
-                             feedback)
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                              'idx_count;area_bloc;' + fieldHousing,
-                              'id_grid',
-                              context, feedback)
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsArea = calculateArea(segments['OUTPUT'],
-                                   'area_seg',
-                                   context, feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
-      housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
-                                          formulaHousingSegments,
-                                          context,
-                                          feedback)
 
 
 
@@ -200,7 +202,7 @@ class IC13Sewerage(QgsProcessingAlgorithm):
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      sewerageForSegmentsFixed = makeSureInside(housingForSegments['OUTPUT'],
+      sewerageForSegmentsFixed = makeSureInside(blocksWithSewerage['OUTPUT'],
                                                   context,
                                                   feedback)
       # Con esto se saca el total de viviendas
@@ -231,7 +233,7 @@ class IC13Sewerage(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaSewer = 'coalesce((coalesce(hou_seg_sum_2,0) /  coalesce(hou_seg_sum,0))*100, "")'
+      formulaSewer = 'coalesce((coalesce(hou_seg_sum_2,0) /  coalesce(hou_seg_sum,""))*100, "")'
       sewer = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['IC13'][0],
                                         formulaSewer,
                                         context,
@@ -282,7 +284,7 @@ class IC13Sewerage(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'C Movilidad Urbana'
+        return 'C Movilidad urbana'
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)

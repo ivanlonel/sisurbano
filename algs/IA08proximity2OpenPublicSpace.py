@@ -147,51 +147,7 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
       -----------------------------------------------------------------
       """
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      blocksWithId = calculateField(params['BLOCKS'], 'id_block', '$id', context,
-                                    feedback, type=1)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      equipmentWithId = calculateField(params['EQUIPMENT'], 'idx', '$id', context,
-                                      feedback, type=1)      
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      centroidsBlocks = createCentroids(blocksWithId['OUTPUT'], context,
-                                        feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      blockBuffer4OpenSapace = createBuffer(centroidsBlocks['OUTPUT'], self.DISTANCE_BUFFER,
-                                            context,
-                                            feedback,)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      counterOpenSpace = joinByLocation(blockBuffer4OpenSapace['OUTPUT'],
-                                        equipmentWithId['OUTPUT'],
-                                        'idx', [CONTIENE], [COUNT],
-                                        UNDISCARD_NONMATCHING,
-                                        context,
-                                        feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      blocksJoined = joinByAttr(blocksWithId['OUTPUT'], 'id_block',
-                                counterOpenSpace['OUTPUT'], 'id_block',
-                                'idx_count',
-                                UNDISCARD_NONMATCHING,
-                                'osp_',
-                                context,
-                                feedback)
-
-      """
-      -----------------------------------------------------------------
-      Calcular numero de viviendas por hexagano
-      -----------------------------------------------------------------
-      """
       steps = steps+1
       feedback.setCurrentStep(steps)
       if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
@@ -204,7 +160,7 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)        
-      blocks = calculateArea(blocksJoined['OUTPUT'], 'area_bloc', context,
+      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
                              feedback)
 
       steps = steps+1
@@ -229,14 +185,58 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
                                           context,
                                           feedback)
 
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      blocksWithId = calculateField(housingForSegments['OUTPUT'], 'id_block', '$id', context,
+                                    feedback, type=1)
 
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      equipmentWithId = calculateField(params['EQUIPMENT'], 'idx', '$id', context,
+                                      feedback, type=1)      
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      centroidsBlocks = createCentroids(blocksWithId['OUTPUT'], context,
+                                        feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      blockBuffer4OpenSapace = createBuffer(centroidsBlocks['OUTPUT'], self.DISTANCE_BUFFER,
+                                            context,
+                                            feedback,)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      counterOpenSpace = joinByLocation(blockBuffer4OpenSapace['OUTPUT'],
+                                        equipmentWithId['OUTPUT'],
+                                        'idx', [CONTIENE, INTERSECTA], [COUNT],
+                                        UNDISCARD_NONMATCHING,
+                                        context,
+                                        feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      blocksJoined = joinByAttr(blocksWithId['OUTPUT'], 'id_block',
+                                counterOpenSpace['OUTPUT'], 'id_block',
+                                'idx_count',
+                                UNDISCARD_NONMATCHING,
+                                'osp_',
+                                context,
+                                feedback)
+
+      """
+      -----------------------------------------------------------------
+      Calcular numero de viviendas por hexagano
+      -----------------------------------------------------------------
+      """
 
 
       # Haciendo el buffer inverso aseguramos que los segmentos
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      facilitiesForSegmentsFixed = makeSureInside(housingForSegments['OUTPUT'],
+      facilitiesForSegmentsFixed = makeSureInside(blocksJoined['OUTPUT'],
                                                   context,
                                                   feedback)
       # Con esto se saca el total de viviendas

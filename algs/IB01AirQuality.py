@@ -188,9 +188,39 @@ class IB01AirQuality(QgsProcessingAlgorithm):
                                          context, feedback)
       gridNeto = grid  
 
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)        
+      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                             feedback)
+
+
       steps = steps+1
       feedback.setCurrentStep(steps)
-      blocks = calculateField(params['BLOCKS'], 'id_blocks', '$id', context,
+      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                              ['area_bloc',fieldPopulation],
+                              'id_grid',
+                              context, feedback)
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
+      populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
+                                          formulaPopulationSegments,
+                                          context,
+                                          feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      blocks = calculateField(populationForSegments['OUTPUT'], 'id_blocks', '$id', context,
                                     feedback, type=1)          
 
       steps = steps+1
@@ -244,44 +274,12 @@ class IB01AirQuality(QgsProcessingAlgorithm):
                                         condition,
                                         context,
                                         feedback, type=1)     
-
-                                                                                              
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)        
-      blocks = calculateArea(blocksPull['OUTPUT'], 'area_bloc', context,
-                             feedback)
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                              ['is_pull','area_bloc',fieldPopulation],
-                              'id_grid',
-                              context, feedback)
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsArea = calculateArea(segments['OUTPUT'],
-                                   'area_seg',
-                                   context, feedback)
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
-      populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
-                                          formulaPopulationSegments,
-                                          context,
-                                          feedback)
-
-
+                                                                                      
       # Haciendo el buffer inverso aseguramos que los segmentos
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      pullForSegmentsFixed = makeSureInside(populationForSegments['OUTPUT'],
+      pullForSegmentsFixed = makeSureInside(blocksPull['OUTPUT'],
                                                   context,
                                                   feedback)
       # Con esto se saca el total de viviendas
@@ -312,7 +310,7 @@ class IB01AirQuality(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaPull = 'coalesce((coalesce(pop_seg_sum_2,0) /  coalesce(pop_seg_sum,0))*100, "")'
+      formulaPull = 'coalesce((coalesce(pop_seg_sum_2,0) /  coalesce(pop_seg_sum,""))*100, "")'
       pull = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['IB01'][0],
                                         formulaPull,
                                         context,

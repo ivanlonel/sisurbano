@@ -23,7 +23,7 @@
 """
 
 __author__ = 'Johnatan Astudillo'
-__date__ = '2019-09-16'
+__date__ = '2019-12-04'
 __copyright__ = '(C) 2019 by LlactaLAB'
 
 # This will get replaced with a git SHA1 when you do a git archive
@@ -48,7 +48,7 @@ from .ZHelpers import *
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class ID11Theft(QgsProcessingAlgorithm):
+class ID02HomesConstructiveDeficiencies(QgsProcessingAlgorithm):
     """
     Mide la concentración de habitantes y evidencia indirectamente la demanda
     de movilidad, productos y servicios. Número de habitantes por la
@@ -61,17 +61,17 @@ class ID11Theft(QgsProcessingAlgorithm):
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
     BLOCKS = 'BLOCKS'
-    FIELD_POPULATION = 'FIELD_POPULATION'
-    NUMBER_HABITANTS = 'NUMBER_HABITANTS'
-    THEF = 'THEF'
+    FIELD_HOUSING = 'FIELD_HOUSING'
+    HOUSING_DEFICIENCIES = 'HOUSING_DEFICIENCIES'
     CELL_SIZE = 'CELL_SIZE'
     OUTPUT = 'OUTPUT'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'
 
+
     def initAlgorithm(self, config):
 
         currentPath = getCurrentPath(self)
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID11'][1]))
+        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID02'][1]))
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -83,19 +83,19 @@ class ID11Theft(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterField(
-                self.FIELD_POPULATION,
-                self.tr('Población'),
-                'poblacion', 'BLOCKS'
+                self.FIELD_HOUSING,
+                self.tr('Viviendas'),
+                'viviendas', 'BLOCKS'
             )
-        )        
+        )   
 
         self.addParameter(
-            QgsProcessingParameterFeatureSource(
-                self.THEF,
-                self.tr('Robos'),
-                [QgsProcessing.TypeVectorPoint]
+            QgsProcessingParameterField(
+                self.HOUSING_DEFICIENCIES,
+                self.tr('Viviendas con deficiencias'),
+                'viviendas', 'BLOCKS'
             )
-        )
+        )        
 
 
         self.addParameter(
@@ -107,7 +107,6 @@ class ID11Theft(QgsProcessingAlgorithm):
             )
         )
 
-
         if OPTIONAL_GRID_INPUT:
             self.addParameter(
                 QgsProcessingParameterNumber(
@@ -116,17 +115,8 @@ class ID11Theft(QgsProcessingAlgorithm):
                     QgsProcessingParameterNumber.Integer,
                     P_CELL_SIZE, False, 1, 99999999
                 )
-            )          
+            )
 
-
-        # self.addParameter(
-        #     QgsProcessingParameterNumber(
-        #         self.NUMBER_HABITANTS,
-        #         self.tr('Por cada número de habitantes'),
-        #         QgsProcessingParameterNumber.Integer,
-        #         100000, False, 1, 99999999
-        #     )
-        # )   
 
         self.addParameter(
             QgsProcessingParameterFeatureSink(
@@ -139,105 +129,86 @@ class ID11Theft(QgsProcessingAlgorithm):
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 12
-        fieldPopulation = params['FIELD_POPULATION']
-        # fieldHab = params['NUMBER_HABITANTS']
+        totalStpes = 11
+        fieldHousing = params['FIELD_HOUSING']
+        fieldHousingDeficiencies = params['HOUSING_DEFICIENCIES']
 
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
         blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
                                feedback)
 
+
         steps = steps+1
         feedback.setCurrentStep(steps)
         if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
         grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-                                         params['STUDY_AREA_GRID'],
-                                         context, feedback)
-        gridNeto = grid  
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
+        gridNeto = grid
+
+
 
         steps = steps+1
         feedback.setCurrentStep(steps)
         segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                                'area_bloc;' + fieldPopulation,
+                                ['area_bloc',fieldHousing,fieldHousingDeficiencies],
                                 'id_grid;area_grid',
                                 context, feedback)
 
         steps = steps+1
         feedback.setCurrentStep(steps)
         segmentsArea = calculateArea(segments['OUTPUT'],
-                                   'area_seg',
-                                   context, feedback)
+                                     'area_seg',
+                                     context, feedback)
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
+        formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
         housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
-                                          formulaPopulationSegments,
-                                          context,
-                                          feedback)
+                                               formulaHousingSegments,
+                                               context,
+                                               feedback)
 
-
-
-
-        # Haciendo el buffer inverso aseguramos que los segmentos
-        # quden dentro de la malla
         steps = steps+1
         feedback.setCurrentStep(steps)
-        segments = makeSureInside(housingForSegments['OUTPUT'],
-                                context,
-                                feedback)
+        formulaHousingDefSegments = '(area_seg/area_bloc) * ' + fieldHousingDeficiencies
+        housingAndHousingDefiForSegments = calculateField(housingForSegments['OUTPUT'], 'hou_def_seg',
+                                               formulaHousingDefSegments,
+                                               context,
+                                               feedback)        
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        housingAndHousingDefiForSegmentsFixed = makeSureInside(housingAndHousingDefiForSegments['OUTPUT'],
+                                                    context,
+                                                    feedback)
 
         steps = steps+1
         feedback.setCurrentStep(steps)
         gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                             segments['OUTPUT'],
-                                              'hou_seg',                                   
+                                             housingAndHousingDefiForSegmentsFixed['OUTPUT'],
+                                             ['hou_seg','hou_def_seg'],                                   
                                               [CONTIENE], [SUM],
                                               UNDISCARD_NONMATCHING,
                                               context,
                                               feedback)   
 
 
-        # Calcular cuantos robos hay en cada grid
-
         steps = steps+1
         feedback.setCurrentStep(steps)
-        thef = calculateField(params['THEF'], 'idx', '$id', context,
-                                         feedback, type=1)
-
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)        
-        gridNetoAndSegments = joinByLocation(gridNetoAndSegments['OUTPUT'],
-                                              thef['OUTPUT'],
-                                              ['idx'],                                   
-                                              [CONTIENE], [COUNT],
-                                              UNDISCARD_NONMATCHING,
-                                              context,
-                                              feedback)           
-
-        # steps = steps+1
-        # feedback.setCurrentStep(steps)
-        # formulaThefPerHab = 'idx_count/' + str(fieldHab)
-        # thefPerHab = calculateField(gridNetoAndSegments['OUTPUT'],
-        #                            NAMES_INDEX['ID11'][0],
-        #                            formulaThefPerHab,
-        #                            context,
-        #                            feedback, params['OUTPUT'])
-
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaThefPerHab = 'coalesce(coalesce(idx_count, 0)/hou_seg_sum, "")'
-        thefPerHab = calculateField(gridNetoAndSegments['OUTPUT'],
-                                   NAMES_INDEX['ID11'][0],
-                                   formulaThefPerHab,
+        formulaNetDensityhousingPerHa = 'coalesce((hou_def_seg_sum/hou_seg_sum)*100, 0)'
+        homesDeficiencies = calculateField(gridNetoAndSegments['OUTPUT'],
+                                   NAMES_INDEX['ID02'][0],
+                                   formulaNetDensityhousingPerHa,
                                    context,
-                                   feedback, params['OUTPUT'])        
+                                   feedback, params['OUTPUT'])
 
 
-        return thefPerHab
+
+
+
+        return homesDeficiencies
 
         # Return the results of the algorithm. In this case our only result is
         # the feature sink which contains the processed features, but some
@@ -248,7 +219,7 @@ class ID11Theft(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'thief.png'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'housebroken.png'))
 
     def name(self):
         """
@@ -258,7 +229,7 @@ class ID11Theft(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'D11 Robos por número de habitantes'
+        return 'D02 Viviendas con carencias constructivas'
 
     def displayName(self):
         """
@@ -288,5 +259,10 @@ class ID11Theft(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return ID11Theft()
+        return ID02HomesConstructiveDeficiencies()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br>"\
+                "<span>La cantidad de unidades de vivienda en el área urbana del municipio que no cumplen con los estándares de habitabilidad definidos por el país dividido para el total de unidades de vivienda en el área urbana a evaluar.<br>"\
+                "<b>Formula:</b><br>"\
+                "<span>(N° de viviendas con carencias / total de viviendas)*100</span><br>"\
