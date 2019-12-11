@@ -84,13 +84,13 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
             )
         )
 
-        self.addParameter(
-            QgsProcessingParameterField(
-                self.FIELD_POPULATION,
-                self.tr('Población'),
-                'poblacion', 'BLOCKS'
-            )
-        )      
+        # self.addParameter(
+        #     QgsProcessingParameterField(
+        #         self.FIELD_POPULATION,
+        #         self.tr('Población'),
+        #         'poblacion', 'BLOCKS'
+        #     )
+        # )      
 
         self.addParameter(
             QgsProcessingParameterField(
@@ -172,7 +172,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
     def processAlgorithm(self, params, context, feedback):
         steps = 0
         totalStpes = 31
-        fieldPopulation = params['FIELD_POPULATION']
+        # fieldPopulation = params['FIELD_POPULATION']
         fieldHousing = params['FIELD_HOUSING']
         DISTANCE_EDUCATION = 500
         DISTANCE_HEALTH = 1200

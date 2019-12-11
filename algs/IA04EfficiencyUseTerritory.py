@@ -63,11 +63,11 @@ class IA04EfficiencyUseTerritory(QgsProcessingAlgorithm):
     """
 
     YEARS = 'YEARS'
-    BLOCKS = 'BLOCKS'
+    BLOCKS_LAST = 'BLOCKS_LAST'
     BLOCKS_BEGIN = 'BLOCKS_BEGIN'
     BUILT_BEGIN = 'BUILT_BEGIN'
     BUILT_LAST = 'BUILT_LAST'
-    FIELD_POPULATION = 'FIELD_POPULATION'
+    FIELD_POPULATION_LAST = 'FIELD_POPULATION_LAST'
     FIELD_POPULATION_BEGIN = 'FIELD_POPULATION_BEGIN'
     CELL_SIZE = 'CELL_SIZE'
     OUTPUT = 'OUTPUT'
@@ -81,7 +81,7 @@ class IA04EfficiencyUseTerritory(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
-                self.BLOCKS,
+                self.BLOCKS_LAST,
                 self.tr('Manzanas en el último año'),
                 [QgsProcessing.TypeVectorPolygon]
             )
@@ -89,9 +89,9 @@ class IA04EfficiencyUseTerritory(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterField(
-                self.FIELD_POPULATION,
+                self.FIELD_POPULATION_LAST,
                 self.tr('Población en el último año'),
-                'poblacion', 'BLOCKS'
+                'poblacion', 'BLOCKS_LAST'
             )
         )    
 
@@ -170,7 +170,7 @@ class IA04EfficiencyUseTerritory(QgsProcessingAlgorithm):
     def processAlgorithm(self, params, context, feedback):
         steps = 0
         totalStpes = 24
-        fieldPopulationLast = params['FIELD_POPULATION']
+        fieldPopulationLast = params['FIELD_POPULATION_LAST']
         fieldPopulationBegin = params['FIELD_POPULATION_BEGIN']
         years = str(params['YEARS'])
 
@@ -182,7 +182,7 @@ class IA04EfficiencyUseTerritory(QgsProcessingAlgorithm):
         steps = steps+1
         feedback.setCurrentStep(steps)
         if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS_BEGIN'],
                                            params['STUDY_AREA_GRID'],
                                            context, feedback)
         gridNeto = grid
@@ -234,7 +234,7 @@ class IA04EfficiencyUseTerritory(QgsProcessingAlgorithm):
         segmentsBeginFixed = makeSureInside(beginHousingForSegments['OUTPUT'],
                                                     context,
                                                     feedback)                                     
-        blocks = params['BLOCKS']
+        blocks = params['BLOCKS_LAST']
 
         steps = steps+1
         feedback.setCurrentStep(steps)

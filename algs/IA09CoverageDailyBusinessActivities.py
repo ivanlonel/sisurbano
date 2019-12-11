@@ -70,7 +70,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
     FIELD_POPULATE_HOUSING = 'FIELD_POPULATE_HOUSING'
     CELL_SIZE = 'CELL_SIZE'    
     SHOP = 'SHOP'    
-    MINIMARKET = 'MINIMARKET'    
+    GAS = 'GAS'    
     PHARMACY = 'PHARMACY'    
     BAKERY = 'BAKERY'    
     STATIONERY = 'STATIONERY'    
@@ -155,7 +155,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
         # MINIMARKET ES REEMPLAZADO POR DEPOSITOS DE DE DISTRIBUACION DE CILINDROS DE GAS
         self.addParameter(
             QgsProcessingParameterFeatureSource(
-                self.MINIMARKET,
+                self.GAS,
                 self.tr('Depósitos de distribución de cilindros de gas'),
                 [QgsProcessing.TypeVectorPoint],
                 '', True
@@ -279,7 +279,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      layerMinimarket = calculateField(params['MINIMARKET'], 'idx', '$id', context,
+      layerMinimarket = calculateField(params['GAS'], 'idx', '$id', context,
                                     feedback, type=1)    
 
       steps = steps+1

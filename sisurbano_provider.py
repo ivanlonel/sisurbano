@@ -37,6 +37,7 @@ from qgis.PyQt.QtGui import QIcon
 from .sisurbano_algorithm import SisurbanoAlgorithm
 
 from .algs import ( 
+    IA00WrapA,
     IA01DensityPopulation,
     IA02DensityHousing,
     IA03Compactness,
@@ -95,6 +96,7 @@ class SisurbanoProvider(QgsProcessingProvider):
         Loads all algorithms belonging to this provider.
         """
         # self.addAlgorithm(SisurbanoAlgorithm())
+        self.addAlgorithm(IA00WrapA.IA00WrapA())
         self.addAlgorithm(IA01DensityPopulation.IA01DensityPopulation())
         self.addAlgorithm(IA02DensityHousing.IA02DensityHousing())
         self.addAlgorithm(IA03Compactness.IA03Compactness())

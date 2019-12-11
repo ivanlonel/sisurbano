@@ -57,7 +57,7 @@ class IA11UrbanComplexity(QgsProcessingAlgorithm):
     en el territorio, a través de la fórmula de Shannon proveniente de la Teoría de la Información.
     Formula: Σj Shannon - Ìndice de diversidad de Wienner
     """
-    TERTIARYUSES = 'TERTIARYUSES'
+    TERTIARYUSES_ACTIVITIES = 'TERTIARYUSES_ACTIVITIES'
     BLOCKS = 'BLOCKS'
     FIELD_POPULATION = 'FIELD_POPULATION'
     FIELD_ACTIVITIES = 'FIELD_ACTIVITIES'
@@ -109,9 +109,9 @@ class IA11UrbanComplexity(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
-                self.TERTIARYUSES,
-                self.tr('Uos terciarios (comercio, servicios u oficinas)'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                self.TERTIARYUSES_ACTIVITIES,
+                self.tr('Equipamientos de actividades'),
+                [QgsProcessing.TypeVectorPoint]
             )
         )
 
@@ -119,7 +119,7 @@ class IA11UrbanComplexity(QgsProcessingAlgorithm):
             QgsProcessingParameterField(
                 self.FIELD_ACTIVITIES,
                 self.tr('Actividades'),
-                'actividad_', 'TERTIARYUSES'
+                'categoria', 'TERTIARYUSES_ACTIVITIES'
             )
         )  
 
@@ -156,7 +156,7 @@ class IA11UrbanComplexity(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      activitiesGrid = joinAttrByLocation(params['TERTIARYUSES'],
+      activitiesGrid = joinAttrByLocation(params['TERTIARYUSES_ACTIVITIES'],
                               gridNeto['OUTPUT'],
                               ['id_grid'],
                               [INTERSECTA],

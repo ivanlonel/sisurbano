@@ -58,9 +58,9 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
     Viviendas totales) * 100
     """ 
     BLOCKS = 'BLOCKS'
-    FIELD_POPULATION = 'FIELD_POPULATION'
+    # FIELD_POPULATION = 'FIELD_POPULATION'
     FIELD_HOUSING = 'FIELD_HOUSING'
-    EQUIPMENT = 'EQUIPMENT'
+    EQUIPMENT_PUBLIC_SPACE = 'EQUIPMENT_PUBLIC_SPACE'
     CELL_SIZE = 'CELL_SIZE'    
     OUTPUT = 'OUTPUT'
     DISTANCE_BUFFER = 300
@@ -81,13 +81,13 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
             )
         )
 
-        self.addParameter(
-            QgsProcessingParameterField(
-                self.FIELD_POPULATION,
-                self.tr('Población'),
-                'poblacion', 'BLOCKS'
-            )
-        )      
+        # self.addParameter(
+        #     QgsProcessingParameterField(
+        #         self.FIELD_POPULATION,
+        #         self.tr('Población'),
+        #         'poblacion', 'BLOCKS'
+        #     )
+        # )      
 
         self.addParameter(
             QgsProcessingParameterField(
@@ -118,7 +118,7 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
-                self.EQUIPMENT,
+                self.EQUIPMENT_PUBLIC_SPACE,
                 self.tr('Espacios públicos abiertos'),
                 [QgsProcessing.TypeVectorAnyGeometry]
             )
@@ -136,7 +136,7 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
     def processAlgorithm(self, params, context, feedback):
       steps = 0
       totalStpes = 13
-      fieldPopulation = params['FIELD_POPULATION']
+      # fieldPopulation = params['FIELD_POPULATION']
       fieldHousing = params['FIELD_HOUSING']
 
       feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
@@ -192,7 +192,7 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      equipmentWithId = calculateField(params['EQUIPMENT'], 'idx', '$id', context,
+      equipmentWithId = calculateField(params['EQUIPMENT_PUBLIC_SPACE'], 'idx', '$id', context,
                                       feedback, type=1)      
 
       steps = steps+1

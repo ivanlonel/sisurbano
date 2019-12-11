@@ -119,7 +119,7 @@ class IA05EmptyProperties(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.EMPTY_PROPERTIES,
                 self.tr('Predios vacíos'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorPolygon]
             )
         )
 
