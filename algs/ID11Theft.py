@@ -62,8 +62,8 @@ class ID11Theft(QgsProcessingAlgorithm):
     # calling from the QGIS console.
     BLOCKS = 'BLOCKS'
     FIELD_POPULATION = 'FIELD_POPULATION'
-    NUMBER_HABITANTS = 'NUMBER_HABITANTS'
-    THEF = 'THEF'
+    # NUMBER_HABITANTS = 'NUMBER_HABITANTS'
+    THEFTS = 'THEFTS'
     CELL_SIZE = 'CELL_SIZE'
     OUTPUT = 'OUTPUT'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'
@@ -91,7 +91,7 @@ class ID11Theft(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
-                self.THEF,
+                self.THEFTS,
                 self.tr('Robos'),
                 [QgsProcessing.TypeVectorPoint]
             )
@@ -203,7 +203,7 @@ class ID11Theft(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        thef = calculateField(params['THEF'], 'idx', '$id', context,
+        thef = calculateField(params['THEFTS'], 'idx', '$id', context,
                                          feedback, type=1)
 
 

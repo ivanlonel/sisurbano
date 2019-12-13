@@ -59,8 +59,8 @@ class ID10Proximity2PublicMarket(QgsProcessingAlgorithm):
     Formula: (Viviendas con proximidad a mercados públicos /
               Viviendas totales)*100
     """
-    EQUIPMENT = 'EQUIPMENT'
     BLOCKS = 'BLOCKS'
+    EQUIPMENT_MARKET = 'EQUIPMENT_MARKET'
     FIELD_POPULATION = 'FIELD_POPULATION'
     FIELD_HOUSING = 'FIELD_HOUSING'
     CELL_SIZE = 'CELL_SIZE'    
@@ -120,7 +120,7 @@ class ID10Proximity2PublicMarket(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
-                self.EQUIPMENT,
+                self.EQUIPMENT_MARKET,
                 self.tr('Mercados públicos'),
                 [QgsProcessing.TypeVectorPoint]
             )
@@ -194,7 +194,7 @@ class ID10Proximity2PublicMarket(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      equipmentWithId = calculateField(params['EQUIPMENT'], 'idx', '$id', context,
+      equipmentWithId = calculateField(params['EQUIPMENT_MARKET'], 'idx', '$id', context,
                                       feedback, type=1)
 
 

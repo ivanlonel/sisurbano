@@ -55,7 +55,6 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
     Formula: (No. viviendas con todos los servicios / No. total de viviendas)*100
     """
 
-    YEARS = 'YEARS'
     BLOCKS = 'BLOCKS'
     VAR_SECTORES = 'VAR_SECTORES'
     FIELD_POPULATION = 'FIELD_POPULATION'

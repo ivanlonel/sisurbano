@@ -23,7 +23,7 @@
 """
 
 __author__ = 'Johnatan Astudillo'
-__date__ = '2019-09-16'
+__date__ = '2019-10-13'
 __copyright__ = '(C) 2019 by LlactaLAB'
 
 # This will get replaced with a git SHA1 when you do a git archive
@@ -60,14 +60,38 @@ class ID00WrapD(QgsProcessingAlgorithm):
     CELL_SIZE = 'CELL_SIZE'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'
 
-
-    OUTPUT_A01 = 'OUTPUT_A01'
+    #-----------------D01----------------------  
+    VAR_SECTORES = 'VAR_SECTORES'
+    FIELD_VAR_SECTORES = 'FIELD_VAR_SECTORES'
+    #-----------------D02----------------------    
+    HOUSING_DEFICIENCIES = 'HOUSING_DEFICIENCIES'
+    #-----------------D03----------------------    
+    RISK = 'RISK'
+    #-----------------D04----------------------
+    OPEN_SPACE = 'OPEN_SPACE'
+    SPACE2IMPROVEMENT = 'SPACE2IMPROVEMENT'
+    #-----------------D10----------------------    
+    EQUIPMENT_MARKET = 'EQUIPMENT_MARKET'
+    #-----------------D11----------------------    
+    THEFTS = 'THEFTS'
+    #-----------------OUTPUTS----------------------
+    OUTPUT_D01 = 'OUTPUT_D01'
+    OUTPUT_D02 = 'OUTPUT_D02'
+    OUTPUT_D03 = 'OUTPUT_D03'
+    OUTPUT_D04 = 'OUTPUT_D04'
+    OUTPUT_D10 = 'OUTPUT_D10'
+    OUTPUT_D11 = 'OUTPUT_D11'
 
 
     def initAlgorithm(self, config):
 
         currentPath = getCurrentPath(self)
-        FULL_PATH_A01 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA01'][1]))
+        FULL_PATH_D01 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID01'][1]))
+        FULL_PATH_D02 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID02'][1]))
+        FULL_PATH_D03 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID03'][1]))
+        FULL_PATH_D04 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID04'][1]))
+        FULL_PATH_D10 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID10'][1]))
+        FULL_PATH_D11 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID11'][1]))
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -94,6 +118,73 @@ class ID00WrapD(QgsProcessingAlgorithm):
         )   
 
 
+        #-----------------D01----------------------  
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.VAR_SECTORES,
+                self.tr('Sectores'),
+                [QgsProcessing.TypeVectorPolygon]
+            )
+        )
+
+        self.addParameter(
+            QgsProcessingParameterField(
+                self.FIELD_VAR_SECTORES,
+                self.tr('Viviendas con servicios básicos'),
+                'Viviendas_', 'VAR_SECTORES'
+            )
+        )   
+        #-----------------D02----------------------    
+        self.addParameter(
+            QgsProcessingParameterField(
+                self.HOUSING_DEFICIENCIES,
+                self.tr('Viviendas con deficiencias'),
+                'viviendas', 'BLOCKS'
+            )
+        )        
+        #-----------------D03----------------------    
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.RISK,
+                self.tr('Zonas de riesgo'),
+                [QgsProcessing.TypeVectorAnyGeometry]
+            )
+        )
+        #-----------------D04----------------------
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.OPEN_SPACE,
+                self.tr('Espacios públicos abiertos'),
+                [QgsProcessing.TypeVectorPolygon]
+            )
+        )
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.SPACE2IMPROVEMENT,
+                self.tr('Espacios públicos abiertos que necesitan mejoras'),
+                [QgsProcessing.TypeVectorAnyGeometry]
+            )
+        )
+        #-----------------D10----------------------    
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.EQUIPMENT_MARKET,
+                self.tr('Mercados públicos'),
+                [QgsProcessing.TypeVectorPoint]
+            )
+        )
+
+        #-----------------D11----------------------       
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.THEFTS,
+                self.tr('Robos'),
+                [QgsProcessing.TypeVectorPoint]
+            )
+        )
+        #-----------------OTHERS----------------------     
+
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.STUDY_AREA_GRID,
@@ -103,25 +194,71 @@ class ID00WrapD(QgsProcessingAlgorithm):
             )
         )
 
+        #-----------------OUTPUT----------------------          
+
         self.addParameter(
             QgsProcessingParameterFeatureSink(
-                self.OUTPUT_A01,
-                self.tr('A01 Densidad neta de habitantes'),
+                self.OUTPUT_D01,
+                self.tr('D01 Viviendas con cobertura total de servicios básicos'),
                 QgsProcessing.TypeVectorAnyGeometry,
-                str(FULL_PATH_A01)
+                str(FULL_PATH_D01)
             )
         )
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSink(
+                self.OUTPUT_D02,
+                self.tr('D02 Viviendas con carencias constructivas'),
+                QgsProcessing.TypeVectorAnyGeometry,
+                str(FULL_PATH_D02)
+            )
+        )        
              
+        self.addParameter(
+            QgsProcessingParameterFeatureSink(
+                self.OUTPUT_D03,
+                self.tr('D03 Viviendas emplazadas en zonas vulnerables y de riesgo'),
+                QgsProcessing.TypeVectorAnyGeometry,
+                str(FULL_PATH_D03)
+            )
+        )        
+           
+        self.addParameter(
+            QgsProcessingParameterFeatureSink(
+                self.OUTPUT_D04,
+                self.tr('D04 Espacios públicos abiertos que necesitan mejoras'),
+                QgsProcessing.TypeVectorAnyGeometry,
+                str(FULL_PATH_D04)
+            )
+        )             
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSink(
+                self.OUTPUT_D10,
+                self.tr('D10 Cercanía y asequibilidad a alimentos'),
+                QgsProcessing.TypeVectorAnyGeometry,
+                str(FULL_PATH_D10)
+            )
+        )             
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSink(
+                self.OUTPUT_D11,
+                self.tr('D11 Robos por número de habitantes'),
+                QgsProcessing.TypeVectorAnyGeometry,
+                str(FULL_PATH_D11)
+            )
+        )             
 
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 12
+        totalStpes = 7
         outputs = {}
         results = {}
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-        # A01 Densidad neta de habitantes
+        # D01 Viviendas con cobertura total de servicios básicos
         steps = steps+1
         feedback.setCurrentStep(steps)  
         if feedback.isCanceled():
@@ -129,12 +266,91 @@ class ID00WrapD(QgsProcessingAlgorithm):
         alg_params = {
             'BLOCKS': params['BLOCKS'],
             'FIELD_POPULATION': params['FIELD_POPULATION'],
+            'FIELD_VAR_SECTORES': params['FIELD_VAR_SECTORES'],
             'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_A01']
+            'VAR_SECTORES': params['VAR_SECTORES'],
+            'OUTPUT': params['OUTPUT_D01']
         }
-        outputs['A01DensidadNetaDeHabitantes'] = processing.run('SISURBANO:A01 Densidad neta de habitantes', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_A01'] = outputs['A01DensidadNetaDeHabitantes']['OUTPUT']        
+        outputs['D01ViviendasConCoberturaTotalDeServiciosBsicos'] = processing.run('SISURBANO:D01 Viviendas con cobertura total de servicios básicos', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        results['OUTPUT_D01'] = outputs['D01ViviendasConCoberturaTotalDeServiciosBsicos']['OUTPUT']               
                           
+
+        # D02 Viviendas con carencias constructivas
+        steps = steps+1
+        feedback.setCurrentStep(steps)  
+        if feedback.isCanceled():
+            return {}        
+        alg_params = {
+            'BLOCKS': params['BLOCKS'],
+            'FIELD_HOUSING': params['FIELD_HOUSING'],
+            'HOUSING_DEFICIENCIES': params['HOUSING_DEFICIENCIES'],
+            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+            'OUTPUT': params['OUTPUT_D02']
+        }
+        outputs['D02ViviendasConCarenciasConstructivas'] = processing.run('SISURBANO:D02 Viviendas con carencias constructivas', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        results['OUTPUT_D02'] = outputs['D02ViviendasConCarenciasConstructivas']['OUTPUT']
+
+
+        # D03 Viviendas emplazadas en zonas vulnerables y de riesgo
+        steps = steps+1
+        feedback.setCurrentStep(steps)  
+        if feedback.isCanceled():
+            return {}          
+        alg_params = {
+            'BLOCKS': params['BLOCKS'],
+            'FIELD_HOUSING': params['FIELD_HOUSING'],
+            'RISK': params['RISK'],
+            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+            'OUTPUT': params['OUTPUT_D03']
+        }
+        outputs['D03ViviendasEmplazadasEnZonasVulnerablesYDeRiesgo'] = processing.run('SISURBANO:D03 Viviendas emplazadas en zonas vulnerables y de riesgo', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        results['OUTPUT_D03'] = outputs['D03ViviendasEmplazadasEnZonasVulnerablesYDeRiesgo']['OUTPUT']
+
+        # D04 Espacios públicos abiertos que necesitan mejoras
+        steps = steps+1
+        feedback.setCurrentStep(steps)  
+        if feedback.isCanceled():
+            return {}           
+        alg_params = {
+            'OPEN_SPACE': params['OPEN_SPACE'],
+            'SPACE2IMPROVEMENT': params['SPACE2IMPROVEMENT'],
+            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+            'OUTPUT': params['OUTPUT_D04']
+        }
+        outputs['D04EspaciosPblicosAbiertosQueNecesitanMejoras'] = processing.run('SISURBANO:D04 Espacios públicos abiertos que necesitan mejoras', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        results['OUTPUT_D04'] = outputs['D04EspaciosPblicosAbiertosQueNecesitanMejoras']['OUTPUT']   
+
+
+        # D10 Cercanía y asequibilidad a alimentos
+        steps = steps+1
+        feedback.setCurrentStep(steps)  
+        if feedback.isCanceled():
+            return {}          
+        alg_params = {
+            'BLOCKS': params['BLOCKS'],
+            'EQUIPMENT_MARKET': params['EQUIPMENT_MARKET'],
+            'FIELD_HOUSING': params['FIELD_HOUSING'],
+            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+            'OUTPUT': params['OUTPUT_D10']
+        }
+        outputs['D10CercanaYAsequibilidadAAlimentos'] = processing.run('SISURBANO:D10 Cercanía y asequibilidad a alimentos', alg_params, context=context, feedback=feedback, is_child_algorithm=True)    
+        results['OUTPUT_D10'] = outputs['D10CercanaYAsequibilidadAAlimentos']['OUTPUT']     
+
+        # D11 Robos por número de habitantes
+        steps = steps+1
+        feedback.setCurrentStep(steps)  
+        if feedback.isCanceled():
+            return {}           
+        alg_params = {
+            'BLOCKS': params['BLOCKS'],
+            'FIELD_POPULATION': params['FIELD_POPULATION'],
+            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+            'THEFTS': params['THEFTS'],
+            'OUTPUT': params['OUTPUT_D11']
+        }
+        outputs['D11RobosPorNmeroDeHabitantes'] = processing.run('SISURBANO:D11 Robos por número de habitantes', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        results['OUTPUT_D11'] = outputs['D11RobosPorNmeroDeHabitantes']['OUTPUT']                       
+
 
         return results
 

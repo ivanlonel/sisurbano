@@ -56,8 +56,8 @@ class ID04OpenPublicSpacesNeedImprovement(QgsProcessingAlgorithm):
     Formula: (Superficie de espacios públicos abiertos que necesitan mejoras en m2 / Superficie total de espacios públicos abiertos en m2)*100
     """
     OPEN_SPACE = 'OPEN_SPACE'
-    CELL_SIZE = 'CELL_SIZE'
     SPACE2IMPROVEMENT = 'SPACE2IMPROVEMENT'
+    CELL_SIZE = 'CELL_SIZE'    
     OUTPUT = 'OUTPUT'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'
 

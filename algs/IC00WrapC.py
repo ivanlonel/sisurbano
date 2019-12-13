@@ -267,7 +267,7 @@ class IC00WrapC(QgsProcessingAlgorithm):
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 12
+        totalStpes = 6
         outputs = {}
         results = {}
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
