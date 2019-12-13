@@ -217,7 +217,7 @@ class IB02LuminaryPerRoad(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaLumPerRoad = 'coalesce(idx_count/LENGTH, "")'
+      formulaLumPerRoad = 'coalesce(coalesce(idx_count,0)/LENGTH, "")'
       lumPerRoad = calculateField(gridNetoAndSegmentsSumLinesLum['OUTPUT'],
                                      NAMES_INDEX['IB02'][0],
                                      formulaLumPerRoad,
@@ -277,4 +277,12 @@ class IB02LuminaryPerRoad(QgsProcessingAlgorithm):
 
     def createInstance(self):
         return IB02LuminaryPerRoad()
+
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Trata de medir la cantidad adecuada de iluminación nocturna pública en el viario público. Esta es importante ya que la falta de iluminación está asociada a la percepción de inseguridad, y por el contrario, áreas sobreiluminadas o con contaminación lumínica, perjudican a especies naturales.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span></span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>Total de luminarias / Viario público en m2<br/>"          
 

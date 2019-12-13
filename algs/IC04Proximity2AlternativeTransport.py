@@ -575,3 +575,11 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
     def createInstance(self):
         return IC04Proximity2AlternativeTransport()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide el porcentaje de población que tiene acceso simultáneo a tres o más redes de transporte alternativo (bus, tranvía, bici pública, ciclovías y senderos peatonales). Se considera que la población tiene acceso a una red de transporte si su vivienda se encuentra dentro del área de influencia de dicha red, según lo siguiente: a 300m de una parada de bus urbano, 500m de una parada de tranvía, 300m de una estación de bici pública, 300m de ciclovías, y 300m de un sendero peatonal.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>Proximidad se define como viviendas ubicadas a: 300m o menos de una parada de bus urbano, 500m o menos de una parada de tranvía, 300m o menos de una estación de bici pública, 300m o menos de una ciclovía, 300m o menos de senderos peatonales</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>(Población cubierta por al menos 3 redes de transporte alternativo / Población total)*100<br/>"         
+

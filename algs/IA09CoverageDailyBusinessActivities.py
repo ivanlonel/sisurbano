@@ -585,3 +585,11 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
     def createInstance(self):
         return IA09CoverageDailyBusinessActivities()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide la cobertura simultánea de actividades comerciales cotidianas, poniendo de manifiesto la actividad de la calle y el tiempo invertido en desplazamientos relacionados con estas tareas. Relación entre el número de viviendas que simultaneamente se encuentran dentro del radio de cobertura de 300m de cada una categoría de actividad comercial cotidiana ( a) tienda de abarrotes, despensas, minimercado, b) farmacia, droguería, c) papelería, bazar, d) panadería, heladería, pastelería, e) depósitos de distribución de cilindros de gas) y el total de viviendas del área estudio.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>Áreas cubiertas se consideran aquellas que simultáneamente quedan cubiertas al trazar un radio de 300m desde cada tipo de actividad comercial cotidiana. Actividades comerciales cotidianas se consideran las siguientes categorías: a) tienda de abarrotes, despensas, minimercado, b) farmacia, droguería, c) papelería, bazar, d) panadería, heladería, pastelería, e) depósitos de distribución de cilindros de gas.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>(Viviendas con cobertura simultánea de actividades comerciales cotidianas / Viviendas totales)*100<br/>"          
+

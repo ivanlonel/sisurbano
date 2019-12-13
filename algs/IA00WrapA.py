@@ -23,7 +23,7 @@
 """
 
 __author__ = 'Johnatan Astudillo'
-__date__ = '2019-09-16'
+__date__ = '2019-10-12'
 __copyright__ = '(C) 2019 by LlactaLAB'
 
 # This will get replaced with a git SHA1 when you do a git archive
@@ -345,7 +345,7 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.TERTIARYUSES_ACTIVITIES,
                 self.tr('Equipamientos de actividades'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorPoint]
             )
         )    
 
@@ -586,9 +586,9 @@ class IA00WrapA(QgsProcessingAlgorithm):
         if feedback.isCanceled():
             return {}            
         alg_params = {
-            'BAKERY': params['BAKERY'],
             'BLOCKS': params['BLOCKS'],
-            'FIELD_HOUSING': params['FIELD_HOUSING'],
+            'FIELD_POPULATE_HOUSING': params['FIELD_HOUSING'],        
+            'BAKERY': params['BAKERY'],
             'GAS': params['GAS'],
             'PHARMACY': params['PHARMACY'],
             'SHOP': params['SHOP'],
@@ -621,7 +621,7 @@ class IA00WrapA(QgsProcessingAlgorithm):
             return {}            
         alg_params = {
             'BLOCKS': params['BLOCKS'],
-            'FIELD_ACTIVITIES': 'FIELD_ACTIVITIES',
+            'FIELD_ACTIVITIES': params['FIELD_ACTIVITIES'],
             'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
             'TERTIARYUSES_ACTIVITIES': params['TERTIARYUSES_ACTIVITIES'],
             'OUTPUT': params['OUTPUT_A11']

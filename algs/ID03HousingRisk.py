@@ -321,3 +321,11 @@ class ID03HousingRisk(QgsProcessingAlgorithm):
     def createInstance(self):
         return ID03HousingRisk()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide le porcentaje de viviendas ubicadas cerca de vertederos, camales, plantas de tratamiento de agua, industria pesada, zonas de deslizamiento, propensas a inundaciones, entre otros factores que influyen sobre el estado de la salud y las condiciones de vida.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>La cantidad de unidades de vivienda en el área urbana emplazadas en zonas vulnerables y de riesgo, dividido para el total de unidades de vivienda en el área urbana a evaluar.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>(N° de viviendasen zona de riesgo / total de viviendas)*100<br/>"         
+

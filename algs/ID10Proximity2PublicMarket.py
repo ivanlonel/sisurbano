@@ -332,3 +332,10 @@ class ID10Proximity2PublicMarket(QgsProcessingAlgorithm):
     def createInstance(self):
         return ID10Proximity2PublicMarket()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide la distancia desde la vivienda a puntos de venta de comida asequible. Se entiende como cercano y asequible, aquellas viviendas ubicadas a 300 metros o menos de mercados públicos.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>El objetivo de un sistema alimentario es promover y consolidar puntos de venta de alimentos saludables, para diversas zonas de la ciudad, de manera que se llegue a todos los ciudadanos.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>(Viviendas con proximidad a mercados públicos / Viviendas totales)*100<br/>" 

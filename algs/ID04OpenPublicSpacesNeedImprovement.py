@@ -248,3 +248,11 @@ class ID04OpenPublicSpacesNeedImprovement(QgsProcessingAlgorithm):
     def createInstance(self):
         return ID04OpenPublicSpacesNeedImprovement()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide el porcentaje de espacios públicos abiertos (parques, plazas, plazas cívicas, otros) que necesitan mejoras en cuanto a la estructura, mobiliario, vegetación en relación con el número total de espacios públicos.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>Se consideran los lotes de espacio público, en base al registro más reciente del estado actual. </span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>(Superficie de espacios públicos abiertos que necesitan mejoras en m2 / Superficie total de espacios públicos abiertos en m2)*100<br/>"         
+

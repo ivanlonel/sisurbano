@@ -248,3 +248,11 @@ class IC08ParkedVehicles(QgsProcessingAlgorithm):
     def createInstance(self):
         return IC08ParkedVehicles()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide de forma indirecta la intensidad de uso del vehículo y la cobertura de sistemas de transporte público. Área destinada a parqueaderos en el espacio público con respecto a la superficie del tramo de calle.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span></span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>(Superficie de parqueadero en m2 / Superficie total del tramo de calle en m2)*100<br/>"         
+

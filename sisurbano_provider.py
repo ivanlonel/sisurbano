@@ -48,6 +48,7 @@ from .algs import (
     IA09CoverageDailyBusinessActivities,
     IA10RelationshipActivityResidence,
     IA11UrbanComplexity,
+    IB00WrapB,
     IB01AirQuality,
     IB02LuminaryPerRoad,
     IB03AcousticComfort,
@@ -55,11 +56,13 @@ from .algs import (
     IB06Proximity2GreenPublicSpace,
     IB07SoilPermeability,
     IB08AgriculturalGrove,
+    IC00WrapC,
     IC01PublicPedestrianRoadDistribution,
     IC03RoadsPerHabitant,
     IC04Proximity2AlternativeTransport,
     IC08ParkedVehicles,
     IC13Sewerage,
+    ID00WrapD,
     ID03HousingRisk,
     ID01HousingFullCoverageBasicServices,
     ID02HomesConstructiveDeficiencies,
@@ -107,6 +110,7 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(IA09CoverageDailyBusinessActivities.IA09CoverageDailyBusinessActivities())
         self.addAlgorithm(IA10RelationshipActivityResidence.IA10RelationshipActivityResidence())
         self.addAlgorithm(IA11UrbanComplexity.IA11UrbanComplexity())
+        self.addAlgorithm(IB00WrapB.IB00WrapB())
         self.addAlgorithm(IB01AirQuality.IB01AirQuality())
         self.addAlgorithm(IB02LuminaryPerRoad.IB02LuminaryPerRoad())
         self.addAlgorithm(IB03AcousticComfort.IB03AcousticComfort())
@@ -114,11 +118,13 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(IB06Proximity2GreenPublicSpace.IB06Proximity2GreenPublicSpace())
         self.addAlgorithm(IB07SoilPermeability.IB07SoilPermeability())
         self.addAlgorithm(IB08AgriculturalGrove.IB08AgriculturalGrove())
+        self.addAlgorithm(IC00WrapC.IC00WrapC())
         self.addAlgorithm(IC01PublicPedestrianRoadDistribution.IC01PublicPedestrianRoadDistribution())
         self.addAlgorithm(IC03RoadsPerHabitant.IC03RoadsPerHabitant())
         self.addAlgorithm(IC04Proximity2AlternativeTransport.IC04Proximity2AlternativeTransport())
         self.addAlgorithm(IC08ParkedVehicles.IC08ParkedVehicles())
         self.addAlgorithm(IC13Sewerage.IC13Sewerage())
+        self.addAlgorithm(ID00WrapD.ID00WrapD())
         self.addAlgorithm(ID01HousingFullCoverageBasicServices.ID01HousingFullCoverageBasicServices())
         self.addAlgorithm(ID02HomesConstructiveDeficiencies.ID02HomesConstructiveDeficiencies())
         self.addAlgorithm(ID03HousingRisk.ID03HousingRisk())

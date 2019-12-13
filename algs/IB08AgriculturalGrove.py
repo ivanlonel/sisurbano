@@ -267,3 +267,11 @@ class IB08AgriculturalGrove(QgsProcessingAlgorithm):
     def createInstance(self):
         return IB08AgriculturalGrove()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide la capacidad de un territorio de contener actividades agrícolas o huertos en relación a su superficie total.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span></span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>(Superficie de espacios agrícolas en m2 / Superficie total en m2)*100<br/>"          
+

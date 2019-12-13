@@ -314,3 +314,11 @@ class IB03AcousticComfort(QgsProcessingAlgorithm):
     def createInstance(self):
         return IB03AcousticComfort()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide la cantidad de población no expuesta a niveles sonoros superiores a los recomendados, y que comprenden 70 dB diurnos y 65 dB nocturnos, en base al Texto Unificado de Legislación Secundaria del Ministerio del Ambiente (TULSMA, 2015).</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span></span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>(Población expuesta a niveles acústicos inferiores a los límites establecidos / Población total)*100<br/>"          
+

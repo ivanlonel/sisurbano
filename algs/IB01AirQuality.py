@@ -363,3 +363,11 @@ class IB01AirQuality(QgsProcessingAlgorithm):
     def createInstance(self):
         return IB01AirQuality()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide la cantidad de población no expuesta a niveles de emisión superiores a los determinados como nocivos para la salud por la Norma Ecuatoriana de Calidad del Aire Ambiente.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>Se evalua por separado cada uno de los contaminantes: NO2, CO, SO2, O3, MP2.5 y MP10. Se utilizan los resultados de los cálculos realizados por el IERSE y EMOV en el años 2015. Si de entrada no se cumple con los niveles para uno de los contaminates, se considera que es una poblacion expuesta y no es necesario seguir con el análisis del siguiente contaminante.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>(Población no expuesta a aire nocivo / Total de la población)*100<br/>"           
+

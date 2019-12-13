@@ -327,3 +327,11 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
     def createInstance(self):
         return IA08proximity2OpenPublicSpace()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide la población que se encuentra próxima a espacios públicos abiertos. Relación entre las viviendas ubicadas a 300 metros o menos de un espacio público abierto (parques, plazas, parques cívicos, parque infantil, campo deportivo, margen de agua, parque lineal, bulevards y mercados abiertos.) y el total de viviendas del área de estudio.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>Proximidad se define como viviendas a 300m o menos de un espacio público abierto. Los espacios públicos abiertos comprenden parques, plazas, parques cívicos, parque infantil, campo deportivo, margen de agua, parque lineal, bulevards y mercados abiertos.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>(Viviendas con proximidad a espacios públicos abiertos / Viviendas totales)*100<br/>"        
+

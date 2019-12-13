@@ -329,7 +329,9 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
         return ID01HousingFullCoverageBasicServices()
 
     def shortHelpString(self):
-        return  "<b>Descripción:</b><br>"\
-                "<span>Mide la eficiencia del consumo del territorio en base al crecimiento poblacional. Puede informar sobre la dispersión de una ciudad. Relación entre la tasa de crecimiento urbano y la tasa de crecimiento de la población. El indicador se mide para cada censo poblacional, donde el crecimiento urbano se expresa como el área urbanizada en planta baja de un territorio.</span><br>"\
-                "<b>Formula:</b><br>"\
-                "<span>(((Urbt+n – Urbt) / Urbt)^1/y) / (((Popt+n – Popt) / Popt)^1/y)</span><br>"\
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide el porcentaje de viviendas que tienen acceso directo en su vivienda a una fuente de agua potable, energía eléctrica, alcantarillado y recolección de residuos sólidos.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>Se utilizan los datos disponibles por las empresas suministradoras de servicios privadas o municipales.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>(No. viviendas con todos los servicios / No. total de viviendas)*100<br/>" 

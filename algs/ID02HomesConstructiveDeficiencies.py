@@ -262,7 +262,9 @@ class ID02HomesConstructiveDeficiencies(QgsProcessingAlgorithm):
         return ID02HomesConstructiveDeficiencies()
 
     def shortHelpString(self):
-        return  "<b>Descripción:</b><br>"\
-                "<span>La cantidad de unidades de vivienda en el área urbana del municipio que no cumplen con los estándares de habitabilidad definidos por el país dividido para el total de unidades de vivienda en el área urbana a evaluar.<br>"\
-                "<b>Formula:</b><br>"\
-                "<span>(N° de viviendas con carencias / total de viviendas)*100</span><br>"\
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide el porcentaje de viviendas que presentan carencias constructivas.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>La cantidad de unidades de vivienda en el área urbana del municipio que no cumplen con los estándares de habitabilidad definidos por el país dividido para el total de unidades de vivienda en el área urbana a evaluar.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>(N° de viviendas con carencias / total de viviendas)*100<br/>" 

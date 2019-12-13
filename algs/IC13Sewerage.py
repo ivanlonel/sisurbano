@@ -292,3 +292,11 @@ class IC13Sewerage(QgsProcessingAlgorithm):
     def createInstance(self):
         return IC13Sewerage()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide el porcentaje de hogares con conexión domiciliaria al sistema de alcantarillado, por tejido urbano.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>El número de hogares con conexión domiciliaria se divide para el total de hogares, expresado en porcentaje.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>(Hogares con conexión a alcantarillado / total de hogares) * 100<br/>"         
+

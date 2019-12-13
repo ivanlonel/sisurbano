@@ -290,3 +290,11 @@ class ID11Theft(QgsProcessingAlgorithm):
     def createInstance(self):
         return ID11Theft()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide la cantidad de robos al año por número de habitantes</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>Las tazas de robo podrían ser entendidas mejor por medio de encuestas de victimización, más que en base a datos policiales dado que no siempre se denuncian estos delitos.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>(Robos / número de personas)*100<br/>"         
+

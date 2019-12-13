@@ -247,3 +247,11 @@ class IC01PublicPedestrianRoadDistribution(QgsProcessingAlgorithm):
     def createInstance(self):
         return IC01PublicPedestrianRoadDistribution()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide el porcentaje del espacio viario destinado al peatón, considerando que los espacios con acceso restringido al automovil son favorables para actividades de vida en comunidad, que repercuten directa y positivamente en la calidad urbana y la clalidad de vida. Relación del espacio público peatonal con respecto al viario público en general.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>Se entiende como viario público: calles, veredas, caminos peatonales, ciclovías.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>(Área del viario público peatonal / Área del viario público)*100<br/>"             
+

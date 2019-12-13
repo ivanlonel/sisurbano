@@ -280,3 +280,11 @@ class IA05EmptyProperties(QgsProcessingAlgorithm):
     def createInstance(self):
         return IA05EmptyProperties()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide la disgregación del espacio urbano. Relación entre la superficie de predios sin edificaciones o con uso agrícola y la superficie de suelo de naturaleza urbana (no incluye superficies destinadas a vías y equipamientos).</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>Predios vacíos se consideran aquellos que no están edificados o tienen un uso agrícola. Para el cálculo, el área neta no incluye el área de vías y de equipamientos menores y mayores.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>(Superficie de predios vacíos en m2 / Superficie efectiva neta en m2)*100</span><br/>"        
+

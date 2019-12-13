@@ -291,3 +291,11 @@ class IB05GreenPerHabitant(QgsProcessingAlgorithm):
     def createInstance(self):
         return IB05GreenPerHabitant()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide la relación entre el espacio verde y la población, donde se considera como espacio verde aquellas áreas de la ciudad que presentan cobertura vegetal tanto de tenencia pública como privada.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>Análisis NDVI a partir de imágenes satelitales.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>Superficie verde en m2 / Población total<br/>"          
+

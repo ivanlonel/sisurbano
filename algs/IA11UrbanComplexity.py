@@ -364,3 +364,11 @@ class IA11UrbanComplexity(QgsProcessingAlgorithm):
     def createInstance(self):
         return IA11UrbanComplexity()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide simultáneamente la diversidad y frecuencia de usos terciarios (personas jurídicas) en el territorio, a través de la fórmula de Shannon proveniente de la Teoría de la Información. Para el cálculo se incluyen solo usos terciarios que generan actividades de intercambio según las siguientes categorías: administración, comercio, educación, recreación/cultura y salud.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>Para el cálculo se incluyen solo usos terciarios que generan actividades de intercambio según las siguientes categorías: administración, comercio, educación, recreación/cultura y salud.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>Σj Shannon - Ìndice de diversidad de Wienner<br/>"           
+

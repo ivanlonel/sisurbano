@@ -269,3 +269,11 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
     def createInstance(self):
         return IA10RelationshipActivityResidence()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide la variedad y equilibrio urbano a través de la cantidad de actividades lucrativas no residenciales y la cantidad de vivienda. Este indicador se relaciona además con la capacidad de autocontención de un territorio en términos de movilidad. Relación entre la cantidad de usos terciarios (comercio, servicios u oficinas) y la cantidad de vivienda.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>Para el cálculo se considera usos terciarios a aquellos como comercio, servicios u oficinas. Por falta de información y para hacer viable el indicador se utiliza la cantidad de usos terciarios.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>Número total de usos terciarios / Número total de viviendas<br/>"          
+

@@ -252,3 +252,11 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
     def createInstance(self):
         return IA02DensityHousing()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide la intensidad de uso residencial en el territorio. Número de viviendas por la superficie de suelo de naturaleza urbana (no incluye superficie destinada a vías y equipamientos).</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>Para el cálculo, el área no incluye el área de vías y de equipamientos menores y mayores.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>Número de viviendas / Superficie efectiva neta en hectareas</span><br/>"
+

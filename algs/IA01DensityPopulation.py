@@ -190,14 +190,14 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
                                    feedback)
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaGrossDensityPopulationPerHa = 'coalesce((pop_seg_sum/area_grid)*10000, 0)'
-        densities = calculateField(densities['OUTPUT'],
-                                   'i_gdp',
-                                   formulaGrossDensityPopulationPerHa,
-                                   context,
-                                   feedback, params['OUTPUT'])
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # formulaGrossDensityPopulationPerHa = 'coalesce((pop_seg_sum/area_grid)*10000, 0)'
+        # densities = calculateField(densities['OUTPUT'],
+        #                            'i_gdp',
+        #                            formulaGrossDensityPopulationPerHa,
+        #                            context,
+        #                            feedback, params['OUTPUT'])
 
 
 
@@ -255,9 +255,9 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
         return IA01DensityPopulation()
 
     def shortHelpString(self):
-        return  "<b>Descripción:</b><br>"\
-                "<span>Mide la concentración de habitantes y evidencia indirectamente la demanda</span><br>"\
-                "<span>de movilidad, productos y servicios. Número de habitantes por la</span><br>"\
-                "<span>superficie de suelo de naturaleza urbana (no incluye vías y equipamientos).</span><br>"\
-                "<b>Formula:</b><br>"\
-                "<span>Número de habitantes / Superficie efectiva neta en hectareas</span><br>"\
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide la intensidad de uso residencial en el territorio. Número de viviendas por la superficie de suelo de naturaleza urbana (no incluye superficie destinada a vías y equipamientos).</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>Para el cálculo, el área no incluye el área de vías y de equipamientos menores y mayores.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>Número de viviendas / Superficie efectiva neta en hectareas</span><br/>"

@@ -540,4 +540,12 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
 
     def createInstance(self):
         return IA07proximity2BasicUrbanServices()
+        
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide la cantidad de viviendas que se encuentran próximas de manera simultanea a los diferentes tipos de equipamiento urbano básicos. Proximidad se define como viviendas a: 500m o menos de equipamientos educativos, 500m o menos de equipamientos de aprovisionamiento, 1200m o menos de equipamientos de salud, 1000m o menos de equipamientos de gestión pública, y 1000m o menos de equipamientos deportivos-recreativos.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>Proximidad se define como viviendas a: 500m o menos de equipamientos educativos, 500m o menos de equipamientos de aprovisionamiento, 1200m o menos de equipamientos de salud, 1000m o menos de equipamientos de gestión pública, y 1000m o menos de equipamientos deportivos-recreativos.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>(Viviendas con proximidad simultánea a todos los tipos de equipamiento / Viviendas totales)*100</span><br/>"          
 

@@ -80,7 +80,7 @@ class IA03Compactness(QgsProcessingAlgorithm):
             QgsProcessingParameterField(
                 self.CONSTRUCTION_AREA,
                 self.tr('Area de construcción'),
-                'area_const', 'CADASTRE'
+                'Area Cons', 'CADASTRE'
             )
         )      
 
@@ -88,7 +88,7 @@ class IA03Compactness(QgsProcessingAlgorithm):
             QgsProcessingParameterField(
                 self.FLOORS,
                 self.tr('Pisos de construcción'),
-                'pisos', 'CADASTRE'
+                'Pisos cons', 'CADASTRE'
             )
         )   
 
@@ -250,3 +250,10 @@ class IA03Compactness(QgsProcessingAlgorithm):
     def createInstance(self):
         return IA03Compactness()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide la intensidad edificatoria del territorio; donde el resultado representa la altura media de edificación. Relación entre el volumen total edificado y la superficie de suelo del área de estudio.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>Para el cálculo se considera una altura de 3m por piso.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>Volumen edificado en m3 / Superficie total en m2</span><br/>"

@@ -57,7 +57,7 @@ class IC03RoadsPerHabitant(QgsProcessingAlgorithm):
     en el área de estudio.
     Formula: Total de carriles de vías en m / Total habitantes
     """
-    ROADS = 'ROADS'
+    ROADS_LINES = 'ROADS_LINES'
     BLOCKS = 'BLOCKS'
     FIELD_POPULATION = 'FIELD_POPULATION'
     FIELD_HOUSING = 'FIELD_HOUSING'
@@ -115,7 +115,7 @@ class IC03RoadsPerHabitant(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
-                self.ROADS,
+                self.ROADS_LINES,
                 self.tr('Vías públicas'),
                 [QgsProcessing.TypeVectorLine]
             )
@@ -194,7 +194,7 @@ class IC03RoadsPerHabitant(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      gridNetoAndSegmentsSumLines = sumLineLen(params['ROADS'],
+      gridNetoAndSegmentsSumLines = sumLineLen(params['ROADS_LINES'],
                                            gridNetoAndSegments['OUTPUT'],
                                            'COUNT',
                                            'LENGTH',                             
@@ -265,4 +265,12 @@ class IC03RoadsPerHabitant(QgsProcessingAlgorithm):
 
     def createInstance(self):
         return IC03RoadsPerHabitant()
+
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide la repartición de espacio vial con relación a la población. Es un indicador que puede dar información sobre la flexibiliad del sistema de transporte y la matriz urbana. Relación entre el número de kilómetros lineales de carril de vías públicas y la cantidad de población en el área de estudio.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span></span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>Total de carriles de vías en m / Total habitantes<br/>"         
 

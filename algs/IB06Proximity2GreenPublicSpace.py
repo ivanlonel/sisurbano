@@ -57,7 +57,7 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
     Formula: Población próxima a espacios verdes públicos /
     Total de la población * 100
     """
-    EQUIPMENT = 'EQUIPMENT'
+    EQUIPMENT_GREEN = 'EQUIPMENT_GREEN'
     BLOCKS = 'BLOCKS'
     FIELD_POPULATION = 'FIELD_POPULATION'
     CELL_SIZE = 'CELL_SIZE'    
@@ -109,7 +109,7 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
-                self.EQUIPMENT,
+                self.EQUIPMENT_GREEN,
                 self.tr('Espacio verde público'),
                 [QgsProcessing.TypeVectorAnyGeometry]
             )
@@ -179,7 +179,7 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      equipmentWithId = calculateField(params['EQUIPMENT'], 'idx', '$id', context,
+      equipmentWithId = calculateField(params['EQUIPMENT_GREEN'], 'idx', '$id', context,
                                       feedback, type=1)
 
       steps = steps+1
@@ -316,3 +316,10 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
     def createInstance(self):
         return IB06Proximity2GreenPublicSpace()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Mide la proximidad, a pie, de la población al espacio verde más cercano, sin distinción de la actividad que acoge o de su función ecológica. Se entiende a la cobertura isócrona desde cada espacio verde (distancia caminable = 300m).</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>Para el cálculo el espacio verde público comprende las siguientes categorías: parque, parque infantil, margen de agua, parque lineal.</span>"\
+                "<br/><br/><b>Formula:</b><br/>"\
+                "<span>Población próxima a espacios verdes públicos / Total de la población*100<br/>"  
