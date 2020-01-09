@@ -86,7 +86,7 @@ NAMES_INDEX = {
 	'ID04': ['id04','id04','D04 Espacios públicos abiertos que necesitan mejoras'],
 	# 'ID05': ['id05','id05',''],
 	# 'ID06': ['id06','id06',''],
-	# 'ID07': ['id07','id07',''],
+	'ID07': ['id07','id07','D07 Indice de calidad de vida'],
 	# 'ID08': ['id08','id08',''],
 	# 'ID09': ['id09','id09',''],
 	'ID10': ['id10','id10','D10 Cercanía y asequibilidad a alimentos'],

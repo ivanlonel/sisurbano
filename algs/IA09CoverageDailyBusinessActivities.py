@@ -58,12 +58,16 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
     300m de cada una de estas actividades comerciales cotidianas y el área bruta
     del área estudio.
     
-    Áreas cubiertas se consideran aquellas que simultáneamente quedan cubiertas
-    al trazar un radio de 300m desde cada tipo de actividad comercial cotidiana.
-    Actividades comerciales cotidianas se consideran: tienda de abarrotes, minimercado,
-    farmacia, panadería, papelería-bazar.
+    Áreas cubiertas se consideran aquellas que simultáneamente quedan cubiertas al
+    trazar un radio de 300m desde cada tipo de actividad comercial cotidiana. Actividades
+    comerciales cotidianas se consideran las siguientes categorías:
+    a) tienda de abarrotes, despensas, minimercado, 
+    b) farmacia, droguería, 
+    c) papelería, bazar, 
+    d) panadería, heladería, pastelería, 
+    e) depósitos de distribución de cilindros de gas.
 
-    Formula: (Área con cobertura simultánea Act.Cot. / Área total)*100
+    Formula: (Viviendas con cobertura simultánea de actividades comerciales cotidianas / Viviendas totales)*100
     """
 
     BLOCKS = 'BLOCKS'

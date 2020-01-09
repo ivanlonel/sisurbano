@@ -53,14 +53,16 @@ from .ZHelpers import *
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 def joinAll(validInputs, params, context, feedback):
-  steps = 0
   outp = QgsProcessing.TEMPORARY_OUTPUT
   totalValidInputs = len(validInputs)
+  step = 0
+  steps = totalValidInputs
+  feedback = QgsProcessingMultiStepFeedback(steps, feedback)  
   i = 0
-  for k,v in validInputs.items():
+  for k,v in validInputs.items(): 
     i = i + 1
-    if i == totalValidInputs:
-      outp = params['OUTPUT']
+    # if i == totalValidInputs:
+    #   outp = params['OUTPUT']
     feedback.pushConsoleInfo(str(i))
     val = validInputs[k]
     layer = str(val[0])
@@ -68,18 +70,49 @@ def joinAll(validInputs, params, context, feedback):
     if i == 1:
       result = layer    
     else:   
-      steps = steps+1
-      # feedback.setCurrentStep(steps)
+      step = step+1
+      feedback.setCurrentStep(step)
       result = joinAttrByLocation(result,
                               layer,
                               attr,
                               [IGUALA],
                               UNDISCARD_NONMATCHING,               
                               context,
-                              feedback, outp)      
+                              feedback)      
       result = result['OUTPUT']
 
-  return outp
+  return result
+
+def buildExpression(validInputs):
+  expression = ""
+  i = 0
+  totalValidInputs = len(validInputs)
+  for k,v in validInputs.items():   
+    i = i + 1
+    val = validInputs[k]
+    attr = str(val[1])
+    expression = expression + " " + attr + " IS NOT NULL"
+    if i != totalValidInputs:
+      expression = expression + " AND"
+
+  print(expression)
+  return expression
+
+
+def buildExpressionDiscard(validInputs):
+  expression = ""
+  i = 0
+  totalValidInputs = len(validInputs)
+  for k,v in validInputs.items():   
+    i = i + 1
+    val = validInputs[k]
+    attr = str(val[1])
+    expression = expression + " " + attr + " IS NULL"
+    if i != totalValidInputs:
+      expression = expression + " OR"
+
+  print(expression)
+  return expression  
 
 
 class ZN03WrapValues(QgsProcessingAlgorithm):
@@ -88,6 +121,7 @@ class ZN03WrapValues(QgsProcessingAlgorithm):
     """  
 
     OUTPUT = 'OUTPUT'
+    OUTPUT_DISCARD = 'OUTPUT_DISCARD'
     prefix = ''
 
 
@@ -117,7 +151,7 @@ class ZN03WrapValues(QgsProcessingAlgorithm):
 
         for key in NAMES_INDEX:     
           currentPath = getPath()
-          FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(self.prefix+ NAMES_INDEX[key][1]))       
+          FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(self.prefix+ NAMES_INDEX[key][1]))            
           if not isExistFile(FULL_PATH): 
             FULL_PATH = ''
           self.addParameter(
@@ -129,56 +163,29 @@ class ZN03WrapValues(QgsProcessingAlgorithm):
               )
           )
 
-        # self.addParameter(
-        #     QgsProcessingParameterFeatureSource(
-        #         NAMES_INDEX['IA02'],
-        #         self.tr('A02 Densidad neta de viviendas'),
-        #         [QgsProcessing.TypeVectorPolygon],
-        #         '', True
-        #     )
-        # )
-
-        # self.addParameter(
-        #     QgsProcessingParameterFeatureSource(
-        #         NAMES_INDEX['IA03'],
-        #         self.tr('A03 Compacidad absoluta'),
-        #         [QgsProcessing.TypeVectorPolygon],
-        #         '', True
-        #     )
-        # )
-
-
-        # self.addParameter(
-        #     QgsProcessingParameterFeatureSource(
-        #         NAMES_INDEX['IA07'],
-        #         self.tr('A07 Proximidad a servicios urbanos básicos'),
-        #         [QgsProcessing.TypeVectorPolygon],
-        #         '', True
-        #     )
-        # )
-
-        # self.addParameter(
-        #     QgsProcessingParameterFeatureSource(
-        #         NAMES_INDEX['IA08'],
-        #         self.tr('A08 Proximidad al espacio público abierto'),
-        #         [QgsProcessing.TypeVectorPolygon],
-        #         '', True
-        #     )
-        # )                
-
 
         currentPath = getPath()
         FULL_PATH = buildFullPathName(currentPath, 'sisurbano.shp')
+        FULL_PATH_DISACARD = buildFullPathName(currentPath, 'sisurbano_discarded.shp')
 
 
         self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT,
-                self.tr('Salida'),
+                self.tr('Salida de celdas unidas'),
                 QgsProcessing.TypeVectorAnyGeometry,
                 FULL_PATH
             )
         )
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSink(
+                self.OUTPUT_DISCARD,
+                self.tr('Salida de celdas descartadas'),
+                QgsProcessing.TypeVectorAnyGeometry,
+                FULL_PATH_DISACARD
+            )
+        )        
 
     def processAlgorithm(self, params, context, feedback):
       allInputs = dict()
@@ -210,8 +217,14 @@ class ZN03WrapValues(QgsProcessingAlgorithm):
 
       feedback.pushConsoleInfo(str("total " + str(totalValidInputs)))
 
+
+
       if totalValidInputs > 1:
-        joinAll(validInputs, params, context, feedback)
+        wrapAllValues = joinAll(validInputs, params, context, feedback)
+        expression = buildExpression(validInputs)
+        expressionDiscard = buildExpressionDiscard(validInputs)
+        notNullWrapAllValues = filterByExpression(wrapAllValues, expression, context, feedback, params['OUTPUT'])
+        nullWrapAllValues = filterByExpression(wrapAllValues, expressionDiscard, context, feedback, params['OUTPUT_DISCARD'])
       else:
         feedback.pushConsoleInfo(str("Se necesita al menos 2 entradas válidas"))
 
@@ -277,4 +290,8 @@ class ZN03WrapValues(QgsProcessingAlgorithm):
 
     def createInstance(self):
         return ZN03WrapValues()
-
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br>"\
+                "<span>Une el valor de las celdas de todos los indicadores. Requerido para usar la herramienta MESUE.</span>"\
+                "<br/><br/><b>Justificación y metodología:</b><br/>"\
+                "<span>Se une en un solo layer todos los valores de los indicadores para cada celda. Las celdas que contengan algún valor nulo en uno de sus indicadores serán descartados.</span>"\

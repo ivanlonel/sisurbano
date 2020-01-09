@@ -369,5 +369,5 @@ class IB01AirQuality(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span>Se evalua por separado cada uno de los contaminantes: NO2, CO, SO2, O3, MP2.5 y MP10. Se utilizan los resultados de los cálculos realizados por el IERSE y EMOV en el años 2015. Si de entrada no se cumple con los niveles para uno de los contaminates, se considera que es una poblacion expuesta y no es necesario seguir con el análisis del siguiente contaminante.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Población no expuesta a aire nocivo / Total de la población)*100<br/>"           
+                "<span>(Población no expuesta a aire nocivo / Total de la población)*100</span><br/>"           
 

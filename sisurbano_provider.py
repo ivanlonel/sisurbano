@@ -67,8 +67,10 @@ from .algs import (
     ID01HousingFullCoverageBasicServices,
     ID02HomesConstructiveDeficiencies,
     ID04OpenPublicSpacesNeedImprovement,
+    ID07QualityLifeIndex,
     ID10Proximity2PublicMarket,
     ID11Theft,
+    ID17SpatialSegregation,
     ZN00CreateGrid,
     ZN01FuzzyVectorial,
     ZN02AllocateValues,
@@ -129,8 +131,10 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(ID02HomesConstructiveDeficiencies.ID02HomesConstructiveDeficiencies())
         self.addAlgorithm(ID03HousingRisk.ID03HousingRisk())
         self.addAlgorithm(ID04OpenPublicSpacesNeedImprovement.ID04OpenPublicSpacesNeedImprovement())
+        self.addAlgorithm(ID07QualityLifeIndex.ID07QualityLifeIndex())
         self.addAlgorithm(ID10Proximity2PublicMarket.ID10Proximity2PublicMarket())
         self.addAlgorithm(ID11Theft.ID11Theft())
+        self.addAlgorithm(ID17SpatialSegregation.ID17SpatialSegregation())
         self.addAlgorithm(ZN00CreateGrid.ZN00CreateGrid())
         self.addAlgorithm(ZN01FuzzyVectorial.ZN01FuzzyVectorial())
         self.addAlgorithm(ZN02AllocateValues.ZN02AllocateValues())

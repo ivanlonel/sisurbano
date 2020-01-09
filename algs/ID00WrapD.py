@@ -400,4 +400,5 @@ class ID00WrapD(QgsProcessingAlgorithm):
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br>"\
-                "<span>Calcula todos los indicadores de Dinámicas socio-espaciales</span><br>"\
+                "<span>Calcula todos los indicadores de Dinámicas socio-espaciales</span>"\
+                

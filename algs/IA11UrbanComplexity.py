@@ -283,7 +283,7 @@ class IA11UrbanComplexity(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaDummy = 'shannon * 1'
+      formulaDummy = 'coalesce(shannon * 1, "")'
       result = calculateField(gridShannon['OUTPUT'],
                                  NAMES_INDEX['IA11'][0],
                                  formulaDummy,
