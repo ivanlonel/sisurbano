@@ -34,6 +34,7 @@ import os
 
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtGui import QColor
 from qgis.core import (QgsProcessing,
                        QgsProcessingMultiStepFeedback,
                        QgsFeatureSink,
@@ -42,6 +43,7 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterFile,
                        QgsProcessingParameterField,
                        QgsProcessingParameterNumber,
+                       QgsProcessingUtils,
                        QgsProcessingParameterFeatureSink)
 from .ZProcesses import *
 from .Zettings import *
@@ -50,6 +52,7 @@ import numpy as np
 import pandas as pd
 import tempfile
 import subprocess
+import inspect
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
@@ -68,103 +71,32 @@ class ID17SpatialSegregation(QgsProcessingAlgorithm):
     Formula: (Porcentaje de la población del Cuartil uno en el Secto i / Porcentaje de la población del Cuartil en toda la ciudad)*100
     """
 
-    BLOCKS = 'BLOCKS'
-    FIELD_POPULATION = 'FIELD_POPULATION'
-    CENSO_VIVIENDA = 'CENSO_VIVIENDA'
-    CENSO_POBLACION = 'CENSO_POBLACION'
-    CENSO_HOGAR = 'CENSO_HOGAR'
-    # NUMBER_HABITANTS = 'NUMBER_HABITANTS'
-    THEFTS = 'THEFTS'
-    CELL_SIZE = 'CELL_SIZE'
+    ICV = 'ICV'
     OUTPUT = 'OUTPUT'
-    STUDY_AREA_GRID = 'STUDY_AREA_GRID'
+    FINAL_NAME = None
+    VALUE = 'VALUE'
+    PT = 'PT'
 
     def initAlgorithm(self, config):
-
         currentPath = getCurrentPath(self)
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID11'][1]))
+        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID17'][1]))
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
-                self.BLOCKS,
-                self.tr('Manzanas'),
+                self.ICV,
+                self.tr('Índice de calidad de vida D07'),
                 [QgsProcessing.TypeVectorPolygon]
             )
         )
 
         self.addParameter(
             QgsProcessingParameterField(
-                self.FIELD_POPULATION,
-                self.tr('Población'),
-                'poblacion', 'BLOCKS'
+                self.VALUE,
+                self.tr('Variable'),
+                'PQ1', 'ICV'
             )
-        )   
-
-        self.addParameter(
-            QgsProcessingParameterFile(
-                self.CENSO_POBLACION,
-                self.tr('Censo población'),
-                extension='csv'
-            )
-        ) 
-
-        self.addParameter(
-            QgsProcessingParameterFile(
-                self.CENSO_HOGAR,
-                self.tr('Censo hogar'),
-                extension='csv'
-            )
-        )           
-
-        self.addParameter(
-            QgsProcessingParameterFile(
-                self.CENSO_VIVIENDA,
-                self.tr('Censo vivienda'),
-                extension='csv'
-            )
-        )           
-
-             
-
-        self.addParameter(
-            QgsProcessingParameterFeatureSource(
-                self.THEFTS,
-                self.tr('Robos'),
-                [QgsProcessing.TypeVectorPoint]
-            )
-        )
-
-
-        self.addParameter(
-            QgsProcessingParameterFeatureSource(
-                self.STUDY_AREA_GRID,
-                self.tr(TEXT_GRID_INPUT),
-                [QgsProcessing.TypeVectorPolygon],
-                '', OPTIONAL_GRID_INPUT
-            )
-        )
-
-
-        if OPTIONAL_GRID_INPUT:
-            self.addParameter(
-                QgsProcessingParameterNumber(
-                    self.CELL_SIZE,
-                    self.tr('Tamaño de la malla'),
-                    QgsProcessingParameterNumber.Integer,
-                    P_CELL_SIZE, False, 1, 99999999
-                )
-            )          
-
-
-        # self.addParameter(
-        #     QgsProcessingParameterNumber(
-        #         self.NUMBER_HABITANTS,
-        #         self.tr('Por cada número de habitantes'),
-        #         QgsProcessingParameterNumber.Integer,
-        #         100000, False, 1, 99999999
-        #     )
-        # )   
-
+        )            
+  
         self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT,
@@ -176,53 +108,71 @@ class ID17SpatialSegregation(QgsProcessingAlgorithm):
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 12
-        fieldPopulation = params['FIELD_POPULATION']
-        # fieldHab = params['NUMBER_HABITANTS']
-
+        totalStpes = 5
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
+        p = str(params['VALUE'])
 
-        # blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
-        #                        feedback)
-
-        # steps = steps+1
-        # feedback.setCurrentStep(steps)
-        # if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-        # grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-        #                                  params['STUDY_AREA_GRID'],
-        #                                  context, feedback)
-        # gridNeto = grid  
-
-
-        dfPoblacion = pd.read_csv(params['CENSO_POBLACION'])
-        withPopulation(dfPoblacion)
-
-        #cambiar RECODE V01 (1=2) (4=2) (2 thru 3=1) (5 thru 6=0) INTO TECHO.
-        
-
-        
-        return True
-
-
-    def withPopulation(self, df):   
-        lakes = df.apply(binaryClassifier, source_col='p20', output_col='small_big', threshold=1, axis=1)
-
-
-    def binaryClassifier(self, row, source_col, output_col, threshold, value):
-        # If area of input geometry is lower that the threshold value
-        if row[source_col] == threshold:
-            # Update the output column with value 0
-            row[output_col] = value
-        # If area of input geometry is higher than the threshold value update with value 1
+        if p == 'PQ1' or p == 'PQ2' or p == 'PQ3' or p == 'PQ4' or p == 'Pc' or p == 'Po':
+            self.PT = str('Pt')
+        elif p == 'VQ1' or p == 'VQ2' or p == 'VQ3' or p == 'VQ4' or p == 'Vc' or p == 'Vo':
+            self.PT = str('Vt')
         else:
-            row[output_col]
-        # Return the updated row
-        return row             
+            self.PT = str('0')
 
+        pt = self.PT    
+
+        print("El valor para " + p + " para pt es " + str(pt))    
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        pp = '('+ p +' * 100) / sum('+ p +')' 
+        result = calculateField(params['ICV'] , 'pp',
+                                pp,
+                                context,
+                                feedback)  
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        ppt = '('+ pt + ' * 100) / sum('+ pt +')' 
+        result = calculateField(result['OUTPUT'] , 'ppt',
+                                ppt,
+                                context,
+                                feedback)                                                                        
+        
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        iseg = 'sum(abs('+ pp + ' - '+ ppt + ')) * 0.5' 
+        result = calculateField(result['OUTPUT'] , 'ISEG',
+                                iseg,
+                                context,
+                                feedback)   
+       
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        isea = 'pp / ppt' 
+        result = calculateField(result['OUTPUT'] , 'ISEA',
+                                isea,
+                                context,
+                                feedback)   
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        index = 'isea * 1.0' 
+        result = calculateField(result['OUTPUT'] , NAMES_INDEX['ID17'][0],
+                                index,
+                                context,
+                                feedback, params['OUTPUT'])           
+
+       
+        self.FINAL_NAME = result['OUTPUT']
+
+        return result
+
+       
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'thief.png'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'segregacion.jpg'))
 
     def name(self):
         """
@@ -266,9 +216,22 @@ class ID17SpatialSegregation(QgsProcessingAlgorithm):
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Mide la cantidad de robos al año por número de habitantes</span>"\
+                "<span>Haciendo uso del Índice de Segregación de Espacial Local (ISEA), se mide el nivel de exclusión, cohesión o segregación de la población con mayores carencias (cuartil uno según su ICV).</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
-                "<span>Las tazas de robo podrían ser entendidas mejor por medio de encuestas de victimización, más que en base a datos policiales dado que no siempre se denuncian estos delitos.</span>"\
+                "<span>Se utiliza metodología desarrollada por Osorio y Orellana (2014) para la ciudad de Cuenca. Los cuartiles de la población se obtienen a partir de los índices de vida, escogiendo el uno que representa el sector poblacional con mayor carencia. Se calcula el ISEA para cada área de estudio.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Robos / número de personas)*100<br/>"         
+                "<span>ISEA del Q1 según su ICV<br/>"  
+
+    def postProcessAlgorithm(self, context, feedback):
+            cmd_folder = os.path.split(inspect.getfile(inspect.currentframe()))[0]
+            print(cmd_folder)
+            segments_score_prop_layer = QgsProcessingUtils.mapLayerFromString(self.FINAL_NAME, context)
+            segments_score_prop_layer.renderer().symbol().setColor(QColor("green"))
+            # segments_score_prop_layer.loadNamedStyle(os.path.join(os.path.join(cmd_folder, 'style.qml')))
+            # segments_score_prop_layer.renderer().updateClasses(segments_score_prop_layer, segments_score_prop_layer.renderer().EqualInterval, 8)            
+            segments_score_prop_layer.triggerRepaint()
+            # Do smth with the layer, e.g. style it
+            return {
+                     "OUTPUT" : self.FINAL_NAME
+                   }        
 

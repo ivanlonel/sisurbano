@@ -63,13 +63,18 @@ from .algs import (
     IC08ParkedVehicles,
     IC13Sewerage,
     ID00WrapD,
-    ID03HousingRisk,
     ID01HousingFullCoverageBasicServices,
     ID02HomesConstructiveDeficiencies,
+    ID03HousingRisk,
     ID04OpenPublicSpacesNeedImprovement,
+    ID05InternetAccess,
     ID07QualityLifeIndex,
     ID10Proximity2PublicMarket,
     ID11Theft,
+    ID12HomeTenureSecurity,
+    ID13ActivePopulationWithDegree,
+    ID15WomenPaidWorkforce,
+    ID16AgingIndex,
     ID17SpatialSegregation,
     ZN00CreateGrid,
     ZN01FuzzyVectorial,
@@ -131,9 +136,14 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(ID02HomesConstructiveDeficiencies.ID02HomesConstructiveDeficiencies())
         self.addAlgorithm(ID03HousingRisk.ID03HousingRisk())
         self.addAlgorithm(ID04OpenPublicSpacesNeedImprovement.ID04OpenPublicSpacesNeedImprovement())
+        self.addAlgorithm(ID05InternetAccess.ID05InternetAccess())
         self.addAlgorithm(ID07QualityLifeIndex.ID07QualityLifeIndex())
         self.addAlgorithm(ID10Proximity2PublicMarket.ID10Proximity2PublicMarket())
         self.addAlgorithm(ID11Theft.ID11Theft())
+        self.addAlgorithm(ID12HomeTenureSecurity.ID12HomeTenureSecurity())
+        self.addAlgorithm(ID13ActivePopulationWithDegree.ID13ActivePopulationWithDegree())
+        self.addAlgorithm(ID15WomenPaidWorkforce.ID15WomenPaidWorkforce())
+        self.addAlgorithm(ID16AgingIndex.ID16AgingIndex())
         self.addAlgorithm(ID17SpatialSegregation.ID17SpatialSegregation())
         self.addAlgorithm(ZN00CreateGrid.ZN00CreateGrid())
         self.addAlgorithm(ZN01FuzzyVectorial.ZN01FuzzyVectorial())

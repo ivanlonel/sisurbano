@@ -84,19 +84,19 @@ NAMES_INDEX = {
 	'ID02': ['id02','id02','D02 Viviendas con carencias constructivas'],
 	'ID03': ['id03','id03','D03 Viviendas emplazadas en zonas vulnerables y de riesgo'],
 	'ID04': ['id04','id04','D04 Espacios públicos abiertos que necesitan mejoras'],
-	# 'ID05': ['id05','id05',''],
+	'ID05': ['id05','id05','D05 Acceso a internet'],
 	# 'ID06': ['id06','id06',''],
 	'ID07': ['id07','id07','D07 Indice de calidad de vida'],
 	# 'ID08': ['id08','id08',''],
 	# 'ID09': ['id09','id09',''],
 	'ID10': ['id10','id10','D10 Cercanía y asequibilidad a alimentos'],
 	'ID11': ['id11','id11','D11 Robos por número de habitantes'],
-	# 'ID12': ['id12','id12',''],
-	# 'ID13': ['id13','id13',''],
+	'ID12': ['id12','id12','D12 Seguridad de tenencia de la vivienda'],
+	'ID13': ['id13','id13','D13 Población activa con estudios universitarios'],
 	# 'ID14': ['id14','id14',''],
-	# 'ID15': ['id15','id15',''],
-	# 'ID16': ['id16','id16',''],
-	# 'ID17': ['id17','id17',''],
+	'ID15': ['id15','id15','D15 Mujeres en la fuerza de trabajo remunerado'],
+	'ID16': ['id16','id16','D16 Índice de envejecimiento'],
+	'ID17': ['id17','id17','D17 Segregación Espacial']
 }
 
 TEXT_GRID_INPUT = 'Malla (Si ya tienes una malla de estudio)'

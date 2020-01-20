@@ -19,7 +19,18 @@ import processing
 from .Zettings import *
 
 
+def refactorFields(fieldsMapping, input, context, feedback,
+                   output=QgsProcessing.TEMPORARY_OUTPUT):
+    alg_params = {
+        'FIELDS_MAPPING': fieldsMapping,
+        'INPUT': input,
+        'OUTPUT': output
+    }
+    result = processing.run('qgis:refactorfields', alg_params,
+                            context=context, feedback=feedback,
+                            is_child_algorithm=True)
 
+    return result    
 
 # def stByZona(raster, vector, band = 1, stats = [0,1,2],
 def stByZona(raster, vector, band, stats, prefix,

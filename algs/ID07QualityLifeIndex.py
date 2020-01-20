@@ -168,7 +168,7 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 9
+        totalStpes = 26
         fieldDpaMan = params['DPA_MAN']
         # fieldHab = params['NUMBER_HABITANTS']
 
@@ -634,6 +634,38 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
         # *5.6 Cantidad de población carenciada.
         df['Carentes'] = df['TOTPER'] * df['vivienda_carente']
 
+
+        # DIVIDIR EN 4 CUANTILES LAS CONDICIONES DE VIDA
+
+        df['q1'] = None
+        df['q2'] = None
+        df['q3'] = None
+        df['q4'] = None
+        df['popQ1'] = None
+        df['popQ2'] = None
+        df['popQ3'] = None
+        df['popQ4'] = None        
+
+        quantiles = df['CONDICIONES_VIDA'].quantile([.25, .5, .75])
+        q1 = quantiles[0.25]
+        q2 = quantiles[0.50]
+        q3 = quantiles[0.75]
+        df.loc[df['CONDICIONES_VIDA'] <= q1, 'q1'] = 1.0
+        df.loc[(df['CONDICIONES_VIDA'] > q1) & (df['CONDICIONES_VIDA'] <= q2), 'q2'] = 1.0
+        df.loc[(df['CONDICIONES_VIDA'] > q2) & (df['CONDICIONES_VIDA'] <= q3), 'q3'] = 1.0
+        df.loc[(df['CONDICIONES_VIDA'] > q3), 'q4'] = 1.0
+
+        df['popQ1'] = df['TOTPER'] * df['q1']
+        df['popQ2'] = df['TOTPER'] * df['q2']
+        df['popQ3'] = df['TOTPER'] * df['q3']
+        df['popQ4'] = df['TOTPER'] * df['q4']   
+
+        # sacar numero de viviendas reales
+        df['is_vivienda'] = None
+        df.loc[(df['vivienda_carente'] == 0) | (df['vivienda_carente'] ==1 ), 'is_vivienda'] = 1.0
+        df['is_vivienda'] = df['is_vivienda'].astype(float)             
+
+
         # *5.8 Base de datos por manzana.
 
         df['codman'] = df['I01'].astype(str) + df['I02'].astype(str) + df['I03'].astype(str) \
@@ -648,14 +680,14 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
                         'Carentes', 'TOTPER', 'VIVIENDA', 'SERVICIOS', 'EDUCACION',
                         'SEGURIDAD_SOCIAL', 'CONDICIONES_VIDA', 'Viv_car', 'Edu_car',
                         'SS_car', 'Serv_car','id_man', 'id_viv', 'id_provin',
-                        'id_can', 'id_parr']
+                        'id_can', 'id_parr','q1','q2','q3','q4','popQ1','popQ2','popQ3','popQ4','is_vivienda']
 
         importantColsForSec = ['codsec', 'codv', 'vivienda_carente', 'Carencias', 'Carencia_vivienda', 
                          'Carencia_educacion', 'Carencia_segsocial', 'Carencia_servicios',
                         'Carentes', 'TOTPER', 'VIVIENDA', 'SERVICIOS', 'EDUCACION',
                         'SEGURIDAD_SOCIAL', 'CONDICIONES_VIDA', 'Viv_car', 'Edu_car',
                         'SS_car', 'Serv_car', 'id_man', 'id_viv', 'id_provin',
-                         'id_can', 'id_parr']
+                         'id_can', 'id_parr','q1','q2','q3','q4','popQ1','popQ2','popQ3','popQ4','is_vivienda']
 
         dfManzanas = pd.DataFrame(df, columns=importantColsForMan)
         # dfSectores = pd.DataFrame(df, columns=importantColsForSec)
@@ -678,13 +710,24 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
                       'Edu_car' : 'sum',
                       'SS_car' : 'sum',
                       'Serv_car' : 'sum',
-                      'codman' : 'first'
+                      'codman' : 'first',
+                      'q1':'sum',
+                      'q2':'sum',
+                      'q3':'sum',
+                      'q4':'sum',
+                      'popQ1': 'sum',
+                      'popQ2': 'sum',
+                      'popQ3': 'sum',
+                      'popQ4': 'sum',
+                      'is_vivienda' : 'sum'                                            
                      } 
 
         resManzanas = dfManzanas.groupby('codman').agg(aggOptions)    
-        resManzanas.rename(columns={'codv':'viviendas'}, inplace=True)
+        resManzanas.rename(columns={'is_vivienda':'viv_tot'}, inplace=True)
         resManzanas.rename(columns={'CONDICIONES_VIDA':'icv'}, inplace=True)        
         # resManzanas.loc[resManzanas['icv'] == ' ', 'icv'] = -9999   
+        resManzanas['qt'] = resManzanas['q1'] + resManzanas['q2'] + resManzanas['q3'] + resManzanas['q4']
+        resManzanas['popQt'] = resManzanas['popQ1'] + resManzanas['popQ2'] + resManzanas['popQ3'] + resManzanas['popQ4']        
         
         steps = steps+1
         feedback.setCurrentStep(steps)
@@ -740,19 +783,382 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
         feedback.setCurrentStep(steps)
         # formulaDummy = 'CASE WHEN icv IS NOT '' AND icv is NOT NULL THEN coalesce(icv * 1, NULL) ELSE NULL END'
         formulaDummy = 'icv * 1.0'
-        # CASE WHEN "icv" IS NOT ''  THEN  "icv"  * 1.0  END
         result = calculateField(icvNotNull['OUTPUT'], 
-                                 NAMES_INDEX['ID07'][0],
+                                 'icv_n',
                                  formulaDummy,
                                  context,
-                                 feedback, params['OUTPUT'])     
+                                 feedback)     
 
 
-        # result = calculateField(filterNotNull['OUTPUT'], 
-        #                          NAMES_INDEX['ID07'][0],
-        #                          formulaDummy,
-        #                          context,
-        #                          feedback, params['OUTPUT'])           
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'TOTPER * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'pob_tot',
+                                 formulaDummy,
+                                 context,
+                                 feedback) 
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'Carentes * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'Pc',
+                                 formulaDummy,
+                                 context,
+                                 feedback) 
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'pob_tot - Pc'
+        result = calculateField(result['OUTPUT'], 
+                                 'Po',
+                                 formulaDummy,
+                                 context,
+                                 feedback)                                                                            
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'viv_tot * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'viv_tot',
+                                 formulaDummy,
+                                 context,
+                                 feedback)                                        
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'vivienda_carente * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'Vc',
+                                 formulaDummy,
+                                 context,
+                                 feedback)   
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'viv_tot - Vc'
+        result = calculateField(result['OUTPUT'], 
+                                 'Vo',
+                                 formulaDummy,
+                                 context,
+                                 feedback)   
+
+
+        #----------------------cuartiles ICV de viviendas--------------------------------
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'q1 * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'VQ1',
+                                 formulaDummy,
+                                 context,
+                                 feedback) 
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'q2 * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'VQ2',
+                                 formulaDummy,
+                                 context,
+                                 feedback)         
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'q3 * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'VQ3',
+                                 formulaDummy,
+                                 context,
+                                 feedback)  
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'q4 * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'VQ4',
+                                 formulaDummy,
+                                 context,
+                                 feedback)     
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'qt * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'VQt',
+                                 formulaDummy,
+                                 context,
+                                 feedback)      
+
+        #----------------------cuartiles ICV de pop--------------------------------
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'popQ1 * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'PQ1',
+                                 formulaDummy,
+                                 context,
+                                 feedback) 
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'popQ2 * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'PQ2',
+                                 formulaDummy,
+                                 context,
+                                 feedback)         
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'popQ3 * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'PQ3',
+                                 formulaDummy,
+                                 context,
+                                 feedback)  
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'popQ4 * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'PQ4',
+                                 formulaDummy,
+                                 context,
+                                 feedback)     
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'popQt * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'PQt',
+                                 formulaDummy,
+                                 context,
+                                 feedback)                                                                                                          
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)        
+        blocks = calculateArea(result['OUTPUT'], 'area_bloc', context,
+                               feedback)        
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                                ['area_bloc','pob_tot','Pc','Po','viv_tot','Vc','Vo','icv_n', 
+                                 'VQ1','VQ2','VQ3','VQ4', 'VQt',
+                                 'PQ1','PQ2','PQ3','PQ4', 'PQt'
+                                 ],
+                                 'id_grid;area_grid',
+                                context, feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                     'area_seg',
+                                     context, feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * pob_tot' 
+        resultForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_tot_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * Pc' 
+        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'Pc_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)   
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * Po' 
+        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'Po_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)   
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * viv_tot' 
+        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'viv_tot_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * Vc' 
+        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'Vc_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * Vo' 
+        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'Vo_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback) 
+
+        #----------------------cuartiles ICV de pop--------------------------------
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * PQ1' 
+        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'pq1_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * PQ2' 
+        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'pq2_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * PQ3' 
+        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'pq3_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)        
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * PQ4' 
+        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'pq4_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * PQt' 
+        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'pqt_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)        
+
+        #----------------------cuartiles ICV de viv--------------------------------    
+        
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * VQ1' 
+        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'vq1_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)   
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * VQ2' 
+        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'vq2_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)                                                            
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * VQ3' 
+        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'vq3_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)   
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * VQ4' 
+        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'vq4_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)   
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * VQt' 
+        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'vqt_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)   
+
+
+        # Haciendo el buffer inverso aseguramos que los segmentos
+        # quden dentro de la malla
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        resultForSegmentsFixed = makeSureInside(resultForSegments['OUTPUT'],
+                                                    context,
+                                                    feedback)        
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        gridNeto = joinByLocation(gridNeto['OUTPUT'],
+                             resultForSegmentsFixed['OUTPUT'],
+                             ['pop_tot_seg','Pc_seg','Po_seg','viv_tot_seg','Vc_seg','Vo_seg',
+                              'pq1_seg','pq2_seg','pq3_seg','pq4_seg','pqt_seg',
+                              'vq1_seg','vq2_seg','vq3_seg','vq4_seg','vqt_seg'
+                              ],                                   
+                              [CONTIENE], [SUM],
+                              UNDISCARD_NONMATCHING,
+                              context,
+                              feedback)         
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        gridNeto = joinByLocation(gridNeto['OUTPUT'],
+                             resultForSegmentsFixed['OUTPUT'],
+                             ['icv_n'],                                   
+                              [CONTIENE], [MEDIA],
+                              UNDISCARD_NONMATCHING,
+                              context,
+                              feedback)  
+
+        fieldsMapping = [
+            {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
+            {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
+            {'expression': '"pop_tot_seg_sum"', 'length': 20, 'name': 'Pt', 'precision': 6, 'type': 6}, 
+            {'expression': '"Pc_seg_sum"', 'length': 20, 'name': 'Pc', 'precision': 6, 'type': 6}, 
+            {'expression': '"Po_seg_sum"', 'length': 20, 'name': 'Po', 'precision': 6, 'type': 6}, 
+            {'expression': '"viv_tot_seg_sum"', 'length': 20, 'name': 'Vt', 'precision': 6, 'type': 6}, 
+            {'expression': '"Vc_seg_sum"', 'length': 20, 'name': 'Vc', 'precision': 6, 'type': 6}, 
+            {'expression': '"Vo_seg_sum"', 'length': 20, 'name': 'Vo', 'precision': 6, 'type': 6},
+
+            {'expression': '"pq1_seg_sum"', 'length': 20, 'name': 'PQ1', 'precision': 6, 'type': 6}, 
+            {'expression': '"pq2_seg_sum"', 'length': 20, 'name': 'PQ2', 'precision': 6, 'type': 6}, 
+            {'expression': '"pq3_seg_sum"', 'length': 20, 'name': 'PQ3', 'precision': 6, 'type': 6}, 
+            {'expression': '"pq4_seg_sum"', 'length': 20, 'name': 'PQ4', 'precision': 6, 'type': 6}, 
+            {'expression': '"pqt_seg_sum"', 'length': 20, 'name': 'PQt', 'precision': 6, 'type': 6}, 
+
+            {'expression': '"vq1_seg_sum"', 'length': 20, 'name': 'VQ1', 'precision': 6, 'type': 6}, 
+            {'expression': '"vq2_seg_sum"', 'length': 20, 'name': 'VQ2', 'precision': 6, 'type': 6}, 
+            {'expression': '"vq3_seg_sum"', 'length': 20, 'name': 'VQ3', 'precision': 6, 'type': 6}, 
+            {'expression': '"vq4_seg_sum"', 'length': 20, 'name': 'VQ4', 'precision': 6, 'type': 6}, 
+            {'expression': '"vqt_seg_sum"', 'length': 20, 'name': 'VQt', 'precision': 6, 'type': 6},             
+            
+            {'expression': '"icv_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID07'][0], 'precision': 6, 'type': 6}
+        ]      
+        
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 
+                                context,
+                                feedback, params['OUTPUT'])                                                                
 
         return result
           

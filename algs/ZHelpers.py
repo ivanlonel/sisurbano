@@ -101,6 +101,12 @@ def getPath():
 
 
 def buildFullPathName(path, name):
+	split = path.split('SIS-OUTPUTS')
+	lenSplit = len(split)
+	# print(lenSplit)
+	if lenSplit > 2:
+		path = split[0] + "SIS-OUTPUTS"
+	# print(path)
 	return os.path.join(path, name)
 	# return os.path.join('', name)
 

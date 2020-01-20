@@ -169,8 +169,6 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-
-     
         gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                              populationForSegmentsFixed['OUTPUT'],
                                              'area_seg;pop_seg',                                   
@@ -187,7 +185,7 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
                                    NAMES_INDEX['IA01'][0],
                                    formulaNetDensityPopulationPerHa,
                                    context,
-                                   feedback)
+                                   feedback, params['OUTPUT'])
 
 
         # steps = steps+1
