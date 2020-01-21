@@ -53,11 +53,11 @@ import subprocess
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class ID13ActivePopulationWithDegree(QgsProcessingAlgorithm):
+class ID19CommunityStability(QgsProcessingAlgorithm):
     """
-    Mide el porcentaje de la población económicamente activa
-    (15 años o más), que cuenta con estudios universitarios completos.
-    Formula: (Población económicamente activa con estudios universitarios / Población total)*100
+    Porcentaje de la población que reside en el mismo lugar
+    (parroquia) desde hace más de 5 años.
+    Formula: (Población que vive en el mismo lugar / Población total)*100
     """
 
     BLOCKS = 'BLOCKS'
@@ -73,7 +73,7 @@ class ID13ActivePopulationWithDegree(QgsProcessingAlgorithm):
     def initAlgorithm(self, config):
         currentPath = getCurrentPath(self)
         self.CURRENT_PATH = currentPath        
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID13'][1]))
+        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID19'][1]))
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -160,7 +160,7 @@ class ID13ActivePopulationWithDegree(QgsProcessingAlgorithm):
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 17
+        totalStpes = 9
         fieldDpaMan = params['DPA_MAN']
         # fieldHab = params['NUMBER_HABITANTS']
 
@@ -179,7 +179,7 @@ class ID13ActivePopulationWithDegree(QgsProcessingAlgorithm):
         pathCsvPoblacion = params['CENSO_POBLACION']
 
         file = pathCsvPoblacion
-        cols = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 'I10', 'P01', 'P23', 'GEDAD']
+        cols = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 'I10', 'P01', 'P23', 'GEDAD', 'P13']
         df = pd.read_csv(file, usecols=cols)
 
         # fix codes 
@@ -204,12 +204,17 @@ class ID13ActivePopulationWithDegree(QgsProcessingAlgorithm):
         df.loc[df['I09'].str.len() == 2, 'I09'] = "0" + df['I09']
         df.loc[df['I10'].str.len() < 2, 'I10'] = "0" + df['I10']
 
+        # --------------P13 LUGAR DONDE VIVIA HACE 4 ANIOS
+        df.loc[df['P13'].str.len() == 5, 'P13'] = "0" + df['P13']
+        df['codpar'] = df['I01'].astype(str) + df['I02'].astype(str) + df['I03'].astype(str)
 
-        df['pobactive'] = 0.0
-        df.loc[(df['GEDAD'] >= 5) & ((df['P23'] == '9')), 'pobactive'] = 1.0
+
+
+        df['mismolugar'] = 0.0
+        df.loc[(df['codpar'] == df['P13']), 'mismolugar'] = 1.0
 
         df['poblacion'] = 0.0
-        df.loc[(df['GEDAD'] >0), 'poblacion'] = 1.0
+        df.loc[(df['P13'] != " "), 'poblacion'] = 1.0
 
 
         # df[0:50]
@@ -218,22 +223,23 @@ class ID13ActivePopulationWithDegree(QgsProcessingAlgorithm):
                   + df['I04'].astype(str) + df['I05'].astype(str) + df['I06'].astype(str)
 
 
-        df['pobactive'] = df['pobactive'].astype(float)
+        df['mismolugar'] = df['mismolugar'].astype(float)
         df['poblacion'] = df['poblacion'].astype(float)
 
 
         aggOptions = {
                       'codman' : 'first',
                       'poblacion' : 'sum',
-                      'pobactive' : 'sum',
+                      'mismolugar' : 'sum',
                      } 
 
 
         resManzanas = df.groupby('codman').agg(aggOptions)
 
-        resManzanas['pobactuni'] = None
-        resManzanas['pobactuni'] = (resManzanas['pobactive'] / resManzanas['poblacion']) * 100
-        resManzanas['pobt'] = resManzanas['poblacion']          
+        resManzanas['pobmismolugar'] = None
+        resManzanas['pobmismolugar'] = (resManzanas['mismolugar'] / resManzanas['poblacion']) * 100
+        resManzanas['pb'] = resManzanas['poblacion']
+
 
         df = resManzanas
 
@@ -241,8 +247,8 @@ class ID13ActivePopulationWithDegree(QgsProcessingAlgorithm):
         steps = steps+1
         feedback.setCurrentStep(steps)
 
-        outputCsv = self.CURRENT_PATH+'/pobactuni.csv'
-        feedback.pushConsoleInfo(str(('pobactuni en ' + outputCsv)))    
+        outputCsv = self.CURRENT_PATH+'/pobmismolugar.csv'
+        feedback.pushConsoleInfo(str(('pobmismolugar en ' + outputCsv)))    
         df.to_csv(outputCsv, index=False)
 
         steps = steps+1
@@ -276,38 +282,30 @@ class ID13ActivePopulationWithDegree(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        expressionNotNull = "pobactuni IS NOT '' AND pobactuni is NOT NULL"    
+        expressionNotNull = "pobmismolugar IS NOT '' AND pobmismolugar is NOT NULL"    
         notNull =   filterByExpression(result['OUTPUT'], expressionNotNull, context, feedback) 
 
 
+
+        # ----------------------CONVERTIR A NUMERICOS --------------------
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = 'pobactuni * 1.0'
+        formulaDummy = 'pb * 1.0'
         result = calculateField(notNull['OUTPUT'], 
-                                 'pobactuni_n',
+                                 'pobt',
                                  formulaDummy,
                                  context,
-                                 feedback)
+                                 feedback)     
 
-  # ----------------------CONVERTIR A NUMERICOS --------------------     
-  
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = 'pobactive * 1.0'
+        formulaDummy = 'mismolugar * 1.0'
         result = calculateField(result['OUTPUT'], 
-                                 'pobactive_n',
+                                 'pobml',
                                  formulaDummy,
                                  context,
                                  feedback)  
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = 'pobt * 1.0'
-        result = calculateField(result['OUTPUT'], 
-                                 'pobt_n',
-                                 formulaDummy,
-                                 context,
-                                 feedback)    
 
        # ----------------------PROPORCIONES AREA--------------------------
        
@@ -319,7 +317,7 @@ class ID13ActivePopulationWithDegree(QgsProcessingAlgorithm):
         steps = steps+1
         feedback.setCurrentStep(steps)
         segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                                ['pobactive_n','pobt_n','area_bloc'],
+                                ['pb','pobml','area_bloc'],
                                 ['id_grid','area_grid'],
                                 context, feedback)        
 
@@ -333,16 +331,16 @@ class ID13ActivePopulationWithDegree(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * pobactive_n' 
-        result = calculateField(segmentsArea['OUTPUT'], 'pobactive_n_seg',
+        formulaDummy = '(area_seg/area_bloc) * pb' 
+        result = calculateField(segmentsArea['OUTPUT'], 'poblacion_seg',
                                                formulaDummy,
                                                context,
                                                feedback)     
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * pobt_n' 
-        result = calculateField(result['OUTPUT'], 'pobt_n_seg',
+        formulaDummy = '(area_seg/area_bloc) * pobml' 
+        result = calculateField(result['OUTPUT'], 'mismolugar_seg',
                                formulaDummy,
                                context,
                                feedback)   
@@ -354,13 +352,13 @@ class ID13ActivePopulationWithDegree(QgsProcessingAlgorithm):
                                 context,
                                 feedback)                                    
 
-        #----------------------------------------------------------------------   
-
+        #----------------------------------------------------------------------                                                                              
+    
         steps = steps+1
         feedback.setCurrentStep(steps)
         result = joinByLocation(gridNeto['OUTPUT'],
                              result['OUTPUT'],
-                             ['pobactive_n_seg','pobt_n_seg'],                                   
+                             ['poblacion_seg','mismolugar_seg'],                                   
                               [CONTIENE], [SUM],
                               UNDISCARD_NONMATCHING,
                               context,
@@ -369,39 +367,29 @@ class ID13ActivePopulationWithDegree(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(pobactive_n_seg_sum/pobt_n_seg_sum) * 100' 
-        result = calculateField(result['OUTPUT'], NAMES_INDEX['ID13'][0],
+        formulaDummy = '(mismolugar_seg_sum/poblacion_seg_sum) * 100' 
+        result = calculateField(result['OUTPUT'], NAMES_INDEX['ID19'][0],
                                formulaDummy,
                                context,
-                               feedback, params['OUTPUT'])                                               
-    
-        # steps = steps+1
-        # feedback.setCurrentStep(steps)
-        # gridNeto = joinByLocation(gridNeto['OUTPUT'],
-        #                      result['OUTPUT'],
-        #                      ['pobactuni_n'],                                   
-        #                       [INTERSECTA], [MEDIA],
-        #                       UNDISCARD_NONMATCHING,
-        #                       context,
-        #                       feedback)         
+                               feedback, params['OUTPUT'])                                        
  
 
         # fieldsMapping = [
         #     {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
         #     {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
-        #     {'expression': '"pobactuni_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID13'][0], 'precision': 2, 'type': 6}
+        #     {'expression': '"pobmismolugar_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID19'][0], 'precision': 2, 'type': 6}
         # ]      
         
         # steps = steps+1
         # feedback.setCurrentStep(steps)
-        # result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 
+        # result = refactorFields(fieldsMapping, result['OUTPUT'], 
         #                         context,
         #                         feedback, params['OUTPUT'])                                                                
 
         return result
           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'degree.png'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'community2.png'))
 
     def name(self):
         """
@@ -411,7 +399,7 @@ class ID13ActivePopulationWithDegree(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'D13 Población activa con estudios universitarios'
+        return 'D19 Estabilidad de la comunidad'
 
     def displayName(self):
         """
@@ -441,13 +429,13 @@ class ID13ActivePopulationWithDegree(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return ID13ActivePopulationWithDegree()
+        return ID19CommunityStability()
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Mide el porcentaje de la población económicamente activa (15 años o más), que cuenta con estudios universitarios completos.</span>"\
+                "<span>Porcentaje de la población que reside en el mismo lugar (parroquia) desde hace más de 5 años.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Población económicamente activa con estudios universitarios / Población total)*100</span><br/>"         
+                "<span>(Población que vive en el mismo lugar / Población total)*100</span><br/>"         
 

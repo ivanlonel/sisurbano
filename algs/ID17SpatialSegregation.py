@@ -79,7 +79,7 @@ class ID17SpatialSegregation(QgsProcessingAlgorithm):
 
     def initAlgorithm(self, config):
         currentPath = getCurrentPath(self)
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID17'][1]))
+        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID17'][1]))        
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(

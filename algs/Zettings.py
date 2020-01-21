@@ -96,7 +96,8 @@ NAMES_INDEX = {
 	# 'ID14': ['id14','id14',''],
 	'ID15': ['id15','id15','D15 Mujeres en la fuerza de trabajo remunerado'],
 	'ID16': ['id16','id16','D16 Índice de envejecimiento'],
-	'ID17': ['id17','id17','D17 Segregación Espacial']
+	'ID17': ['id17','id17','D17 Segregación Espacial'],
+	'ID19': ['id19','id19','D19 Estabilidad de la comunidad']
 }
 
 TEXT_GRID_INPUT = 'Malla (Si ya tienes una malla de estudio)'

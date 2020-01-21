@@ -76,6 +76,7 @@ from .algs import (
     ID15WomenPaidWorkforce,
     ID16AgingIndex,
     ID17SpatialSegregation,
+    ID19CommunityStability,
     ZN00CreateGrid,
     ZN01FuzzyVectorial,
     ZN02AllocateValues,
@@ -145,6 +146,7 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(ID15WomenPaidWorkforce.ID15WomenPaidWorkforce())
         self.addAlgorithm(ID16AgingIndex.ID16AgingIndex())
         self.addAlgorithm(ID17SpatialSegregation.ID17SpatialSegregation())
+        self.addAlgorithm(ID19CommunityStability.ID19CommunityStability())
         self.addAlgorithm(ZN00CreateGrid.ZN00CreateGrid())
         self.addAlgorithm(ZN01FuzzyVectorial.ZN01FuzzyVectorial())
         self.addAlgorithm(ZN02AllocateValues.ZN02AllocateValues())

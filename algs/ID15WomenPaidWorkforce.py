@@ -160,7 +160,7 @@ class ID15WomenPaidWorkforce(QgsProcessingAlgorithm):
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 9
+        totalStpes = 17
         fieldDpaMan = params['DPA_MAN']
         # fieldHab = params['NUMBER_HABITANTS']
 
@@ -235,7 +235,9 @@ class ID15WomenPaidWorkforce(QgsProcessingAlgorithm):
         resManzanas = df.groupby('codman').agg(aggOptions)
 
         resManzanas['mftr'] = None
-        resManzanas['mftr'] = (resManzanas['mutra'] / resManzanas['poblacion']) * 100      
+        resManzanas['mftr'] = (resManzanas['mutra'] / resManzanas['poblacion']) * 100   
+
+        resManzanas['pobt'] = resManzanas['poblacion']   
 
         df = resManzanas
 
@@ -289,30 +291,116 @@ class ID15WomenPaidWorkforce(QgsProcessingAlgorithm):
                                  'mftr_n',
                                  formulaDummy,
                                  context,
-                                 feedback)     
-    
+                                 feedback)  
+
+  # ----------------------CONVERTIR A NUMERICOS --------------------     
+  
         steps = steps+1
         feedback.setCurrentStep(steps)
-        gridNeto = joinByLocation(gridNeto['OUTPUT'],
+        formulaDummy = 'mutra * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'mutra_n',
+                                 formulaDummy,
+                                 context,
+                                 feedback)  
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'pobt * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'pobt_n',
+                                 formulaDummy,
+                                 context,
+                                 feedback)    
+
+       # ----------------------PROPORCIONES AREA--------------------------
+       
+        steps = steps+1
+        feedback.setCurrentStep(steps)        
+        blocks = calculateArea(result['OUTPUT'], 'area_bloc', context,
+                               feedback)     
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                                ['mutra_n','pobt_n','area_bloc'],
+                                ['id_grid','area_grid'],
+                                context, feedback)        
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                     'area_seg',
+                                     context, feedback)
+
+        # -------------------------PROPORCIONES VALORES-------------------------
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * mutra_n' 
+        result = calculateField(segmentsArea['OUTPUT'], 'mutra_n_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)     
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * pobt_n' 
+        result = calculateField(result['OUTPUT'], 'pobt_n_seg',
+                               formulaDummy,
+                               context,
+                               feedback)   
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        result = makeSureInside(result['OUTPUT'],
+                                context,
+                                feedback)                                    
+
+        #----------------------------------------------------------------------   
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        result = joinByLocation(gridNeto['OUTPUT'],
                              result['OUTPUT'],
-                             ['mftr_n'],                                   
-                              [INTERSECTA], [MEDIA],
+                             ['mutra_n_seg','pobt_n_seg'],                                   
+                              [CONTIENE], [SUM],
                               UNDISCARD_NONMATCHING,
                               context,
-                              feedback)         
- 
+                              feedback)  
 
-        fieldsMapping = [
-            {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
-            {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
-            {'expression': '"mftr_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID15'][0], 'precision': 2, 'type': 6}
-        ]      
-        
+
         steps = steps+1
         feedback.setCurrentStep(steps)
-        result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 
-                                context,
-                                feedback, params['OUTPUT'])                                                                
+        formulaDummy = '(mutra_n_seg_sum/pobt_n_seg_sum) * 100' 
+        result = calculateField(result['OUTPUT'], NAMES_INDEX['ID15'][0],
+                               formulaDummy,
+                               context,
+                               feedback, params['OUTPUT'])                                    
+    
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # gridNeto = joinByLocation(gridNeto['OUTPUT'],
+        #                      result['OUTPUT'],
+        #                      ['mftr_n'],                                   
+        #                       [INTERSECTA], [MEDIA],
+        #                       UNDISCARD_NONMATCHING,
+        #                       context,
+        #                       feedback)         
+ 
+
+        # fieldsMapping = [
+        #     {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
+        #     {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
+        #     {'expression': '"mftr_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID15'][0], 'precision': 2, 'type': 6}
+        # ]      
+        
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 
+        #                         context,
+        #                         feedback, params['OUTPUT'])                                                                
 
         return result
           

@@ -160,7 +160,7 @@ class ID05InternetAccess(QgsProcessingAlgorithm):
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 9
+        totalStpes = 17
         fieldDpaMan = params['DPA_MAN']
         # fieldHab = params['NUMBER_HABITANTS']
 
@@ -330,30 +330,120 @@ class ID05InternetAccess(QgsProcessingAlgorithm):
                                  'acceso_inter_n',
                                  formulaDummy,
                                  context,
-                                 feedback)     
-    
+                                 feedback)  
+
+
+  # ----------------------CONVERTIR A NUMERICOS --------------------     
+  
         steps = steps+1
         feedback.setCurrentStep(steps)
-        gridNeto = joinByLocation(gridNeto['OUTPUT'],
+        formulaDummy = 'internet * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'internet_n',
+                                 formulaDummy,
+                                 context,
+                                 feedback)  
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'V16 * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'V16_n',
+                                 formulaDummy,
+                                 context,
+                                 feedback)          
+
+
+       # ----------------------PROPORCIONES AREA--------------------------
+       
+        steps = steps+1
+        feedback.setCurrentStep(steps)        
+        blocks = calculateArea(result['OUTPUT'], 'area_bloc', context,
+                               feedback)     
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                                ['internet_n','V16_n','area_bloc'],
+                                ['id_grid','area_grid'],
+                                context, feedback)        
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                     'area_seg',
+                                     context, feedback)
+
+        # -------------------------PROPORCIONES VALORES-------------------------
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * internet_n' 
+        result = calculateField(segmentsArea['OUTPUT'], 'internet_n_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)     
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * V16_n' 
+        result = calculateField(result['OUTPUT'], 'V16_n_seg',
+                               formulaDummy,
+                               context,
+                               feedback)   
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        result = makeSureInside(result['OUTPUT'],
+                                context,
+                                feedback)                                    
+
+        #----------------------------------------------------------------------   
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        result = joinByLocation(gridNeto['OUTPUT'],
                              result['OUTPUT'],
-                             ['acceso_inter_n'],                                   
-                              [INTERSECTA], [MEDIA],
+                             ['internet_n_seg','V16_n_seg'],                                   
+                              [CONTIENE], [SUM],
                               UNDISCARD_NONMATCHING,
                               context,
-                              feedback)         
- 
+                              feedback)  
 
-        fieldsMapping = [
-            {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
-            {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
-            {'expression': '"acceso_inter_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID05'][0], 'precision': 2, 'type': 6}
-        ]      
-        
+
         steps = steps+1
         feedback.setCurrentStep(steps)
-        result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 
-                                context,
-                                feedback, params['OUTPUT'])                                                                
+        formulaDummy = '(internet_n_seg_sum/V16_n_seg_sum) * 100' 
+        result = calculateField(result['OUTPUT'], NAMES_INDEX['ID05'][0],
+                               formulaDummy,
+                               context,
+                               feedback, params['OUTPUT'])    
+
+
+
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # gridNeto = joinByLocation(gridNeto['OUTPUT'],
+        #                      result['OUTPUT'],
+        #                      ['acceso_inter_n'],                                   
+        #                       [INTERSECTA], [MEDIA],
+        #                       UNDISCARD_NONMATCHING,
+        #                       context,
+        #                       feedback)         
+ 
+
+        # fieldsMapping = [
+        #     {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
+        #     {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
+        #     {'expression': '"acceso_inter_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID05'][0], 'precision': 2, 'type': 6}
+        # ]      
+        
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 
+        #                         context,
+        #                         feedback, params['OUTPUT'])                                                                
 
         return result
           

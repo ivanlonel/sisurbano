@@ -160,7 +160,7 @@ class ID16AgingIndex(QgsProcessingAlgorithm):
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 9
+        totalStpes = 17
         fieldDpaMan = params['DPA_MAN']
         # fieldHab = params['NUMBER_HABITANTS']
 
@@ -285,30 +285,122 @@ class ID16AgingIndex(QgsProcessingAlgorithm):
                                  'envejecimiento_n',
                                  formulaDummy,
                                  context,
-                                 feedback)     
-    
+                                 feedback)   
+
+
+
+  # ----------------------CONVERTIR A NUMERICOS --------------------     
+  
         steps = steps+1
         feedback.setCurrentStep(steps)
-        gridNeto = joinByLocation(gridNeto['OUTPUT'],
+        formulaDummy = 'mayor * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'mayor_n',
+                                 formulaDummy,
+                                 context,
+                                 feedback)  
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'infantil * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'infantil_n',
+                                 formulaDummy,
+                                 context,
+                                 feedback)    
+
+       # ----------------------PROPORCIONES AREA--------------------------
+       
+        steps = steps+1
+        feedback.setCurrentStep(steps)        
+        blocks = calculateArea(result['OUTPUT'], 'area_bloc', context,
+                               feedback)     
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                                ['mayor_n','infantil_n','area_bloc'],
+                                ['id_grid','area_grid'],
+                                context, feedback)        
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                     'area_seg',
+                                     context, feedback)
+
+        # -------------------------PROPORCIONES VALORES-------------------------
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * mayor_n' 
+        result = calculateField(segmentsArea['OUTPUT'], 'mayor_n_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)     
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * infantil_n' 
+        result = calculateField(result['OUTPUT'], 'infantil_n_seg',
+                               formulaDummy,
+                               context,
+                               feedback)   
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        result = makeSureInside(result['OUTPUT'],
+                                context,
+                                feedback)                                    
+
+        #----------------------------------------------------------------------   
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        result = joinByLocation(gridNeto['OUTPUT'],
                              result['OUTPUT'],
-                             ['envejecimiento_n'],                                   
-                              [INTERSECTA], [MEDIA],
+                             ['mayor_n_seg','infantil_n_seg'],                                   
+                              [CONTIENE], [SUM],
                               UNDISCARD_NONMATCHING,
                               context,
-                              feedback)         
- 
+                              feedback)  
 
-        fieldsMapping = [
-            {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
-            {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
-            {'expression': '"envejecimiento_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID16'][0], 'precision': 2, 'type': 6}
-        ]      
-        
+
         steps = steps+1
         feedback.setCurrentStep(steps)
-        result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 
-                                context,
-                                feedback, params['OUTPUT'])                                                                
+        formulaDummy = '(mayor_n_seg_sum/infantil_n_seg_sum) * 100' 
+        result = calculateField(result['OUTPUT'], NAMES_INDEX['ID16'][0],
+                               formulaDummy,
+                               context,
+                               feedback, params['OUTPUT'])
+
+
+
+
+    
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # gridNeto = joinByLocation(gridNeto['OUTPUT'],
+        #                      result['OUTPUT'],
+        #                      ['envejecimiento_n'],                                   
+        #                       [INTERSECTA], [MEDIA],
+        #                       UNDISCARD_NONMATCHING,
+        #                       context,
+        #                       feedback)         
+ 
+
+        # fieldsMapping = [
+        #     {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
+        #     {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
+        #     {'expression': '"envejecimiento_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID16'][0], 'precision': 2, 'type': 6}
+        # ]      
+        
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 
+        #                         context,
+        #                         feedback, params['OUTPUT'])                                                                
 
         return result
           
