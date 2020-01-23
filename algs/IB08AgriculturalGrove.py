@@ -52,11 +52,11 @@ class IB08AgriculturalGrove(QgsProcessingAlgorithm):
     """
     Mide la capacidad de un territorio de contener actividades agrícolas
     o huertos en relación a su superficie total.
-    Formula:(Superficie de espacios agrícolas en m2 / Superficie total en m2)*100
+    Formula: Superficie de espacios agrícolas y huertos en m2 / Población total
     """
     AGRICULTRURAL = 'AGRICULTRURAL'
     BLOCKS = 'BLOCKS'
-    # FIELD_POPULATION = 'FIELD_POPULATION'
+    FIELD_POPULATION = 'FIELD_POPULATION'
     # FIELD_HOUSING = 'FIELD_HOUSING'
     CELL_SIZE = 'CELL_SIZE'    
     OUTPUT = 'OUTPUT'
@@ -74,13 +74,13 @@ class IB08AgriculturalGrove(QgsProcessingAlgorithm):
             )
         )
 
-        # self.addParameter(
-        #     QgsProcessingParameterField(
-        #         self.FIELD_POPULATION,
-        #         self.tr('Población'),
-        #         'poblacion', 'BLOCKS'
-        #     )
-        # )      
+        self.addParameter(
+            QgsProcessingParameterField(
+                self.FIELD_POPULATION,
+                self.tr('Población'),
+                'poblacion', 'BLOCKS'
+            )
+        )      
 
         # self.addParameter(
         #     QgsProcessingParameterField(
@@ -130,7 +130,7 @@ class IB08AgriculturalGrove(QgsProcessingAlgorithm):
     def processAlgorithm(self, params, context, feedback):
       steps = 0
       totalStpes = 13
-      # fieldPopulation = params['FIELD_POPULATION']
+      fieldPopulation = params['FIELD_POPULATION']
 
       feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
@@ -148,27 +148,43 @@ class IB08AgriculturalGrove(QgsProcessingAlgorithm):
       steps = steps+1
       feedback.setCurrentStep(steps)
       segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                              'area_bloc;',
+                              'area_bloc;' + fieldPopulation,
                               'id_grid;area_grid',
                               context, feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      segmentsArea = calculateArea(segments['OUTPUT'],
+                                   'area_seg',
+                                   context, feedback)
+
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
+      populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
+                                             formulaPopulationSegments,
+                                             context,
+                                             feedback)
 
       # Haciendo el buffer inverso aseguramos que los segmentos
       # quden dentro de la malla
       steps = steps+1
       feedback.setCurrentStep(steps)
-      segmentsFixed = makeSureInside(segments['OUTPUT'],
-                                              context,
-                                              feedback)
+      populationForSegmentsFixed = makeSureInside(populationForSegments['OUTPUT'],
+                                                  context,
+                                                  feedback)
 
       steps = steps+1
       feedback.setCurrentStep(steps)
       gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                           segmentsFixed['OUTPUT'],
-                                           [],
-                                           [CONTIENE], [SUM],    
-                                           UNDISCARD_NONMATCHING,                               
-                                           context,
-                                           feedback)
+                                           populationForSegmentsFixed['OUTPUT'],
+                                           'pop_seg',                                   
+                                            [CONTIENE], [SUM],
+                                            UNDISCARD_NONMATCHING,
+                                            context,
+                                            feedback)  
+
+
       # CALCULAR AREA AGRICULTURA
       steps = steps+1
       feedback.setCurrentStep(steps)
@@ -196,7 +212,7 @@ class IB08AgriculturalGrove(QgsProcessingAlgorithm):
       feedback.setCurrentStep(steps)
       agriAreaAndPopulation = joinByLocation(gridNetoAndSegments['OUTPUT'],
                                               agriAreaFixed['OUTPUT'],
-                                              'area_agri',
+                                              ['area_agri','pop_seg'],
                                               [CONTIENE], [SUM],
                                               UNDISCARD_NONMATCHING,                              
                                               context,
@@ -205,11 +221,11 @@ class IB08AgriculturalGrove(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      # formulaSurfacePerHab = 'coalesce(area_agri_sum/' + fieldPopulation + '_sum, 0)'
-      formulaSurfaceAgri = 'coalesce((area_agri_sum/area_grid)*100, 0)'
+      formulaSurfacePerHab = 'coalesce(area_agri_sum/pop_seg_sum, 0)'
+      # formulaSurfaceAgri = 'coalesce((area_agri_sum/area_grid)*100, 0)'
       surfaceAgri = calculateField(agriAreaAndPopulation['OUTPUT'],
                                      NAMES_INDEX['IB08'][0],
-                                     formulaSurfaceAgri,
+                                     formulaSurfacePerHab,
                                      context,
                                      feedback, params['OUTPUT'])
 
@@ -235,7 +251,7 @@ class IB08AgriculturalGrove(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'B08 Superficie de área agrícola/huertos'
+        return 'B08 Superficie de área agrícola y huertos'
 
     def displayName(self):
         """
@@ -269,9 +285,9 @@ class IB08AgriculturalGrove(QgsProcessingAlgorithm):
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Mide la capacidad de un territorio de contener actividades agrícolas o huertos en relación a su superficie total.</span>"\
+                "<span>Mide la capacidad de un territorio de contener actividades agrícolas o huertos en relación con el total de la población.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Superficie de espacios agrícolas en m2 / Superficie total en m2)*100<br/>"          
+                "<span>Superficie de espacios agrícolas y huertos en m2 / Población total<br/>"          
 

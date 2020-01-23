@@ -50,11 +50,12 @@ pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID11Theft(QgsProcessingAlgorithm):
     """
-    Mide la concentración de habitantes y evidencia indirectamente la demanda
-    de movilidad, productos y servicios. Número de habitantes por la
-    superficie de suelo de naturaleza urbana (no incluye vías
-    y equipamientos).
-    Formula: Número de habitantes / Superficie efectiva neta en hectareas
+    Mide la cantidad de robos a personas, viviendas, instituciones, comercios
+    y vehículos en el área de estudio con respecto al total de delitos ocurridos en la ciudad.
+
+    Para el cálculo se utiliza información del CSC que comprende los robos denunciados.    
+
+    Formula: (Delitos anuales en el área de estudio / Total de delitos anuales en la ciudad)*100
     """
 
     # Constants used to refer to parameters and outputs. They will be
@@ -229,7 +230,7 @@ class ID11Theft(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaThefPerHab = 'coalesce(coalesce(idx_count, 0)/hou_seg_sum, "")'
+        formulaThefPerHab = 'coalesce((coalesce(idx_count, 0)/sum(idx_count)) * 100, "")'
         thefPerHab = calculateField(gridNetoAndSegments['OUTPUT'],
                                    NAMES_INDEX['ID11'][0],
                                    formulaThefPerHab,
@@ -294,7 +295,7 @@ class ID11Theft(QgsProcessingAlgorithm):
         return  "<b>Descripción:</b><br/>"\
                 "<span>Mide la cantidad de robos al año por número de habitantes</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
-                "<span>Las tazas de robo podrían ser entendidas mejor por medio de encuestas de victimización, más que en base a datos policiales dado que no siempre se denuncian estos delitos.</span>"\
+                "<span>Para el cálculo se utiliza información del CSC que comprende los robos denunciados.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Robos / número de personas)*100<br/>"         
+                "<span>(Delitos anuales en el área de estudio / Total de delitos anuales en la ciudad)*100<br/>"         
 

@@ -88,16 +88,17 @@ NAMES_INDEX = {
 	# 'ID06': ['id06','id06',''],
 	'ID07': ['id07','id07','D07 Indice de calidad de vida'],
 	# 'ID08': ['id08','id08',''],
-	# 'ID09': ['id09','id09',''],
+	'ID09': ['id09','id09','D09 Uso del tiempo'],
 	'ID10': ['id10','id10','D10 Cercanía y asequibilidad a alimentos'],
 	'ID11': ['id11','id11','D11 Robos por número de habitantes'],
 	'ID12': ['id12','id12','D12 Seguridad de tenencia de la vivienda'],
 	'ID13': ['id13','id13','D13 Población activa con estudios universitarios'],
-	# 'ID14': ['id14','id14',''],
+	'ID14': ['id14','id14','D14 Tasa de desempleo'],
 	'ID15': ['id15','id15','D15 Mujeres en la fuerza de trabajo remunerado'],
 	'ID16': ['id16','id16','D16 Índice de envejecimiento'],
 	'ID17': ['id17','id17','D17 Segregación Espacial'],
-	'ID19': ['id19','id19','D19 Estabilidad de la comunidad']
+	'ID19': ['id19','id19','D19 Estabilidad de la comunidad'],
+	'ID21': ['d21','d21','D21 Percepción de inseguridad']
 }
 
 TEXT_GRID_INPUT = 'Malla (Si ya tienes una malla de estudio)'

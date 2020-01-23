@@ -69,19 +69,23 @@ from .algs import (
     ID04OpenPublicSpacesNeedImprovement,
     ID05InternetAccess,
     ID07QualityLifeIndex,
+    ID09UseOfTime,
     ID10Proximity2PublicMarket,
     ID11Theft,
     ID12HomeTenureSecurity,
     ID13ActivePopulationWithDegree,
+    ID14UnemploymentRate,
     ID15WomenPaidWorkforce,
     ID16AgingIndex,
     ID17SpatialSegregation,
     ID19CommunityStability,
+    ID21PerceptionInsecurity,
     ZN00CreateGrid,
     ZN01FuzzyVectorial,
     ZN02AllocateValues,
     ZN03WrapValues,
-    ZN04AllocateValuesToPoints
+    ZN04AllocateValuesToPoints,
+
     )
 
 
@@ -139,14 +143,17 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(ID04OpenPublicSpacesNeedImprovement.ID04OpenPublicSpacesNeedImprovement())
         self.addAlgorithm(ID05InternetAccess.ID05InternetAccess())
         self.addAlgorithm(ID07QualityLifeIndex.ID07QualityLifeIndex())
+        self.addAlgorithm(ID09UseOfTime.ID09UseOfTime())
         self.addAlgorithm(ID10Proximity2PublicMarket.ID10Proximity2PublicMarket())
         self.addAlgorithm(ID11Theft.ID11Theft())
         self.addAlgorithm(ID12HomeTenureSecurity.ID12HomeTenureSecurity())
         self.addAlgorithm(ID13ActivePopulationWithDegree.ID13ActivePopulationWithDegree())
+        self.addAlgorithm(ID14UnemploymentRate.ID14UnemploymentRate())
         self.addAlgorithm(ID15WomenPaidWorkforce.ID15WomenPaidWorkforce())
         self.addAlgorithm(ID16AgingIndex.ID16AgingIndex())
         self.addAlgorithm(ID17SpatialSegregation.ID17SpatialSegregation())
         self.addAlgorithm(ID19CommunityStability.ID19CommunityStability())
+        self.addAlgorithm(ID21PerceptionInsecurity.ID21PerceptionInsecurity())
         self.addAlgorithm(ZN00CreateGrid.ZN00CreateGrid())
         self.addAlgorithm(ZN01FuzzyVectorial.ZN01FuzzyVectorial())
         self.addAlgorithm(ZN02AllocateValues.ZN02AllocateValues())
