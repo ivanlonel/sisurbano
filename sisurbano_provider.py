@@ -48,6 +48,8 @@ from .algs import (
     IA09CoverageDailyBusinessActivities,
     IA10RelationshipActivityResidence,
     IA11UrbanComplexity,
+    IA14DensityPedestrianIntersections,
+    IA15TissueAccessibility,
     IB00WrapB,
     IB01AirQuality,
     IB02LuminaryPerRoad,
@@ -61,6 +63,7 @@ from .algs import (
     IC03RoadsPerHabitant,
     IC04Proximity2AlternativeTransport,
     IC08ParkedVehicles,
+    IC09PowerConsumption,
     IC13Sewerage,
     ID00WrapD,
     ID01HousingFullCoverageBasicServices,
@@ -122,6 +125,8 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(IA09CoverageDailyBusinessActivities.IA09CoverageDailyBusinessActivities())
         self.addAlgorithm(IA10RelationshipActivityResidence.IA10RelationshipActivityResidence())
         self.addAlgorithm(IA11UrbanComplexity.IA11UrbanComplexity())
+        self.addAlgorithm(IA14DensityPedestrianIntersections.IA14DensityPedestrianIntersections())
+        self.addAlgorithm(IA15TissueAccessibility.IA15TissueAccessibility())
         self.addAlgorithm(IB00WrapB.IB00WrapB())
         self.addAlgorithm(IB01AirQuality.IB01AirQuality())
         self.addAlgorithm(IB02LuminaryPerRoad.IB02LuminaryPerRoad())
@@ -135,6 +140,7 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(IC03RoadsPerHabitant.IC03RoadsPerHabitant())
         self.addAlgorithm(IC04Proximity2AlternativeTransport.IC04Proximity2AlternativeTransport())
         self.addAlgorithm(IC08ParkedVehicles.IC08ParkedVehicles())
+        self.addAlgorithm(IC09PowerConsumption.IC09PowerConsumption())
         self.addAlgorithm(IC13Sewerage.IC13Sewerage())
         self.addAlgorithm(ID00WrapD.ID00WrapD())
         self.addAlgorithm(ID01HousingFullCoverageBasicServices.ID01HousingFullCoverageBasicServices())

@@ -406,36 +406,6 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         -----------------------------------------------------------------
         """
 
-
-
-        # steps = steps+1
-        # feedback.setCurrentStep(steps)        
-        # blocks = calculateArea(blocksFacilities['OUTPUT'], 'area_bloc', context,
-        #                        feedback)
-
-
-        # steps = steps+1
-        # feedback.setCurrentStep(steps)
-        # segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-        #                         'edu_idx_count;hea_idx_count;app_idx_count;spo_idx_count;adm_idx_count;facilities;area_bloc;' + fieldHousing,
-        #                         'id_grid',
-        #                         context, feedback)
-
-        # steps = steps+1
-        # feedback.setCurrentStep(steps)
-        # segmentsArea = calculateArea(segments['OUTPUT'],
-        #                              'area_seg',
-        #                              context, feedback)
-
-
-        # steps = steps+1
-        # feedback.setCurrentStep(steps)
-        # formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
-        # housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
-        #                                     formulaHousingSegments,
-        #                                     context,
-        #                                     feedback)
-
         # Haciendo el buffer inverso aseguramos que los segmentos
         # quden dentro de la malla
         steps = steps+1
@@ -490,13 +460,6 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
 
         return proximity2BasicU
 
-        # Return the results of the algorithm. In this case our only result is
-        # the feature sink which contains the processed features, but some
-        # algorithms may return multiple feature sinks, calculated numeric
-        # statistics, etc. These should all be included in the returned
-        # dictionary, with keys matching the feature corresponding parameter
-        # or output names.
-        #return {self.OUTPUT: dest_id}
 
     def icon(self):
         return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'icon_servicearea_contour_multiple.svg'))

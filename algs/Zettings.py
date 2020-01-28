@@ -50,8 +50,8 @@ NAMES_INDEX = {
 	'IA11': ['ia11','ia11','A11 Complejidad urbana'],
 	# 'IA12': ['ia12','ia12',''],
 	# 'IA13': ['ia13','ia13',''],
-	# 'IA14': ['ia14','ia14',''],
-	# 'IA15': ['ia15','ia15',''],
+	'IA14': ['ia14','ia14','A14 Densidad de intersecciones peatonales'],
+	'IA15': ['ia15','ia15','A15 Accesibilidad al tejido'],
 	'IB01': ['ib01','ib01','B01 Calidad del aire'],
 	'IB02': ['ib02','ib02','B02 Luminación nocturna del viario público'],
 	'IB03': ['ib03','ib03','B03 Confort acústico'],
@@ -68,7 +68,7 @@ NAMES_INDEX = {
 	# 'IC06': ['ic06','ic06',''],
 	# 'IC07': ['ic07','ic07',''],
 	'IC08': ['ic08','ic08','C08 Espacio público ocupado por vehículos parqueados'],
-	# 'IC09': ['ic09','ic09',''],
+	'IC09': ['ic09','ic09','C09 Consumo de energía eléctrica en la vivienda' ],
 	# 'IC10': ['ic10','ic10',''],
 	# 'IC11': ['ic11','ic11',''],
 	# 'IC12': ['ic12','ic12',''],
@@ -103,3 +103,9 @@ NAMES_INDEX = {
 
 TEXT_GRID_INPUT = 'Malla (Si ya tienes una malla de estudio)'
 OPTIONAL_GRID_INPUT = False
+
+TIME_TRAVEL_COST = 300 #segundos (5min)
+DSITANCE_TRAVEL_COST = 300 #metros
+
+STRATEGY_TIME = 1
+STRATEGY_DISTANCE = 0

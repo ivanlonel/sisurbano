@@ -19,6 +19,80 @@ import processing
 from .Zettings import *
 
 
+def multiBufferIsocrono(red, colecStartPoints, context, feedback, output=QgsProcessing.TEMPORARY_OUTPUT):      
+    reslut = []
+    for startPoints, strategy, travelCost in colecStartPoints:
+        reslut[startPoints] = bufferIsocrono(red, startPoints, travelCost, strategy, context, feedback)
+    print reslut
+
+
+def overlaps(input, layers, context, feedback, output=QgsProcessing.TEMPORARY_OUTPUT):
+    alg_params = {
+        'INPUT': input,
+        'LAYERS': layers,
+        'OUTPUT': output
+    }
+    result= processing.run('native:calculatevectoroverlaps', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+    return result    
+ 
+
+def bufferIsocrono(red, startPoints, travelCost, strategy, context, feedback, output=QgsProcessing.TEMPORARY_OUTPUT):      
+    serviceArea =  serviceAreaFromLayer(red, startPoints, travelCost, strategy, context, feedback)
+    hull = convexHull(serviceArea['OUTPUT_LINES'], context, feedback)
+    rdisolve = disolve(hull['OUTPUT'], context, feedback, output)
+    return rdisolve
+
+
+def disolve(input, context, feedback, output=QgsProcessing.TEMPORARY_OUTPUT):
+    # Disolver
+    alg_params = {
+        'FIELD': None,
+        'INPUT': input,
+        'OUTPUT':output
+    }
+    result = processing.run('native:dissolve', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+    return result  
+
+
+def convexHull(input, context, feedback, output=QgsProcessing.TEMPORARY_OUTPUT):
+    # Envolvente convexa
+    alg_params = {
+        'INPUT': input,
+        'OUTPUT': output
+    }
+    result= processing.run('native:convexhull', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+    return result
+
+
+# { 'DEFAULT_DIRECTION' : 2, 'DEFAULT_SPEED' : 5, 'DIRECTION_FIELD' : None, 'INCLUDE_BOUNDS' : False, 'INPUT' : '/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/vias_cuenca_osm.shp', 'OUTPUT_LINES' : 'TEMPORARY_OUTPUT', 'SPEED_FIELD' : None, 'START_POINTS' : '/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/PARQUES.shp', 'STRATEGY' : 1, 'TOLERANCE' : 0, 'TRAVEL_COST' : 5, 'VALUE_BACKWARD' : '', 'VALUE_BOTH' : '', 'VALUE_FORWARD' : '' }
+
+def serviceAreaFromLayer(red, startPoints, travelCost, strategy, context, feedback,
+                   output=QgsProcessing.TEMPORARY_OUTPUT):
+
+    alg_params = {
+        'DEFAULT_DIRECTION': 2,
+        'DEFAULT_SPEED': 5, #km/h
+        'DIRECTION_FIELD': None,
+        'INCLUDE_BOUNDS': False,
+        'INPUT': red,
+        'SPEED_FIELD': None, #km/h
+        'START_POINTS':startPoints,
+        'STRATEGY': strategy, #0 : distancia, 1: tiempo
+        'TOLERANCE': 0,
+        'TRAVEL_COST': travelCost,
+        'VALUE_BACKWARD': '',
+        'VALUE_BOTH': '',
+        'VALUE_FORWARD': '',
+        'OUTPUT_LINES': output
+    }
+    
+    result = processing.run('qgis:serviceareafromlayer', alg_params,
+                            context=context, feedback=feedback,
+                            is_child_algorithm=True)
+    return result
+
+
 def refactorFields(fieldsMapping, input, context, feedback,
                    output=QgsProcessing.TEMPORARY_OUTPUT):
     alg_params = {

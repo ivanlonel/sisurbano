@@ -23,7 +23,7 @@
 """
 
 __author__ = 'Johnatan Astudillo'
-__date__ = '2019-12-04'
+__date__ = '2020-01-14'
 __copyright__ = '(C) 2019 by LlactaLAB'
 
 # This will get replaced with a git SHA1 when you do a git archive
@@ -39,38 +39,40 @@ from qgis.core import (QgsProcessing,
                        QgsFeatureSink,
                        QgsProcessingAlgorithm,
                        QgsProcessingParameterFeatureSource,
+                       QgsProcessingParameterFile,
                        QgsProcessingParameterField,
                        QgsProcessingParameterNumber,
                        QgsProcessingParameterFeatureSink)
 from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
+import numpy as np
+import pandas as pd
+import tempfile
+import subprocess
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID02HomesConstructiveDeficiencies(QgsProcessingAlgorithm):
     """
-    Mide la concentración de habitantes y evidencia indirectamente la demanda
-    de movilidad, productos y servicios. Número de habitantes por la
-    superficie de suelo de naturaleza urbana (no incluye vías
-    y equipamientos).
-    Formula: Número de habitantes / Superficie efectiva neta en hectareas
+    Mide el porcentaje de viviendas que tienen acceso directo en su vivienda a
+    una fuente de agua potable, energía eléctrica, alcantarillado y recolección de residuos sólidos.
+    Formula: (No. viviendas con todos los servicios / No. total de viviendas)*100
     """
 
-    # Constants used to refer to parameters and outputs. They will be
-    # used when calling the algorithm from another algorithm, or when
-    # calling from the QGIS console.
     BLOCKS = 'BLOCKS'
-    FIELD_HOUSING = 'FIELD_HOUSING'
-    HOUSING_DEFICIENCIES = 'HOUSING_DEFICIENCIES'
+    DPA_MAN = 'DPA_MAN'
+    CENSO_VIVIENDA = 'CENSO_VIVIENDA'
+    # CENSO_POBLACION = 'CENSO_POBLACION'
+    # CENSO_HOGAR = 'CENSO_HOGAR'
     CELL_SIZE = 'CELL_SIZE'
     OUTPUT = 'OUTPUT'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'
-
+    CURRENT_PATH = 'CURRENT_PATH'    
 
     def initAlgorithm(self, config):
-
         currentPath = getCurrentPath(self)
+        self.CURRENT_PATH = currentPath        
         FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID02'][1]))
 
         self.addParameter(
@@ -83,20 +85,38 @@ class ID02HomesConstructiveDeficiencies(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterField(
-                self.FIELD_HOUSING,
-                self.tr('Viviendas'),
-                'viviendas', 'BLOCKS'
+                self.DPA_MAN,
+                self.tr('DPA Manzanas'),
+                'dpa_manzan', 'BLOCKS'
             )
-        )   
+        )           
+
+        # self.addParameter(
+        #     QgsProcessingParameterFile(
+        #         self.CENSO_POBLACION,
+        #         self.tr('Censo población'),
+        #         extension='csv',
+        #         defaultValue="/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Pob_Manz.csv"
+        #     )
+        # ) 
+
+        # self.addParameter(
+        #     QgsProcessingParameterFile(
+        #         self.CENSO_HOGAR,
+        #         self.tr('Censo hogar'),
+        #         extension='csv',
+        #         defaultValue="/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Hog_Manz.csv"
+        #     )
+        # )           
 
         self.addParameter(
-            QgsProcessingParameterField(
-                self.HOUSING_DEFICIENCIES,
-                self.tr('Viviendas con deficiencias'),
-                'viviendas', 'BLOCKS'
+            QgsProcessingParameterFile(
+                self.CENSO_VIVIENDA,
+                self.tr('Censo vivienda'),
+                extension='csv',
+                defaultValue='/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Viv_Manz.csv'
             )
-        )        
-
+        )           
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -107,6 +127,7 @@ class ID02HomesConstructiveDeficiencies(QgsProcessingAlgorithm):
             )
         )
 
+
         if OPTIONAL_GRID_INPUT:
             self.addParameter(
                 QgsProcessingParameterNumber(
@@ -115,8 +136,17 @@ class ID02HomesConstructiveDeficiencies(QgsProcessingAlgorithm):
                     QgsProcessingParameterNumber.Integer,
                     P_CELL_SIZE, False, 1, 99999999
                 )
-            )
+            )          
 
+
+        # self.addParameter(
+        #     QgsProcessingParameterNumber(
+        #         self.NUMBER_HABITANTS,
+        #         self.tr('Por cada número de habitantes'),
+        #         QgsProcessingParameterNumber.Integer,
+        #         100000, False, 1, 99999999
+        #     )
+        # )   
 
         self.addParameter(
             QgsProcessingParameterFeatureSink(
@@ -126,35 +156,179 @@ class ID02HomesConstructiveDeficiencies(QgsProcessingAlgorithm):
                 str(FULL_PATH)
             )
         )
+        
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 11
-        fieldHousing = params['FIELD_HOUSING']
-        fieldHousingDeficiencies = params['HOUSING_DEFICIENCIES']
+        totalStpes = 17
+        fieldDpaMan = params['DPA_MAN']
+        # fieldHab = params['NUMBER_HABITANTS']
 
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-        blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
-                               feedback)
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                         params['STUDY_AREA_GRID'],
+                                         context, feedback)
+        gridNeto = grid  
 
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-                                           params['STUDY_AREA_GRID'],
-                                           context, feedback)
-        gridNeto = grid
 
 
+        pathCsvVivienda = params['CENSO_VIVIENDA']
+        file = pathCsvVivienda
+        cols = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 'I10', 'V02', 'V04', 'V06']
+        df = pd.read_csv(file, usecols=cols)
+
+        # fix codes 
+        df['I01'] = df['I01'].astype(str)
+        df['I02'] = df['I02'].astype(str)
+        df['I03'] = df['I03'].astype(str)
+        df['I04'] = df['I04'].astype(str)
+        df['I05'] = df['I05'].astype(str)
+        df['I06'] = df['I06'].astype(str)
+        df['I09'] = df['I09'].astype(str)
+        df['I10'] = df['I10'].astype(str)
+
+        df.loc[df['I01'].str.len() < 2, 'I01'] = "0" + df['I01']
+        df.loc[df['I02'].str.len() < 2, 'I02'] = "0" + df['I02']
+        df.loc[df['I03'].str.len() < 2, 'I03'] = "0" + df['I03']
+        df.loc[df['I04'].str.len() == 1, 'I04'] = "00" + df['I04']
+        df.loc[df['I04'].str.len() == 2, 'I04'] = "0" + df['I04']
+        df.loc[df['I05'].str.len() == 1, 'I05'] = "00" + df['I05']
+        df.loc[df['I05'].str.len() == 2, 'I05'] = "0" + df['I05']
+        df.loc[df['I06'].str.len() < 2, 'I06'] = "0" + df['I06']
+        df.loc[df['I09'].str.len() == 1, 'I09'] = "00" + df['I09']
+        df.loc[df['I09'].str.len() == 2, 'I09'] = "0" + df['I09']
+        df.loc[df['I10'].str.len() < 2, 'I10'] = "0" + df['I10']
+
+        df['codman'] = df['I01'].astype(str) + df['I02'].astype(str) + df['I03'].astype(str) \
+                  + df['I04'].astype(str) + df['I05'].astype(str) + df['I06'].astype(str)
+
+
+        #Para el cálculo se utilizan los datos de las cubiertas,
+        # pareds y pisos en estado MALO según el Censo de pobalción y vivienda 2010.
+        # V02: categoría 3 (techo). 
+        # V04: categoría 3 (paredes). 
+        # V06: categoría 3 (piso).
+
+        df['pt'] = 1.0
+        df['vivcarencias'] = 0.0
+        df.loc[(df['V02'] == '3')
+             & (df['V04'] == '3')
+             & (df['V06'] == '3')       
+               ,'vivcarencias'] = 1.0
+
+
+
+        df['pt'] = df['pt'].astype(float)
+        df['vivcarencias'] = df['vivcarencias'].astype(float)
+
+
+        aggOptions = {
+                      'codman' : 'first',
+                      'pt' : 'count',
+                      'vivcarencias' : 'sum',
+                     } 
+
+
+        resManzanas = df.groupby('codman').agg(aggOptions)
+
+        resManzanas['pobconcaren'] = None
+        resManzanas['pobconcaren'] = (resManzanas['vivcarencias'] / resManzanas['pt']) * 100   
+
+
+        df = resManzanas     
+
+        
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+
+        outputCsv = self.CURRENT_PATH+'/pobconcaren.csv'
+        feedback.pushConsoleInfo(str(('pobconcaren en ' + outputCsv)))    
+        df.to_csv(outputCsv, index=False)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+
+        exitCsv = os.path.exists(outputCsv)
+        if(exitCsv):
+            print("El archivo CSV existe")
+        else:
+            print("No se encuentra CSV")
+
+        CSV =  QgsVectorLayer(outputCsv, "csv", "ogr") 
+        featuresCSV = CSV.getFeatures()
+        # fields = layer.dataProvider().fields()
+        field_names = [field.name() for field in CSV.fields()]       
+        print(field_names)            
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        result = joinByAttr2(params['BLOCKS'], fieldDpaMan,
+                                outputCsv, 'codman',
+                                [],
+                                UNDISCARD_NONMATCHING,
+                                '',
+                                1,
+                                context,
+                                feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        expressionNotNull = "pobconcaren IS NOT '' AND pobconcaren is NOT NULL"    
+        notNull =   filterByExpression(result['OUTPUT'], expressionNotNull, context, feedback) 
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'pobconcaren * 1.0'
+        result = calculateField(notNull['OUTPUT'], 
+                                 'pobconcaren_n',
+                                 formulaDummy,
+                                 context,
+                                 feedback)  
+
+
+  # ----------------------CONVERTIR A NUMERICOS --------------------     
+  
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'vivcarencias * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'vivcarencias_n',
+                                 formulaDummy,
+                                 context,
+                                 feedback)  
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'pt * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'pt_n',
+                                 formulaDummy,
+                                 context,
+                                 feedback)          
+
+
+       # ----------------------PROPORCIONES AREA--------------------------
+       
+        steps = steps+1
+        feedback.setCurrentStep(steps)        
+        blocks = calculateArea(result['OUTPUT'], 'area_bloc', context,
+                               feedback)     
 
         steps = steps+1
         feedback.setCurrentStep(steps)
         segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                                ['area_bloc',fieldHousing,fieldHousingDeficiencies],
-                                'id_grid;area_grid',
-                                context, feedback)
+                                ['vivcarencias_n','pt_n','area_bloc'],
+                                ['id_grid','area_grid'],
+                                context, feedback)        
 
         steps = steps+1
         feedback.setCurrentStep(steps)
@@ -162,62 +336,79 @@ class ID02HomesConstructiveDeficiencies(QgsProcessingAlgorithm):
                                      'area_seg',
                                      context, feedback)
 
+        # -------------------------PROPORCIONES VALORES-------------------------
+
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
-        housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
-                                               formulaHousingSegments,
+        formulaDummy = '(area_seg/area_bloc) * vivcarencias_n' 
+        result = calculateField(segmentsArea['OUTPUT'], 'vivcarencias_n_seg',
+                                               formulaDummy,
                                                context,
-                                               feedback)
+                                               feedback)     
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaHousingDefSegments = '(area_seg/area_bloc) * ' + fieldHousingDeficiencies
-        housingAndHousingDefiForSegments = calculateField(housingForSegments['OUTPUT'], 'hou_def_seg',
-                                               formulaHousingDefSegments,
-                                               context,
-                                               feedback)        
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        housingAndHousingDefiForSegmentsFixed = makeSureInside(housingAndHousingDefiForSegments['OUTPUT'],
-                                                    context,
-                                                    feedback)
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                             housingAndHousingDefiForSegmentsFixed['OUTPUT'],
-                                             ['hou_seg','hou_def_seg'],                                   
-                                              [CONTIENE], [SUM],
-                                              UNDISCARD_NONMATCHING,
-                                              context,
-                                              feedback)   
+        formulaDummy = '(area_seg/area_bloc) * pt_n' 
+        result = calculateField(result['OUTPUT'], 'pt_n_seg',
+                               formulaDummy,
+                               context,
+                               feedback)   
 
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaNetDensityhousingPerHa = 'coalesce((hou_def_seg_sum/hou_seg_sum)*100, 0)'
-        homesDeficiencies = calculateField(gridNetoAndSegments['OUTPUT'],
-                                   NAMES_INDEX['ID02'][0],
-                                   formulaNetDensityhousingPerHa,
-                                   context,
-                                   feedback, params['OUTPUT'])
+        result = makeSureInside(result['OUTPUT'],
+                                context,
+                                feedback)                                    
+
+        #----------------------------------------------------------------------   
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        result = joinByLocation(gridNeto['OUTPUT'],
+                             result['OUTPUT'],
+                             ['vivcarencias_n_seg','pt_n_seg'],                                   
+                              [CONTIENE], [SUM],
+                              UNDISCARD_NONMATCHING,
+                              context,
+                              feedback)  
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(vivcarencias_n_seg_sum/pt_n_seg_sum) * 100' 
+        result = calculateField(result['OUTPUT'], NAMES_INDEX['ID02'][0],
+                               formulaDummy,
+                               context,
+                               feedback, params['OUTPUT'])
 
 
 
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # gridNeto = joinByLocation(gridNeto['OUTPUT'],
+        #                      result['OUTPUT'],
+        #                      ['pobconcaren_n'],                                   
+        #                       [INTERSECTA], [MEDIA],
+        #                       UNDISCARD_NONMATCHING,
+        #                       context,
+        #                       feedback)         
+ 
 
+        # fieldsMapping = [
+        #     {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
+        #     {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
+        #     {'expression': '"acceso_inter_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID02'][0], 'precision': 2, 'type': 6}
+        # ]      
+        
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 
+        #                         context,
+        #                         feedback, params['OUTPUT'])                                                                
 
-        return homesDeficiencies
-
-        # Return the results of the algorithm. In this case our only result is
-        # the feature sink which contains the processed features, but some
-        # algorithms may return multiple feature sinks, calculated numeric
-        # statistics, etc. These should all be included in the returned
-        # dictionary, with keys matching the feature corresponding parameter
-        # or output names.
-        #return {self.OUTPUT: dest_id}
-
+        return result
+          
     def icon(self):
         return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'housebroken.png'))
 

@@ -23,7 +23,7 @@
 """
 
 __author__ = 'Johnatan Astudillo'
-__date__ = '2020-01-14'
+__date__ = '2020-01-27'
 __copyright__ = '(C) 2019 by LlactaLAB'
 
 # This will get replaced with a git SHA1 when you do a git archive
@@ -53,7 +53,7 @@ import subprocess
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
+class IC09PowerConsumption(QgsProcessingAlgorithm):
     """
     Mide el porcentaje de viviendas que tienen acceso directo en su vivienda a
     una fuente de agua potable, energía eléctrica, alcantarillado y recolección de residuos sólidos.
@@ -64,7 +64,7 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
     DPA_MAN = 'DPA_MAN'
     CENSO_VIVIENDA = 'CENSO_VIVIENDA'
     # CENSO_POBLACION = 'CENSO_POBLACION'
-    # CENSO_HOGAR = 'CENSO_HOGAR'
+    CENSO_HOGAR = 'CENSO_HOGAR'
     CELL_SIZE = 'CELL_SIZE'
     OUTPUT = 'OUTPUT'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'
@@ -73,7 +73,7 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
     def initAlgorithm(self, config):
         currentPath = getCurrentPath(self)
         self.CURRENT_PATH = currentPath        
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID01'][1]))
+        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IC09'][1]))
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -100,14 +100,14 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
         #     )
         # ) 
 
-        # self.addParameter(
-        #     QgsProcessingParameterFile(
-        #         self.CENSO_HOGAR,
-        #         self.tr('Censo hogar'),
-        #         extension='csv',
-        #         defaultValue="/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Hog_Manz.csv"
-        #     )
-        # )           
+        self.addParameter(
+            QgsProcessingParameterFile(
+                self.CENSO_HOGAR,
+                self.tr('Censo hogar'),
+                extension='csv',
+                defaultValue="/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Hog_Manz.csv"
+            )
+        )           
 
         self.addParameter(
             QgsProcessingParameterFile(
@@ -177,11 +177,9 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
         feedback.setCurrentStep(steps)
 
 
-        pathCsvVivienda = params['CENSO_VIVIENDA']
-
-        file = pathCsvVivienda
-        cols = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 'I10', 'V08', 'V09', 'V10', 'V13']
-        df = pd.read_csv(file, usecols=cols)
+        fileH = params['CENSO_HOGAR']
+        cols = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 'I10', 'H12']
+        df = pd.read_csv(fileH, usecols=cols)
 
         # fix codes 
         df['I01'] = df['I01'].astype(str)
@@ -209,47 +207,100 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
                   + df['I04'].astype(str) + df['I05'].astype(str) + df['I06'].astype(str)
 
 
-
-        #agua V08: categoría 1. 
-        #electricidad V10: categorías 1 a la 4. 
-        #Alcantarillado V09: categorías 1 a la 3. 
-        #Recolección basura V13: categoría 1.
-
-        df['pt'] = 1.0
-        df['vivservicios'] = 0.0
-        df.loc[(df['V08'] == '1')
-               & (df['V10'] >= '1') & (df['V10'] <= '5')
-               & (df['V09'] >= '1') & (df['V09'] <= '3')
-               & (df['V13'] == '1')
-               ,'vivservicios'] = 1.0
+        df['codviv'] = df['I01'].astype(str) + df['I02'].astype(str) + df['I03'].astype(str) \
+                  + df['I04'].astype(str) + df['I05'].astype(str) +  df['I06'].astype(str) \
+                  + df['I09'].astype(str)
 
 
+        df['codhog'] = df['I01'].astype(str) + df['I02'].astype(str) + df['I03'].astype(str) \
+                  + df['I04'].astype(str) + df['I05'].astype(str)  + df['I09'].astype(str) \
+                  + df['I10'].astype(str)
 
-        df['pt'] = df['pt'].astype(float)
-        df['vivservicios'] = df['vivservicios'].astype(float)
+        df = df[(df['H12'] != '9999')]
+        df.loc[df['H12'] == ' ', 'H12'] = None
+        df['H12'] = df['H12'].astype(float)
+
+
+        aggOptions = {
+                      'codviv' : 'first',
+                      'H12' : 'sum',
+                     } 
+
+        resVivi = df.groupby('codviv').agg(aggOptions)
+
+        resVivi.index.name = None
+        colsToSave = ['codviv', 'H12']
+        resVivi = pd.DataFrame(resVivi, columns=colsToSave)
+
+        dfH = resVivi
+
+        file = params['CENSO_VIVIENDA']
+        cols = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 'I10', 'TOTPER']
+        df = pd.read_csv(file, usecols=cols)
+
+        # fix codes 
+        df['I01'] = df['I01'].astype(str)
+        df['I02'] = df['I02'].astype(str)
+        df['I03'] = df['I03'].astype(str)
+        df['I04'] = df['I04'].astype(str)
+        df['I05'] = df['I05'].astype(str)
+        df['I06'] = df['I06'].astype(str)
+        df['I09'] = df['I09'].astype(str)
+        df['I10'] = df['I10'].astype(str)
+
+        df.loc[df['I01'].str.len() < 2, 'I01'] = "0" + df['I01']
+        df.loc[df['I02'].str.len() < 2, 'I02'] = "0" + df['I02']
+        df.loc[df['I03'].str.len() < 2, 'I03'] = "0" + df['I03']
+        df.loc[df['I04'].str.len() == 1, 'I04'] = "00" + df['I04']
+        df.loc[df['I04'].str.len() == 2, 'I04'] = "0" + df['I04']
+        df.loc[df['I05'].str.len() == 1, 'I05'] = "00" + df['I05']
+        df.loc[df['I05'].str.len() == 2, 'I05'] = "0" + df['I05']
+        df.loc[df['I06'].str.len() < 2, 'I06'] = "0" + df['I06']
+        df.loc[df['I09'].str.len() == 1, 'I09'] = "00" + df['I09']
+        df.loc[df['I09'].str.len() == 2, 'I09'] = "0" + df['I09']
+        df.loc[df['I10'].str.len() < 2, 'I10'] = "0" + df['I10']
+
+        df['codviv'] = df['I01'].astype(str) + df['I02'].astype(str) + df['I03'].astype(str) \
+                  + df['I04'].astype(str) + df['I05'].astype(str) +  df['I06'].astype(str) \
+                  + df['I09'].astype(str)
+
+
+        aggOptions = {
+                      'codviv' : 'first',
+                      'TOTPER' : 'sum',
+                     } 
+
+
+        group = df.groupby('codviv').agg(aggOptions)
+        group.reindex()
+        colsToSave = ['codviv', 'TOTPER']
+        group = pd.DataFrame(df, columns=colsToSave)
+
+
+        merge = pd.merge(group, dfH,  how='left', on='codviv')
+        df = merge
+
+        # colsToSave = ['codhog', 'codviv', 'codman', 'TOTPER', 'H12']
+        # df = pd.DataFrame(df, columns=colsToSave)
+
+        df['enerporperson'] = df['H12'] / df['TOTPER']
+        df['codman'] = df['codviv'].str[0:14]
 
 
         aggOptions = {
                       'codman' : 'first',
-                      'pt' : 'count',
-                      'vivservicios' : 'sum',
+                      'enerporperson' : 'mean',
                      } 
 
 
-        resManzanas = df.groupby('codman').agg(aggOptions)
-
-        resManzanas['pobconserv'] = None
-        resManzanas['pobconserv'] = (resManzanas['vivservicios'] / resManzanas['pt']) * 100        
-
-
-        df = resManzanas     
+        df = df.groupby('codman').agg(aggOptions)
 
         
         steps = steps+1
         feedback.setCurrentStep(steps)
 
-        outputCsv = self.CURRENT_PATH+'/pobconserv.csv'
-        feedback.pushConsoleInfo(str(('pobconserv en ' + outputCsv)))    
+        outputCsv = self.CURRENT_PATH+'/enerporperson.csv'
+        feedback.pushConsoleInfo(str(('enerporperson en ' + outputCsv)))    
         df.to_csv(outputCsv, index=False)
 
         steps = steps+1
@@ -283,136 +334,48 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        expressionNotNull = "pobconserv IS NOT '' AND pobconserv is NOT NULL"    
+        expressionNotNull = "enerporperson IS NOT '' AND enerporperson is NOT NULL"    
         notNull =   filterByExpression(result['OUTPUT'], expressionNotNull, context, feedback) 
 
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = 'pobconserv * 1.0'
+        formulaDummy = 'enerporperson * 1.0'
         result = calculateField(notNull['OUTPUT'], 
-                                 'pobconserv_n',
+                                 'enerporperson_n',
                                  formulaDummy,
                                  context,
                                  feedback)  
 
 
-  # ----------------------CONVERTIR A NUMERICOS --------------------     
-  
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = 'vivservicios * 1.0'
-        result = calculateField(result['OUTPUT'], 
-                                 'vivservicios_n',
-                                 formulaDummy,
-                                 context,
-                                 feedback)  
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = 'pt * 1.0'
-        result = calculateField(result['OUTPUT'], 
-                                 'pt_n',
-                                 formulaDummy,
-                                 context,
-                                 feedback)          
-
-
-       # ----------------------PROPORCIONES AREA--------------------------
-       
-        steps = steps+1
-        feedback.setCurrentStep(steps)        
-        blocks = calculateArea(result['OUTPUT'], 'area_bloc', context,
-                               feedback)     
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                                ['vivservicios_n','pt_n','area_bloc'],
-                                ['id_grid','area_grid'],
-                                context, feedback)        
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        segmentsArea = calculateArea(segments['OUTPUT'],
-                                     'area_seg',
-                                     context, feedback)
-
-        # -------------------------PROPORCIONES VALORES-------------------------
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * vivservicios_n' 
-        result = calculateField(segmentsArea['OUTPUT'], 'vivservicios_n_seg',
-                                               formulaDummy,
-                                               context,
-                                               feedback)     
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * pt_n' 
-        result = calculateField(result['OUTPUT'], 'pt_n_seg',
-                               formulaDummy,
-                               context,
-                               feedback)   
-
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        result = makeSureInside(result['OUTPUT'],
-                                context,
-                                feedback)                                    
-
-        #----------------------------------------------------------------------   
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        result = joinByLocation(gridNeto['OUTPUT'],
+        gridNeto = joinByLocation(gridNeto['OUTPUT'],
                              result['OUTPUT'],
-                             ['vivservicios_n_seg','pt_n_seg'],                                   
-                              [CONTIENE], [SUM],
+                             ['enerporperson_n'],                                   
+                              [INTERSECTA], [MEDIA],
                               UNDISCARD_NONMATCHING,
                               context,
-                              feedback)  
-
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(vivservicios_n_seg_sum/pt_n_seg_sum) * 100' 
-        result = calculateField(result['OUTPUT'], NAMES_INDEX['ID01'][0],
-                               formulaDummy,
-                               context,
-                               feedback, params['OUTPUT'])
-
-
-
-        # steps = steps+1
-        # feedback.setCurrentStep(steps)
-        # gridNeto = joinByLocation(gridNeto['OUTPUT'],
-        #                      result['OUTPUT'],
-        #                      ['pobconserv_n'],                                   
-        #                       [INTERSECTA], [MEDIA],
-        #                       UNDISCARD_NONMATCHING,
-        #                       context,
-        #                       feedback)         
+                              feedback)         
  
 
-        # fieldsMapping = [
-        #     {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
-        #     {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
-        #     {'expression': '"acceso_inter_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID01'][0], 'precision': 2, 'type': 6}
-        # ]      
+        fieldsMapping = [
+            {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
+            {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
+            {'expression': '"enerporperson_n_mean"', 'length': 20, 'name': NAMES_INDEX['IC09'][0], 'precision': 2, 'type': 6}
+        ]      
         
-        # steps = steps+1
-        # feedback.setCurrentStep(steps)
-        # result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 
-        #                         context,
-        #                         feedback, params['OUTPUT'])                                                                
+        
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 
+                                context,
+                                feedback, params['OUTPUT'])                                                                
 
         return result
           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'fullservices.jpg'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'power.png'))
 
     def name(self):
         """
@@ -422,7 +385,7 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'D01 Viviendas con cobertura total de servicios básicos'
+        return 'C09 Consumo de energía eléctrica en la vivienda'
 
     def displayName(self):
         """
@@ -446,18 +409,18 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
         contain lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'D Dinámicas socio-espaciales'
+        return 'C Movilidad urbana'
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return ID01HousingFullCoverageBasicServices()
+        return IC09PowerConsumption()
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Mide el porcentaje de viviendas que tienen acceso directo en su vivienda a una fuente de agua potable, energía eléctrica, alcantarillado y recolección de residuos sólidos.</span>"\
+                "<span>El indicador mide el consumo residencial de energía eléctrica por persona en base al pago de la última planilla eléctrica.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
-                "<span>Se utilizan los datos disponibles por las empresas suministradoras de servicios privadas o municipales.</span>"\
+                "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(No. viviendas con todos los servicios / No. total de viviendas)*100<br/>" 
+                "<span>Valor del último pago mensual de energía eléctrica en $ / Número de personas en el hogar<br/>" 
