@@ -100,8 +100,8 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterField(
                 self.FIELD_POPULATE_HOUSING,
-                self.tr('Población o viviendas'),
-                'poblacion', 'BLOCKS'
+                self.tr('Viviendas'),
+                'viviendas', 'BLOCKS'
             )
         )      
 
@@ -175,7 +175,7 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.BIKEWAY,
                 self.tr('Ciclovía'),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.TypeVectorPoint]
             )
         )
 
@@ -183,7 +183,7 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.CROSSWALK,
                 self.tr('Caminos peatonales'),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.TypeVectorPoint]
             )
         )                                
 
@@ -206,6 +206,9 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
       DISTANCE_BIKEWAY = 300
       DISTANCE_CROSSWALK = 300
 
+
+      MIN_FACILITIES = 3
+      OPERATOR_GE = 3
 
       feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
@@ -249,28 +252,114 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
                                           formulaPopulationSegments,
                                           context,
                                           feedback)
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      blocksWithId = calculateField(populationForSegments['OUTPUT'], 'id_block', '$id', context,
+                                    feedback, type=1)
 
+      steps = steps+1
+      feedback.setCurrentStep(steps)
+      centroidsBlocks = createCentroids(blocksWithId['OUTPUT'], context,
+                                        feedback)
 
       result = []
+
+      idxs = ['idxbus','idxtram','idxbikestop','idkbikeway','idxwalk']
 
       if(params['DISTANCE_OPTIONS'] == 0):
         steps = steps+1
         feedback.setCurrentStep(steps)        
         feedback.pushConsoleInfo(str(('Cálculo de áreas de servicio')))   
-        layers = [[params['BUSSTOP']], STRATEGY_DISTANCE, DISTANCE_BUSSTOP]
-        print layers
+        layers = [
+                  [params['BUSSTOP'], STRATEGY_DISTANCE, DISTANCE_BUSSTOP],
+                  [params['TRAMSTOP'], STRATEGY_DISTANCE, DISTANCE_TRAMSTOP],
+                  [params['BIKESTOP'], STRATEGY_DISTANCE, DISTANCE_BKESTOP],
+                  [params['BIKEWAY'], STRATEGY_DISTANCE, DISTANCE_BIKEWAY],
+                  [params['CROSSWALK'], STRATEGY_DISTANCE, DISTANCE_CROSSWALK],
 
+                 ]
+        serviceAreas = multiBufferIsocrono(params['ROADS'], layers, context, feedback)
+
+        iidx = -1
+        for serviceArea in serviceAreas:
+          iidx = iidx + 1
+          idx = idxs[iidx] 
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          serviceArea = calculateField(serviceArea, idx, '$id', context,
+                                        feedback, type=1)        
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          centroidsBlocks = joinByLocation(centroidsBlocks['OUTPUT'],
+                                    serviceArea['OUTPUT'],
+                                    [idx], [INTERSECTA], [COUNT],
+                                    UNDISCARD_NONMATCHING,
+                                    context,
+                                    feedback)        
+   
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        # formulaDummy = 'idxbus_count * 1'
+        formulaDummy = 'coalesce(idxbus_count, 0) + coalesce(idxtram_count, 0) + coalesce(idxbikestop_count,0) + coalesce(idkbikeway_count, 0) + coalesce(idxwalk_count, 0)'
+        facilitiesCover = calculateField(centroidsBlocks['OUTPUT'], 'facilities',
+                                          formulaDummy,
+                                          context,
+                                          feedback)      
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        facilitiesFullCover = filter(facilitiesCover['OUTPUT'],
+                                                   'facilities', OPERATOR_GE,
+                                                   MIN_FACILITIES, context, feedback)       
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        gridNetoFacilitiesCover = joinByLocation(gridNeto['OUTPUT'],
+                                             facilitiesCover['OUTPUT'],
+                                             ['pop_seg','facilities'],
+                                             [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
+                                             context,
+                                             feedback)     
+
+        fieldsMapping = [
+            {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
+            {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
+            {'expression': '"pop_seg_sum"', 'length': 20, 'name': 'ptotal', 'precision': 2, 'type': 6},
+            {'expression': '"facilities_sum"', 'length': 20, 'name': 'facilities', 'precision': 2, 'type': 6}
+        ]      
+        
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        gridNetoFacilitiesCover = refactorFields(fieldsMapping, gridNetoFacilitiesCover['OUTPUT'], 
+                                context,
+                                feedback)             
+
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        gridNetoFacilities = joinByLocation(gridNetoFacilitiesCover['OUTPUT'],
+                                             facilitiesFullCover['OUTPUT'],
+                                             ['pop_seg'],
+                                             [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
+                                             context,
+                                             feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaProximity = 'coalesce((coalesce(pop_seg_sum,0) / coalesce(ptotal,""))*100,"")'
+        proximity2AlternativeTransport = calculateField(gridNetoFacilities['OUTPUT'], NAMES_INDEX['IC04'][0],
+                                          formulaProximity,
+                                          context,
+                                          feedback, params['OUTPUT'])        
+
+        result = proximity2AlternativeTransport                                                                                                                               
+        
+              
       else:
         feedback.pushConsoleInfo(str(('Cálculo de buffer radial')))
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksWithId = calculateField(populationForSegments['OUTPUT'], 'id_block', '$id', context,
-                                      feedback, type=1)
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        centroidsBlocks = createCentroids(blocksWithId['OUTPUT'], context,
-                                          feedback)
 
         steps = steps+1
         feedback.setCurrentStep(steps)
@@ -516,8 +605,6 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
                                              feedback)
 
         # tomar solo los que tienen cercania simultanea (descartar lo menores de 3)
-        MIN_FACILITIES = 3
-        OPERATOR_GE = 3
         steps = steps+1
         feedback.setCurrentStep(steps)
         facilitiesNotNullForSegmentsFixed = filter(facilitiesForSegmentsFixed['OUTPUT'],
@@ -553,7 +640,7 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
 
         result = proximity2AlternativeTransport
 
-      return proximity2AlternativeTransport
+      return result
 
 
 

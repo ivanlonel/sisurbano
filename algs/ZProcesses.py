@@ -20,10 +20,11 @@ from .Zettings import *
 
 
 def multiBufferIsocrono(red, colecStartPoints, context, feedback, output=QgsProcessing.TEMPORARY_OUTPUT):      
-    reslut = []
+    result = []
     for startPoints, strategy, travelCost in colecStartPoints:
-        reslut[startPoints] = bufferIsocrono(red, startPoints, travelCost, strategy, context, feedback)
-    print reslut
+        biso = bufferIsocrono(red, startPoints, travelCost, strategy, context, feedback)
+        result.append(biso['OUTPUT'])
+    return result
 
 
 def overlaps(input, layers, context, feedback, output=QgsProcessing.TEMPORARY_OUTPUT):

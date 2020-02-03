@@ -38,6 +38,7 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingMultiStepFeedback,
                        QgsFeatureSink,
                        QgsProcessingAlgorithm,
+                       QgsProcessingParameterEnum,
                        QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterField,
                        QgsProcessingParameterNumber,
@@ -71,6 +72,9 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
     OUTPUT = 'OUTPUT'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'
 
+    DISTANCE_OPTIONS = 'DISTANCE_OPTIONS'
+    ROADS = 'ROADS'        
+
  
 
     def initAlgorithm(self, config):
@@ -99,6 +103,27 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
                 'viviendas', 'BLOCKS'
             )
         )         
+
+        self.addParameter(
+          QgsProcessingParameterEnum(
+          self.DISTANCE_OPTIONS,
+          self.tr('Tipo de distancia'),
+          options=['ISOCRONA','RADIAL'], 
+          allowMultiple=False, 
+          defaultValue=1)
+        )            
+
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.ROADS,
+                self.tr('Red vial'),
+                [QgsProcessing.TypeVectorLine],
+                optional = True,
+                defaultValue = ''
+            )
+        )  
+
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -180,6 +205,9 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         DISTANCE_SPORTS = 1000
         DISTANCE_ADMIN_PUBLIC = 1000
 
+        MIN_FACILITIES = 5
+        OPERATOR_GE = 3            
+
 
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
@@ -235,228 +263,329 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
         centroidsBlocks = createCentroids(blocksWithId['OUTPUT'], context,
                                           feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blockBuffer4Education = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_EDUCATION,
-                                             context,
+
+        result = []
+
+        idxs = ['idxedu','idxhea','idxapp','idkspor','idxadmin']
+
+
+        if(params['DISTANCE_OPTIONS'] == 0):
+          steps = steps+1
+          feedback.setCurrentStep(steps)        
+          feedback.pushConsoleInfo(str(('Cálculo de áreas de servicio')))   
+          layers = [
+                    [params['EDUCATION'], STRATEGY_DISTANCE, DISTANCE_EDUCATION],
+                    [params['HEALTH'], STRATEGY_DISTANCE, DISTANCE_HEALTH],
+                    [params['APPROVAL'], STRATEGY_DISTANCE, DISTANCE_APPROVAL],
+                    [params['SPORTS'], STRATEGY_DISTANCE, DISTANCE_SPORTS],
+                    [params['ADMIN_PUBLIC'], STRATEGY_DISTANCE, DISTANCE_ADMIN_PUBLIC],
+
+                   ]
+          serviceAreas = multiBufferIsocrono(params['ROADS'], layers, context, feedback)
+
+          iidx = -1
+          for serviceArea in serviceAreas:
+            iidx = iidx + 1
+            idx = idxs[iidx] 
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            serviceArea = calculateField(serviceArea, idx, '$id', context,
+                                          feedback, type=1)        
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            centroidsBlocks = joinByLocation(centroidsBlocks['OUTPUT'],
+                                      serviceArea['OUTPUT'],
+                                      [idx], [INTERSECTA], [COUNT],
+                                      UNDISCARD_NONMATCHING,
+                                      context,
+                                      feedback)        
+     
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          formulaDummy = 'coalesce(idxedu_count, 0) + coalesce(idxhea_count, 0) + coalesce(idxapp_count,0) + coalesce(idkspor_count, 0) + coalesce(idxadmin_count, 0)'
+          facilitiesCover = calculateField(centroidsBlocks['OUTPUT'], 'facilities',
+                                            formulaDummy,
+                                            context,
+                                            feedback)      
+
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          facilitiesFullCover = filter(facilitiesCover['OUTPUT'],
+                                                     'facilities', OPERATOR_GE,
+                                                     MIN_FACILITIES, context, feedback)       
+
+
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          gridNetoFacilitiesCover = joinByLocation(gridNeto['OUTPUT'],
+                                               facilitiesCover['OUTPUT'],
+                                               ['hou_seg','facilities'],
+                                               [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
+                                               context,
+                                               feedback)     
+
+          fieldsMapping = [
+              {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
+              {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
+              {'expression': '"hou_seg_sum"', 'length': 20, 'name': 'ptotal', 'precision': 2, 'type': 6},
+              {'expression': '"facilities_sum"', 'length': 20, 'name': 'facilities', 'precision': 2, 'type': 6}
+          ]      
+          
+
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          gridNetoFacilitiesCover = refactorFields(fieldsMapping, gridNetoFacilitiesCover['OUTPUT'], 
+                                  context,
+                                  feedback)             
+
+
+
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          gridNetoFacilities = joinByLocation(gridNetoFacilitiesCover['OUTPUT'],
+                                               facilitiesFullCover['OUTPUT'],
+                                               ['hou_seg'],
+                                               [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
+                                               context,
+                                               feedback)
+
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          formulaProximity = 'coalesce((coalesce(hou_seg_sum,0) / coalesce(ptotal,""))*100,"")'
+          proximity2BasicU = calculateField(gridNetoFacilities['OUTPUT'], NAMES_INDEX['IA07'][0],
+                                            formulaProximity,
+                                            context,
+                                            feedback, params['OUTPUT'])        
+
+          result = proximity2BasicU
+                
+        else:
+          feedback.pushConsoleInfo(str(('Cálculo de buffer radial')))              
+
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          blockBuffer4Education = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_EDUCATION,
+                                               context,
+                                               feedback)
+
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          blockBuffer4Health = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_HEALTH, context,
+                                            feedback)
+
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          blockBuffer4Approval = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_APPROVAL, context,
                                              feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blockBuffer4Health = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_HEALTH, context,
-                                          feedback)
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blockBuffer4Approval = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_APPROVAL, context,
-                                           feedback)
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        BlockBuffer4Sports = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_SPORTS,
-                                          context, feedback)
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          BlockBuffer4Sports = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_SPORTS,
+                                            context, feedback)
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        BlockBuffer4Admin = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_ADMIN_PUBLIC,
-                                          context, feedback)        
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          BlockBuffer4Admin = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_ADMIN_PUBLIC,
+                                            context, feedback)        
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        layerEducation = calculateField(params['EDUCATION'], 'idx', '$id', context,
-                                       feedback, type=1)
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          layerEducation = calculateField(params['EDUCATION'], 'idx', '$id', context,
+                                         feedback, type=1)
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        layerHealth = calculateField(params['HEALTH'], 'idx', '$id', context,
-                                      feedback, type=1)      
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          layerHealth = calculateField(params['HEALTH'], 'idx', '$id', context,
+                                        feedback, type=1)      
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        layerApproval = calculateField(params['APPROVAL'], 'idx', '$id', context,
-                                      feedback, type=1)                                             
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          layerApproval = calculateField(params['APPROVAL'], 'idx', '$id', context,
+                                        feedback, type=1)                                             
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        layerSports = calculateField(params['SPORTS'], 'idx', '$id', context,
-                                     feedback, type=1) 
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          layerSports = calculateField(params['SPORTS'], 'idx', '$id', context,
+                                       feedback, type=1) 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        layerAdmin = calculateField(params['ADMIN_PUBLIC'], 'idx', '$id', context,
-                                     feedback, type=1)         
-
-
-        layerEducation = layerEducation['OUTPUT']
-        layerHealth = layerHealth['OUTPUT']
-        layerApproval = layerApproval['OUTPUT']
-        layerSports = layerSports['OUTPUT']
-        layerAdmin = layerAdmin['OUTPUT']
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          layerAdmin = calculateField(params['ADMIN_PUBLIC'], 'idx', '$id', context,
+                                       feedback, type=1)         
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        counterEducation = joinByLocation(blockBuffer4Education['OUTPUT'],
-                                          layerEducation,
+          layerEducation = layerEducation['OUTPUT']
+          layerHealth = layerHealth['OUTPUT']
+          layerApproval = layerApproval['OUTPUT']
+          layerSports = layerSports['OUTPUT']
+          layerAdmin = layerAdmin['OUTPUT']
+
+
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          counterEducation = joinByLocation(blockBuffer4Education['OUTPUT'],
+                                            layerEducation,
+                                            'idx', [CONTIENE, INTERSECTA], [COUNT],
+                                            UNDISCARD_NONMATCHING,
+                                            context,
+                                            feedback)
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          counterHealth = joinByLocation(blockBuffer4Health['OUTPUT'],
+                                         layerHealth,
+                                         'idx', [CONTIENE, INTERSECTA], [COUNT],
+                                         UNDISCARD_NONMATCHING,
+                                         context,
+                                         feedback)
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          counterApproval = joinByLocation(blockBuffer4Approval['OUTPUT'],
+                                          layerApproval,
                                           'idx', [CONTIENE, INTERSECTA], [COUNT],
                                           UNDISCARD_NONMATCHING,
                                           context,
                                           feedback)
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        counterHealth = joinByLocation(blockBuffer4Health['OUTPUT'],
-                                       layerHealth,
-                                       'idx', [CONTIENE, INTERSECTA], [COUNT],
-                                       UNDISCARD_NONMATCHING,
-                                       context,
-                                       feedback)
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        counterApproval = joinByLocation(blockBuffer4Approval['OUTPUT'],
-                                        layerApproval,
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          counterSport = joinByLocation(BlockBuffer4Sports['OUTPUT'],
+                                        layerSports,
                                         'idx', [CONTIENE, INTERSECTA], [COUNT],
                                         UNDISCARD_NONMATCHING,
                                         context,
                                         feedback)
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        counterSport = joinByLocation(BlockBuffer4Sports['OUTPUT'],
-                                      layerSports,
-                                      'idx', [CONTIENE, INTERSECTA], [COUNT],
-                                      UNDISCARD_NONMATCHING,
-                                      context,
-                                      feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        counterAdmin = joinByLocation(BlockBuffer4Admin['OUTPUT'],
-                                      layerAdmin,
-                                      'idx', [CONTIENE, INTERSECTA], [COUNT],
-                                      UNDISCARD_NONMATCHING,
-                                      context,
-                                      feedback)        
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          counterAdmin = joinByLocation(BlockBuffer4Admin['OUTPUT'],
+                                        layerAdmin,
+                                        'idx', [CONTIENE, INTERSECTA], [COUNT],
+                                        UNDISCARD_NONMATCHING,
+                                        context,
+                                        feedback)        
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksJoined = joinByAttr(blocksWithId['OUTPUT'], 'id_block',
-                                  counterEducation['OUTPUT'], 'id_block',
-                                  'idx_count',
-                                  UNDISCARD_NONMATCHING,
-                                  'edu_',
-                                  context,
-                                  feedback)
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          blocksJoined = joinByAttr(blocksWithId['OUTPUT'], 'id_block',
+                                    counterEducation['OUTPUT'], 'id_block',
+                                    'idx_count',
+                                    UNDISCARD_NONMATCHING,
+                                    'edu_',
+                                    context,
+                                    feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
-                                  counterHealth['OUTPUT'], 'id_block',
-                                  'idx_count',
-                                  UNDISCARD_NONMATCHING,
-                                  'hea_',
-                                  context,
-                                  feedback)
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
+                                    counterHealth['OUTPUT'], 'id_block',
+                                    'idx_count',
+                                    UNDISCARD_NONMATCHING,
+                                    'hea_',
+                                    context,
+                                    feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
-                                  counterApproval['OUTPUT'], 'id_block',
-                                  'idx_count',
-                                  UNDISCARD_NONMATCHING,
-                                  'app_',
-                                  context,
-                                  feedback)
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
+                                    counterApproval['OUTPUT'], 'id_block',
+                                    'idx_count',
+                                    UNDISCARD_NONMATCHING,
+                                    'app_',
+                                    context,
+                                    feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
-                                  counterSport['OUTPUT'], 'id_block',
-                                  'idx_count',
-                                  UNDISCARD_NONMATCHING,
-                                  'spo_',
-                                  context,
-                                  feedback)
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
+                                    counterSport['OUTPUT'], 'id_block',
+                                    'idx_count',
+                                    UNDISCARD_NONMATCHING,
+                                    'spo_',
+                                    context,
+                                    feedback)
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
-                                  counterAdmin['OUTPUT'], 'id_block',
-                                  'idx_count',
-                                  UNDISCARD_NONMATCHING,
-                                  'adm_',
-                                  context,
-                                  feedback)        
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
+                                    counterAdmin['OUTPUT'], 'id_block',
+                                    'idx_count',
+                                    UNDISCARD_NONMATCHING,
+                                    'adm_',
+                                    context,
+                                    feedback)        
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaFacilities = 'edu_idx_count * hea_idx_count * app_idx_count * spo_idx_count * adm_idx_count'
-        blocksFacilities = calculateField(blocksJoined['OUTPUT'], 'facilities',
-                                          formulaFacilities,
-                                          context,
-                                          feedback)
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          formulaFacilities = 'edu_idx_count * hea_idx_count * app_idx_count * spo_idx_count * adm_idx_count'
+          blocksFacilities = calculateField(blocksJoined['OUTPUT'], 'facilities',
+                                            formulaFacilities,
+                                            context,
+                                            feedback)
 
-        """
-        -----------------------------------------------------------------
-        Calcular numero de viviendas por hexagano
-        -----------------------------------------------------------------
-        """
+          """
+          -----------------------------------------------------------------
+          Calcular numero de viviendas por hexagano
+          -----------------------------------------------------------------
+          """
 
-        # Haciendo el buffer inverso aseguramos que los segmentos
-        # quden dentro de la malla
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        facilitiesForSegmentsFixed = makeSureInside(blocksFacilities['OUTPUT'],
-                                                    context,
-                                                    feedback)
+          # Haciendo el buffer inverso aseguramos que los segmentos
+          # quden dentro de la malla
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          facilitiesForSegmentsFixed = makeSureInside(blocksFacilities['OUTPUT'],
+                                                      context,
+                                                      feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                             facilitiesForSegmentsFixed['OUTPUT'],
-                                             'edu_idx_count;hea_idx_count;app_idx_count;spo_idx_count;adm_idx_count;facilities;hou_seg',
-                                             [CONTIENE],
-                                             [MAX, SUM], UNDISCARD_NONMATCHING,                 
-                                             context,
-                                             feedback)
-        # tomar solo los que tienen cercania simultanea (descartar NULL)
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        facilitiesNotNullForSegmentsFixed = filter(facilitiesForSegmentsFixed['OUTPUT'],
-                                                   'facilities', NOT_NULL,
-                                                   '', context, feedback)
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
+                                               facilitiesForSegmentsFixed['OUTPUT'],
+                                               'edu_idx_count;hea_idx_count;app_idx_count;spo_idx_count;adm_idx_count;facilities;hou_seg',
+                                               [CONTIENE],
+                                               [MAX, SUM], UNDISCARD_NONMATCHING,                 
+                                               context,
+                                               feedback)
+          # tomar solo los que tienen cercania simultanea (descartar NULL)
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          facilitiesNotNullForSegmentsFixed = filter(facilitiesForSegmentsFixed['OUTPUT'],
+                                                     'facilities', NOT_NULL,
+                                                     '', context, feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNetoAndSegmentsNotNull = joinByLocation(gridNeto['OUTPUT'],
-                                                    facilitiesNotNullForSegmentsFixed['OUTPUT'],
-                                                    'hou_seg',
-                                                    [CONTIENE],
-                                                    [MAX, SUM], UNDISCARD_NONMATCHING,               
-                                                    context,
-                                                    feedback)
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          gridNetoAndSegmentsNotNull = joinByLocation(gridNeto['OUTPUT'],
+                                                      facilitiesNotNullForSegmentsFixed['OUTPUT'],
+                                                      'hou_seg',
+                                                      [CONTIENE],
+                                                      [MAX, SUM], UNDISCARD_NONMATCHING,               
+                                                      context,
+                                                      feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        totalHousing = joinByAttr(gridNetoAndSegments['OUTPUT'], 'id_grid',
-                                  gridNetoAndSegmentsNotNull['OUTPUT'], 'id_grid',
-                                  'hou_seg_sum',
-                                  UNDISCARD_NONMATCHING,
-                                  'net_',
-                                  context,
-                                  feedback)
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          totalHousing = joinByAttr(gridNetoAndSegments['OUTPUT'], 'id_grid',
+                                    gridNetoAndSegmentsNotNull['OUTPUT'], 'id_grid',
+                                    'hou_seg_sum',
+                                    UNDISCARD_NONMATCHING,
+                                    'net_',
+                                    context,
+                                    feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaProximity = 'coalesce((coalesce(net_hou_seg_sum,0) /  coalesce(hou_seg_sum,0))*100, "")'
-        proximity2BasicU = calculateField(totalHousing['OUTPUT'], NAMES_INDEX['IA07'][0],
-                                          formulaProximity,
-                                          context,
-                                          feedback, params['OUTPUT'])
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          formulaProximity = 'coalesce((coalesce(net_hou_seg_sum,0) /  coalesce(hou_seg_sum,0))*100, "")'
+          proximity2BasicU = calculateField(totalHousing['OUTPUT'], NAMES_INDEX['IA07'][0],
+                                            formulaProximity,
+                                            context,
+                                            feedback, params['OUTPUT'])
+
+          result = proximity2BasicU
 
         return proximity2BasicU
 
