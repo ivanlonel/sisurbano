@@ -50,14 +50,11 @@ pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID03HousingRisk(QgsProcessingAlgorithm):
     """
-    Mide le porcentaje de viviendas ubicadas cerca de vertederos, camales,
-    plantas de tratamiento de agua, industria pesada, zonas de deslizamiento,
-    propensas a inundaciones, entre otros factores que influyen sobre el
-    estado de la salud y las condiciones de vida.
-    La cantidad de unidades de vivienda en el área urbana emplazadas en
-    zonas vulnerables y de riesgo, dividido para el total de unidades de
-    vivienda en el área urbana a evaluar    
-    Formula: (N° de viviendasen zona de riesgo / total de viviendas)*100
+    Mide el porcentaje de viviendas ubicadas en zonas de riesgo como son áreas
+    de deslizamiento, áreas de derrumbes, propensas a inundaciones,
+    con limitantes topográficas, limitantes geológicas, zonas de interés
+    agrícola, zonas de uso forestal y zonas de protección natural. 
+    Formula: (Viviendas emplazadas en zonas de riesgo / Total de viviendas)*100
     """
     BLOCKS = 'BLOCKS'
     # FIELD_POPULATION = 'FIELD_POPULATION'
@@ -289,7 +286,7 @@ class ID03HousingRisk(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'D03 Viviendas emplazadas en zonas vulnerables y de riesgo'
+        return 'D03 Viviendas emplazadas en zonas de riesgo'
 
     def displayName(self):
         """
@@ -323,9 +320,9 @@ class ID03HousingRisk(QgsProcessingAlgorithm):
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Mide le porcentaje de viviendas ubicadas cerca de vertederos, camales, plantas de tratamiento de agua, industria pesada, zonas de deslizamiento, propensas a inundaciones, entre otros factores que influyen sobre el estado de la salud y las condiciones de vida.</span>"\
+                "<span>Mide el porcentaje de viviendas ubicadas en zonas de riesgo como son áreas de deslizamiento, áreas de derrumbes, propensas a inundaciones, con limitantes topográficas, limitantes geológicas, zonas de interés agrícola, zonas de uso forestal y zonas de protección natural.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
-                "<span>La cantidad de unidades de vivienda en el área urbana emplazadas en zonas vulnerables y de riesgo, dividido para el total de unidades de vivienda en el área urbana a evaluar.</span>"\
+                "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(N° de viviendasen zona de riesgo / total de viviendas)*100<br/>"         
+                "<span>(Viviendas emplazadas en zonas de riesgo / Total de viviendas)*100<br/>"         
 

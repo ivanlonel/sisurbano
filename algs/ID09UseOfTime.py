@@ -56,10 +56,12 @@ pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID09UseOfTime(QgsProcessingAlgorithm):
     """
-    Informa sobre la asignación semanal de tiempo de la población de 12 años y 
-    más para actividades personales (actividades no remuneradas para otros hogares,
-    para la comunidad, trabajo voluntario; esparcimiento y cultura; familia y sociabilidad) de lunes a viernes
-    Formula: Promedio del tiempo semanal en horas que los miembros del hogar de 12 años o más utilizaron para actividades personales.
+    Informa sobre la asignación semanal de tiempo de la población de 12 años
+    y más para actividades personales (actividades no remuneradas para otros
+    hogares, para la comunidad, trabajo voluntario; esparcimiento y cultura; familia y sociabilidad)
+    de lunes a viernes.
+    Formula: Promedio del tiempo semanal en horas que los miembros del
+    hogar de 12 años o más utilizaron para actividades personales.
     """
 
     BLOCKS = 'BLOCKS'

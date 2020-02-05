@@ -244,7 +244,7 @@ class ID00WrapD(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT_D11,
-                self.tr('D11 Robos por número de habitantes'),
+                self.tr('D11 Número de robos anuales'),
                 QgsProcessing.TypeVectorAnyGeometry,
                 str(FULL_PATH_D11)
             )
@@ -336,7 +336,7 @@ class ID00WrapD(QgsProcessingAlgorithm):
         outputs['D10CercanaYAsequibilidadAAlimentos'] = processing.run('SISURBANO:D10 Cercanía y asequibilidad a alimentos', alg_params, context=context, feedback=feedback, is_child_algorithm=True)    
         results['OUTPUT_D10'] = outputs['D10CercanaYAsequibilidadAAlimentos']['OUTPUT']     
 
-        # D11 Robos por número de habitantes
+        # D11 Número de robos anuales
         steps = steps+1
         feedback.setCurrentStep(steps)  
         if feedback.isCanceled():
@@ -348,7 +348,7 @@ class ID00WrapD(QgsProcessingAlgorithm):
             'THEFTS': params['THEFTS'],
             'OUTPUT': params['OUTPUT_D11']
         }
-        outputs['D11RobosPorNmeroDeHabitantes'] = processing.run('SISURBANO:D11 Robos por número de habitantes', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        outputs['D11RobosPorNmeroDeHabitantes'] = processing.run('SISURBANO:D11 Número de robos anuales', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
         results['OUTPUT_D11'] = outputs['D11RobosPorNmeroDeHabitantes']['OUTPUT']                       
 
 

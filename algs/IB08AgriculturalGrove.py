@@ -50,9 +50,9 @@ pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IB08AgriculturalGrove(QgsProcessingAlgorithm):
     """
-    Mide la capacidad de un territorio de contener actividades agrícolas
-    o huertos en relación a su superficie total.
-    Formula: Superficie de espacios agrícolas y huertos en m2 / Población total
+    Mide la capacidad de un territorio de contener actividades
+    agrícolas o huertos en relación con el total de la población.
+    Formula: Superficie de espacios agrícolas y huertos en m2 en el área de estudio / Población total en el área de estudio
     """
     AGRICULTRURAL = 'AGRICULTRURAL'
     BLOCKS = 'BLOCKS'
@@ -251,7 +251,7 @@ class IB08AgriculturalGrove(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'B08 Superficie de área agrícola y huertos'
+        return 'B08 Superficie agrícola y huertos'
 
     def displayName(self):
         """
@@ -289,5 +289,5 @@ class IB08AgriculturalGrove(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>Superficie de espacios agrícolas y huertos en m2 / Población total<br/>"          
+                "<span>Superficie de espacios agrícolas y huertos en m2 en el área de estudio / Población total en el área de estudio<br/>"          
 

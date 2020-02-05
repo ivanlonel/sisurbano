@@ -53,10 +53,9 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
     """
     Mide la proximidad, a pie, de la población al espacio verde más cercano,
     sin distinción de la actividad que acoge o de su función ecológica.
-    Se entiende a la cobertura isócrona desde cada espacio verde
-    (distancia caminable = 300m)
-    Formula: Población próxima a espacios verdes públicos /
-    Total de la población * 100
+    Porcentaje de viviendas emplazadas a una caminata de 5 minutos o menos
+    de un espacio público verde (parque, parque infantil, margen de agua, parque lineal).
+    Formula: (Viviendas próximas a espacios verdes públicos / Viviendas totales)*100
     """
     EQUIPMENT_GREEN = 'EQUIPMENT_GREEN'
     BLOCKS = 'BLOCKS'
@@ -419,8 +418,8 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Mide la proximidad, a pie, de la población al espacio verde más cercano, sin distinción de la actividad que acoge o de su función ecológica. Se entiende a la cobertura isócrona desde cada espacio verde (distancia caminable = 300m).</span>"\
+                "<span>Mide la proximidad, a pie, de la población al espacio verde más cercano, sin distinción de la actividad que acoge o de su función ecológica. Porcentaje de viviendas emplazadas a una caminata de 5 minutos o menos de un espacio público verde (parque, parque infantil, margen de agua, parque lineal).</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
-                "<span>Para el cálculo el espacio verde público comprende las siguientes categorías: parque, parque infantil, margen de agua, parque lineal.</span>"\
+                "<span>Se utiliza la distancia isocrona.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>Población próxima a espacios verdes públicos / Total de la población*100<br/>"  
+                "<span>(Viviendas próximas a espacios verdes públicos / Viviendas totales)*100<br/>"  

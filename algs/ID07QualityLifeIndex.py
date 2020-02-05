@@ -55,16 +55,16 @@ pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID07QualityLifeIndex(QgsProcessingAlgorithm):
     """
-    Mide el cuartil uno de la población en términos de menores recursos,
-    respecto al total de la población para el área de estudio. Se utiliza
-    el Índice de Segregación Espacial Areal (ISEA). 
-
-    Los cuartiles de la población se obtienen a partir de los índices de vida,
-    escogiendo el uno que representa el sector poblacional con mayor carencia.
-    Se calcula el ISEA para cada área de estudio. Los sectores de donde la proporción
-    de un grupo poblacional es mayor a la población total se indican por valores
-    mayores a 1; evidenciando un proceso de segregación. No así si los
-    valores son cercanos a 1.    
+    Mide el nivel de carencia o bienestar de quienes habitan una
+    vivienda en base a las siguientes variables: a) Características
+    físicas de la vivienda, que integra tanto la calidad de la vivienda
+    en pisos, paredes exteriores y techo, como la “cantidad de la vivienda”
+    medida en hacinamiento de sus habitantes; b) Servicios básicos de
+    la vivienda, que integra la información relacionada a servicios de
+    agua y saneamiento, energía y comunicaciones; c) Educación, que
+    caracteriza del nivel educativo de la población mayor a seis años; y
+    d) Acceso a servicios de salud, que analiza el acceso de
+    la población a un seguro de salud público o privado.  
     Formula: (Porcentaje de la población del Cuartil uno en el Secto i / Porcentaje de la población del Cuartil en toda la ciudad)*100
     """
 
@@ -1211,5 +1211,5 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span>Se utiliza la metodología desarrollada por Osorio y Orellana (2014) para la ciudad de Cuenca.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span></span><br/>"         
+                "<span>Para estandarizar los valores se utiliza la fórmula: Vi=Xi/Ui, Vi= valor estandarizado, Xi= puntaje de la variable, Ui= umbral previamente definido. Para las variables Dormitorios y Años de escolaridad se pueden obtener valores mayores a 2, reescalando los valores mayores a 1: Vi= 1 + ((Vi-1)/(maxV-1)). Finalmente se realiza una suma ponderada de los valores obtenidos para cada variable.</span><br/>"         
 

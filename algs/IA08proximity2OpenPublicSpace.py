@@ -51,12 +51,11 @@ pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
     """
-    Mide la población que se encuentra próxima a espacios públicos abiertos
-    tales como parques, parques cívicos, plazas y áreas de recreación.
-    Relación entre las viviendas ubicadas a 300 metros o menos de un espacio
-    público abierto y el total de viviendas del área de estudio.
-    Formula: (Viviendas con proximidad a espacios públicos abiertos /
-    Viviendas totales) * 100
+    Mide la población que se encuentra próxima a espacios públicos abiertos.
+    Porcentaje de viviendas ubicadas a una caminata de 5 minutos o menos de
+    un espacio público abierto (parques, plazas, parques cívicos, parque infantil,
+    campo deportivo, margen de agua, parque lineal, bulevards y mercados abiertos). 
+    Formula: (Viviendas con cobertura simultánea de actividades comerciales cotidianas / Viviendas totales)*100
     """ 
     BLOCKS = 'BLOCKS'
     # FIELD_POPULATION = 'FIELD_POPULATION'
@@ -424,9 +423,9 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Mide la población que se encuentra próxima a espacios públicos abiertos. Relación entre las viviendas ubicadas a 300 metros o menos de un espacio público abierto (parques, plazas, parques cívicos, parque infantil, campo deportivo, margen de agua, parque lineal, bulevards y mercados abiertos.) y el total de viviendas del área de estudio.</span>"\
+                "<span>Mide la población que se encuentra próxima a espacios públicos abiertos. Porcentaje de viviendas ubicadas a una caminata de 5 minutos o menos de un espacio público abierto (parques, plazas, parques cívicos, parque infantil, campo deportivo, margen de agua, parque lineal, bulevards y mercados abiertos).</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
-                "<span>Proximidad se define como viviendas a 300m o menos de un espacio público abierto. Los espacios públicos abiertos comprenden parques, plazas, parques cívicos, parque infantil, campo deportivo, margen de agua, parque lineal, bulevards y mercados abiertos.</span>"\
+                "<span>Áreas cubiertas se consideran aquellas que simultáneamente quedan cubiertas al trazar un radio de 300m desde cada tipo de actividad comercial cotidiana. Actividades comerciales cotidianas se consideran las siguientes categorías: a) tienda de abarrotes, despensas, minimercado, b) farmacia, droguería, c) papelería, bazar, d) panadería, heladería, pastelería, e) depósitos de distribución de cilindros de gas. Usar distancia isocrona</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Viviendas con proximidad a espacios públicos abiertos / Viviendas totales)*100<br/>"        
+                "<span>(Viviendas con cobertura simultánea de actividades comerciales cotidianas / Viviendas totales)*100<br/>"        
 

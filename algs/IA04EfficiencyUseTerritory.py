@@ -50,16 +50,20 @@ pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IA04EfficiencyUseTerritory(QgsProcessingAlgorithm):
     """
-    Mide la eficiencia del consumo del territorio en base al crecimiento
-    poblacional. Puede informar sobre la dispersión de una ciudad. Relación
-    entre la tasa de crecimiento urbano y la tasa de crecimiento de la población.
-    El indicador se mide para cada censo poblacional, donde el crecimiento urbano
-    se expresa como el área urbanizada en planta baja de un territorio.
-    Formula: (((Urbt+n – Urbt) / Urbt)^1/y) / (((Popt+n – Popt) / Popt)^1/y)
-    ((Área edificada en el último año - Área edificada en el año inicial) /
-    Área edificada en el año inicial ^ 1/ Número de años entre el inicial y final) /
-    ((Población en el último año - Población en el año inicial) / Población en el año inicial ^ 1/
-    Número de años entre el inicial y final) 
+    Mide la eficiencia del consumo del territorio y puede informar sobre la
+    dispersión de una ciudad. Relación entre la tasa de crecimiento urbano
+    y la tasa de crecimiento de la población. El indicador se mide para
+    cada censo poblacional; el crecimiento urbano se expresa como el área
+    urbanizada en planta baja de un territorio.
+
+    El indicador se medirá para cada censo poblacional y, entendiendo el crecimiento urbano 
+    como el área edificada en planta baja en un territorio (no area total construida en altura).
+    En este caso, según información censal, el año inicial es 2000 y año final es 2010. 
+    Para determinar el área construida en planta se realiza una clasificación en base
+    a imágenes satelitales del año 2000 y 2010.    
+
+    Formula:
+    (((Urbt+n – Urbt) / Urbt)^1/y) / (((Popt+n – Popt) / Popt)^1/y)    
     """
 
     YEARS = 'YEARS'
@@ -440,7 +444,7 @@ class IA04EfficiencyUseTerritory(QgsProcessingAlgorithm):
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Mide la eficiencia del consumo del territorio en base al crecimiento poblacional. Puede informar sobre la dispersión de una ciudad. Relación entre la tasa de crecimiento urbano y la tasa de crecimiento de la población. El indicador se mide para cada censo poblacional, donde el crecimiento urbano se expresa como el área urbanizada en planta baja de un territorio.</span>"\
+                "<span>Mide la eficiencia del consumo del territorio y puede informar sobre la dispersión de una ciudad. Relación entre la tasa de crecimiento urbano y la tasa de crecimiento de la población. El indicador se mide para cada censo poblacional; el crecimiento urbano se expresa como el área urbanizada en planta baja de un territorio.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span>El indicador se medirá para cada censo poblacional y, entendiendo el crecimiento urbano como el área edificada en planta baja en un territorio (no area total construida en altura). En este caso, según información censal, el año inicial es 2000 y año final es 2010. Para determinar el área construida en planta se realiza una clasificación en base a imágenes satelitales del año 2000 y 2010.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\

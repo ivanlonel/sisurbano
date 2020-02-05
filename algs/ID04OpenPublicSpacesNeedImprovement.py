@@ -50,9 +50,11 @@ pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID04OpenPublicSpacesNeedImprovement(QgsProcessingAlgorithm):
     """
-    Mide el porcentaje de espacios públicos abiertos (parques, plazas, plazas cívicas, otros)
-    que necesitan mejoras en cuanto a la estructura, mobiliario, vegetación en relación con el
-    número total de espacios públicos.
+    Mide el porcentaje de espacios públicos abiertos
+    (parques, plazas, parques cívicos, parque infantil,
+    campo deportivo, margen de agua, parque lineal, bulevards y mercados abiertos)
+    que necesitan mejoras en cuanto a la estructura, mobiliario,
+    vegetación en relación con el número total de espacios públicos.
     Formula: (Superficie de espacios públicos abiertos que necesitan mejoras en m2 / Superficie total de espacios públicos abiertos en m2)*100
     """
     OPEN_SPACE = 'OPEN_SPACE'
@@ -250,7 +252,7 @@ class ID04OpenPublicSpacesNeedImprovement(QgsProcessingAlgorithm):
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Mide el porcentaje de espacios públicos abiertos (parques, plazas, plazas cívicas, otros) que necesitan mejoras en cuanto a la estructura, mobiliario, vegetación en relación con el número total de espacios públicos.</span>"\
+                "<span>Mide el porcentaje de espacios públicos abiertos (parques, plazas, parques cívicos, parque infantil, campo deportivo, margen de agua, parque lineal, bulevards y mercados abiertos) que necesitan mejoras en cuanto a la estructura, mobiliario, vegetación en relación con el número total de espacios públicos.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span>Se consideran los lotes de espacio público, en base al registro más reciente del estado actual. </span>"\
                 "<br/><br/><b>Formula:</b><br/>"\

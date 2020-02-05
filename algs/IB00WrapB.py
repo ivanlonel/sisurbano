@@ -297,7 +297,7 @@ class IB00WrapB(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT_B08,
-                self.tr('B08 Superficie de área agrícola/huertos'),
+                self.tr('B08 Superficie agrícola y huertos'),
                 QgsProcessing.TypeVectorAnyGeometry,
                 str(FULL_PATH_B08)
             )
@@ -409,7 +409,7 @@ class IB00WrapB(QgsProcessingAlgorithm):
         outputs['B07PermeabilidadDelSuelo'] = processing.run('SISURBANO:B07 Permeabilidad del suelo', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
         results['OUTPUT_B07'] = outputs['B07PermeabilidadDelSuelo']['OUTPUT']    
 
-        # B08 Superficie de área agrícola/huertos
+        # B08 Superficie agrícola y huertos
         steps = steps+1
         feedback.setCurrentStep(steps)  
         if feedback.isCanceled():
@@ -420,7 +420,7 @@ class IB00WrapB(QgsProcessingAlgorithm):
             'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
             'OUTPUT': params['OUTPUT_B08']
         }
-        outputs['B08SuperficieDeReaAgrcolahuertos'] = processing.run('SISURBANO:B08 Superficie de área agrícola/huertos', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        outputs['B08SuperficieDeReaAgrcolahuertos'] = processing.run('SISURBANO:B08 Superficie agrícola y huertos', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
         results['OUTPUT_B08'] = outputs['B08SuperficieDeReaAgrcolahuertos']['OUTPUT']            
 
         return results

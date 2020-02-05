@@ -55,9 +55,9 @@ pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IC09PowerConsumption(QgsProcessingAlgorithm):
     """
-    Mide el porcentaje de viviendas que tienen acceso directo en su vivienda a
-    una fuente de agua potable, energía eléctrica, alcantarillado y recolección de residuos sólidos.
-    Formula: (No. viviendas con todos los servicios / No. total de viviendas)*100
+    El indicador mide el consumo residencial de energía eléctrica por
+    persona en base al pago de la última planilla eléctrica.
+    Formula: Valor del último pago mensual de energía eléctrica en $ / Número de personas en el hogar
     """
 
     BLOCKS = 'BLOCKS'

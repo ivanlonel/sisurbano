@@ -388,7 +388,7 @@ class ID14UnemploymentRate(QgsProcessingAlgorithm):
         return  "<b>Descripción:</b><br/>"\
                 "<span>Mide el porcentaje de la población económicamente activa (PEA) en condición de desempleo. La PEA se define como aquellas personas de 15 y más años.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
-                "<span></span>"\
+                "<span>Encuesta de Empleo, Desempleo y Subempleo, tabla acumulada de enero a diciembre de 2018: categoría DESEMPLEO.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
                 "<span>(PEA desempleada / PEA total)*100</span><br/>"         
 

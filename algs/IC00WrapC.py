@@ -257,7 +257,7 @@ class IC00WrapC(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT_C13,
-                self.tr('C13 Cobertura del sistema de servicio de alcantarillado'),
+                self.tr('C13 Cobertura del servicio de alcantarillado'),
                 QgsProcessing.TypeVectorAnyGeometry,
                 str(FULL_PATH_C13)
             )
@@ -336,7 +336,7 @@ class IC00WrapC(QgsProcessingAlgorithm):
         outputs['C08EspacioPblicoOcupadoPorVehculosParqueados'] = processing.run('SISURBANO:C08 Espacio público ocupado por vehículos parqueados', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
         results['OUTPUT_C08'] = outputs['C08EspacioPblicoOcupadoPorVehculosParqueados']['OUTPUT']
 
-        # C13 Cobertura del sistema de servicio de alcantarillado
+        # C13 Cobertura del servicio de alcantarillado
         steps = steps+1
         feedback.setCurrentStep(steps)  
         if feedback.isCanceled():
@@ -348,7 +348,7 @@ class IC00WrapC(QgsProcessingAlgorithm):
             'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
             'OUTPUT': params['OUTPUT_C13']
         }
-        outputs['C13CoberturaDelSistemaDeServicioDeAlcantarillado'] = processing.run('SISURBANO:C13 Cobertura del sistema de servicio de alcantarillado', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        outputs['C13CoberturaDelSistemaDeServicioDeAlcantarillado'] = processing.run('SISURBANO:C13 Cobertura del servicio de alcantarillado', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
         results['OUTPUT_C13'] = outputs['C13CoberturaDelSistemaDeServicioDeAlcantarillado']['OUTPUT']
 
 

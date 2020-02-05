@@ -64,8 +64,8 @@ class IA14DensityPedestrianIntersections(QgsProcessingAlgorithm):
     Número de intersecciones / Superficie del área en Km2
     """
 
-    ROADS_SINTAXIS = 'ROADS_SINTAXIS'
-    FIELD_SINTAXIS = 'FIELD_SINTAXIS'
+    ROADS = 'ROADS'
+    # FIELD_SINTAXIS = 'FIELD_SINTAXIS'
     CELL_SIZE = 'CELL_SIZE'
     OUTPUT = 'OUTPUT'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'
@@ -78,19 +78,19 @@ class IA14DensityPedestrianIntersections(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
-                self.ROADS_SINTAXIS,
-                self.tr('Vías SINTAXIS ESPACIAL'),
+                self.ROADS,
+                self.tr('Vías'),
                 [QgsProcessing.TypeVectorLine]
             )
         )
 
-        self.addParameter(
-            QgsProcessingParameterField(
-                self.FIELD_SINTAXIS,
-                self.tr('Valor'),
-                'NACH_slen', 'ROADS_SINTAXIS'
-            )
-        )        
+        # self.addParameter(
+        #     QgsProcessingParameterField(
+        #         self.FIELD_SINTAXIS,
+        #         self.tr('Valor'),
+        #         'NACH_slen', 'ROADS'
+        #     )
+        # )        
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -123,8 +123,8 @@ class IA14DensityPedestrianIntersections(QgsProcessingAlgorithm):
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 11
-        fieldSintaxis = params['FIELD_SINTAXIS']
+        totalStpes = 10
+        # fieldSintaxis = params['FIELD_SINTAXIS']
 
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
@@ -132,29 +132,158 @@ class IA14DensityPedestrianIntersections(QgsProcessingAlgorithm):
         steps = steps+1
         feedback.setCurrentStep(steps)
         if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['ROADS_SINTAXIS'],
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['ROADS'],
                                            params['STUDY_AREA_GRID'],
                                            context, feedback)
         gridNeto = grid
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        centroides = createCentroids(params['ROADS_SINTAXIS'], context, feedback)
+        results = {}
+        outputs = {}
+
+
+        # Dividir con líneas
+        alg_params = {
+            'INPUT': params['ROADS'],
+            'LINES': params['ROADS'],
+            'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+        }
+        outputs['DividirConLneas'] = processing.run('native:splitwithlines', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(1)
+        if feedback.isCanceled():
+            return {}
+
+        # Calculadora de campos
+        alg_params = {
+            'FIELD_LENGTH': 10,
+            'FIELD_NAME': 'idx',
+            'FIELD_PRECISION': 3,
+            'FIELD_TYPE': 1,
+            'FORMULA': '$id',
+            'INPUT': outputs['DividirConLneas']['OUTPUT'],
+            'NEW_FIELD': True,
+            'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+        }
+        outputs['CalculadoraDeCampos'] = processing.run('qgis:fieldcalculator', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(2)
+        if feedback.isCanceled():
+            return {}
+
+        # Intersección de lineas
+        alg_params = {
+            'INPUT': outputs['CalculadoraDeCampos']['OUTPUT'],
+            'INPUT_FIELDS': 'idx',
+            'INTERSECT': outputs['CalculadoraDeCampos']['OUTPUT'],
+            'INTERSECT_FIELDS': 'idx',
+            'INTERSECT_FIELDS_PREFIX': '',
+            'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+        }
+        outputs['InterseccinDeLineas'] = processing.run('native:lineintersections', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(3)
+        if feedback.isCanceled():
+            return {}
+
+        # Disolver
+        alg_params = {
+            'FIELD': 'idx',
+            'INPUT': outputs['InterseccinDeLineas']['OUTPUT'],
+            'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+        }
+        outputs['Disolver'] = processing.run('native:dissolve', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(4)
+        if feedback.isCanceled():
+            return {}
+
+        # Convert multipoints to points
+        alg_params = {
+            'MULTIPOINTS': outputs['Disolver']['OUTPUT'],
+            'POINTS': QgsProcessing.TEMPORARY_OUTPUT
+        }
+        outputs['ConvertMultipointsToPoints'] = processing.run('saga:convertmultipointstopoints', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(5)
+        if feedback.isCanceled():
+            return {}
+
+        # Agrupamiento DBSCAN
+        alg_params = {
+            'DBSCAN*': False,
+            'EPS': 0.1,
+            'FIELD_NAME': 'CLUSTER_ID',
+            'INPUT': outputs['ConvertMultipointsToPoints']['POINTS'],
+            'MIN_SIZE': 1,
+            'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+        }
+        outputs['AgrupamientoDbscan'] = processing.run('native:dbscanclustering', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(6)
+        if feedback.isCanceled():
+            return {}
+
+        # Disolver last
+        alg_params = {
+            'FIELD': 'CLUSTER_ID',
+            'INPUT': outputs['AgrupamientoDbscan']['OUTPUT'],
+            'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+        }
+        outputs['DisolverLast'] = processing.run('native:dissolve', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(7)
+        if feedback.isCanceled():
+            return {}
+
+        # Unir atributos por localización (resumen)
+        alg_params = {
+            'DISCARD_NONMATCHING': False,
+            'INPUT': outputs['DisolverLast']['OUTPUT'],
+            'JOIN': outputs['ConvertMultipointsToPoints']['POINTS'],
+            'JOIN_FIELDS': 'idx',
+            'PREDICATE': [0],
+            'SUMMARIES': [0],
+            'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+        }
+        outputs['UnirAtributosPorLocalizacinResumen'] = processing.run('qgis:joinbylocationsummary', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(8)
+        if feedback.isCanceled():
+            return {}
+
+        # Seleccionar por expresión
+        alg_params = {
+            'EXPRESSION': 'idx_count >=3',
+            'INPUT': outputs['UnirAtributosPorLocalizacinResumen']['OUTPUT'],
+            'METHOD': 0
+        }
+        outputs['SeleccionarPorExpresin'] = processing.run('qgis:selectbyexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+        feedback.setCurrentStep(9)
+        if feedback.isCanceled():
+            return {}
+
+        # Extraer los objetos espaciales seleccionados
+        alg_params = {
+            'INPUT': outputs['SeleccionarPorExpresin']['OUTPUT'],
+            'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+        }
+        outputs['ExtraerLosObjetosEspacialesSeleccionados'] = processing.run('native:saveselectedfeatures', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
 
         steps = steps+1
         feedback.setCurrentStep(steps)
         result = joinByLocation(gridNeto['OUTPUT'],
-                                             centroides['OUTPUT'],
-                                             [fieldSintaxis],                                   
-                                              [CONTIENE], [MEDIA],
-                                              UNDISCARD_NONMATCHING,
-                                              context,
-                                              feedback)   
+                                 outputs['ExtraerLosObjetosEspacialesSeleccionados']['OUTPUT'],
+                                 ['idx_count'],                                   
+                                  [CONTIENE], [COUNT],
+                                  UNDISCARD_NONMATCHING,
+                                  context,
+                                  feedback)   
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = fieldSintaxis+'_mean * 1.00'
+        formulaDummy = 'idx_count_count / (area_grid / 1000)'
         result = calculateField(result['OUTPUT'],
                                    NAMES_INDEX['IA14'][0],
                                    formulaDummy,

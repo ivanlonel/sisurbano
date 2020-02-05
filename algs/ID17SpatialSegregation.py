@@ -58,17 +58,15 @@ pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID17SpatialSegregation(QgsProcessingAlgorithm):
     """
-    Mide el cuartil uno de la población en términos de menores recursos,
-    respecto al total de la población para el área de estudio. Se utiliza
-    el Índice de Segregación Espacial Areal (ISEA). 
+    Haciendo uso del Índice de Segregación de Espacial Local (ISEA),
+    se mide el nivel de exclusión, cohesión o segregación de la población con mayores carencias (cuartil uno según su ICV).
+    
+    Se utiliza metodología desarrollada por Osorio y Orellana (2014) para la ciudad de
+    Cuenca. Los cuartiles de la población se obtienen a partir de los índices
+    de vida, escogiendo el uno que representa el sector poblacional
+    con mayor carencia. Se calcula el ISEA para cada área de estudio. 
 
-    Los cuartiles de la población se obtienen a partir de los índices de vida,
-    escogiendo el uno que representa el sector poblacional con mayor carencia.
-    Se calcula el ISEA para cada área de estudio. Los sectores de donde la proporción
-    de un grupo poblacional es mayor a la población total se indican por valores
-    mayores a 1; evidenciando un proceso de segregación. No así si los
-    valores son cercanos a 1.    
-    Formula: (Porcentaje de la población del Cuartil uno en el Secto i / Porcentaje de la población del Cuartil en toda la ciudad)*100
+    Formula: ISEA del Q1 según su ICV
     """
 
     ICV = 'ICV'

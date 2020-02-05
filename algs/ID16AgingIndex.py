@@ -451,7 +451,7 @@ class ID16AgingIndex(QgsProcessingAlgorithm):
         return  "<b>Descripción:</b><br/>"\
                 "<span>Relación cuantitativa de la población mayor (más de 65 años) respecto a la población infantil (de 0 a 15 años). Personas mayores por cada niño.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
-                "<span></span>"\
+                "<span>CPV 2010: GEDAD. 22 grupos. Mayores de 65 años son grupos 15 al 22. Niños de hasta 15 años son grupos del 1-4.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
                 "<span>(Población mayor / Población infantil)*100</span><br/>"         
 

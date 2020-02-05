@@ -51,12 +51,10 @@ pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID10Proximity2PublicMarket(QgsProcessingAlgorithm):
     """
-    Mide la distancia desde la vivienda a puntos de venta de
+    Mide la distribución en la ciudad de los puntos de venta de
     comida asequible. Se entiende como cercano y asequible,
-    aquellas viviendas ubicadas a 300 metros o menos de mercados públicos.
-    El objetivo de un sistema alimentario es promover y consolidar puntos
-    de venta de alimentos saludables, para diversas zonas de la ciudad,
-    de manera que se llegue a todos los ciudadanos.    
+    aquellas viviendas ubicadas a una caminata de 10 minutos
+    o menos de mercados públicos. 
     Formula: (Viviendas con proximidad a mercados públicos /
               Viviendas totales)*100
     """
@@ -426,7 +424,7 @@ class ID10Proximity2PublicMarket(QgsProcessingAlgorithm):
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Mide la distancia desde la vivienda a puntos de venta de comida asequible. Se entiende como cercano y asequible, aquellas viviendas ubicadas a 300 metros o menos de mercados públicos.</span>"\
+                "<span>Mide la distribución en la ciudad de los puntos de venta de comida asequible. Se entiende como cercano y asequible, aquellas viviendas ubicadas a una caminata de 10 minutos o menos de mercados públicos.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span>El objetivo de un sistema alimentario es promover y consolidar puntos de venta de alimentos saludables, para diversas zonas de la ciudad, de manera que se llegue a todos los ciudadanos.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\

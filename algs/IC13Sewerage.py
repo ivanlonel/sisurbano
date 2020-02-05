@@ -54,7 +54,7 @@ class IC13Sewerage(QgsProcessingAlgorithm):
     alcantarillado, por tejido urbano.
     El número de hogares con conexión domiciliaria se divide para el total de hogares,
     expresado en porcentaje. 
-    Formula: (Hogares con conexión a alcantarillado / total de hogares) * 100
+    Formula: (Viviendas con conexión a alcantarillado / Total de viviendas)*100
     """
     SEWERAGE = 'SEWERAGE'
     BLOCKS = 'BLOCKS'
@@ -260,7 +260,7 @@ class IC13Sewerage(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'C13 Cobertura del sistema de servicio de alcantarillado'
+        return 'C13 Cobertura del servicio de alcantarillado'
 
     def displayName(self):
         """
@@ -294,9 +294,9 @@ class IC13Sewerage(QgsProcessingAlgorithm):
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Mide el porcentaje de hogares con conexión domiciliaria al sistema de alcantarillado, por tejido urbano.</span>"\
+                "<span>Mide el porcentaje de hogares con conexión domiciliaria al sistema de alcantarillado público.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
-                "<span>El número de hogares con conexión domiciliaria se divide para el total de hogares, expresado en porcentaje.</span>"\
+                "<span>En CPV 2010: Alcantarillado V09: categoría 1.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Hogares con conexión a alcantarillado / total de hogares) * 100<br/>"         
+                "<span>(Viviendas con conexión a alcantarillado / Total de viviendas)*100<br/>"         
 

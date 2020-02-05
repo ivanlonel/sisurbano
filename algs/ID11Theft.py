@@ -50,10 +50,9 @@ pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID11Theft(QgsProcessingAlgorithm):
     """
-    Mide la cantidad de robos a personas, viviendas, instituciones, comercios
-    y vehículos en el área de estudio con respecto al total de delitos ocurridos en la ciudad.
-
-    Para el cálculo se utiliza información del CSC que comprende los robos denunciados.    
+    Mide la cantidad de robos a personas, viviendas, instituciones,
+    comercios y vehículos en el área de estudio con respecto al
+    total de delitos ocurridos en la ciudad.  
 
     Formula: (Delitos anuales en el área de estudio / Total de delitos anuales en la ciudad)*100
     """
@@ -259,7 +258,7 @@ class ID11Theft(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'D11 Robos por número de habitantes'
+        return 'D11 Número de robos anuales'
 
     def displayName(self):
         """
@@ -293,7 +292,7 @@ class ID11Theft(QgsProcessingAlgorithm):
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Mide la cantidad de robos al año por número de habitantes</span>"\
+                "<span>Mide la cantidad de robos a personas, viviendas, instituciones, comercios y vehículos en el área de estudio con respecto al total de delitos ocurridos en la ciudad.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span>Para el cálculo se utiliza información del CSC que comprende los robos denunciados.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\

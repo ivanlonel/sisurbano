@@ -55,9 +55,11 @@ pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID02HomesConstructiveDeficiencies(QgsProcessingAlgorithm):
     """
-    Mide el porcentaje de viviendas que tienen acceso directo en su vivienda a
-    una fuente de agua potable, energía eléctrica, alcantarillado y recolección de residuos sólidos.
-    Formula: (No. viviendas con todos los servicios / No. total de viviendas)*100
+    Mide el porcentaje de viviendas que presentan carencias constructivas.
+    Se define carencia constructiva cuando el estado de la cubierta, paredes y
+    piso presentan deterioro o daño estructural que son un peligro inminente
+    para los habitantes de la vivienda.
+    Formula: (Viviendas con carencias / Total de viviendas)*100
     """
 
     BLOCKS = 'BLOCKS'
@@ -454,8 +456,8 @@ class ID02HomesConstructiveDeficiencies(QgsProcessingAlgorithm):
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Mide el porcentaje de viviendas que presentan carencias constructivas.</span>"\
+                "<span>Mide el porcentaje de viviendas que presentan carencias constructivas. Se define carencia constructiva cuando el estado de la cubierta, paredes y piso presentan deterioro o daño estructural que son un peligro inminente para los habitantes de la vivienda.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
-                "<span>La cantidad de unidades de vivienda en el área urbana del municipio que no cumplen con los estándares de habitabilidad definidos por el país dividido para el total de unidades de vivienda en el área urbana a evaluar.</span>"\
+                "<span>Para el cálculo se utilizan los datos de las cubiertas, pareds y pisos en estado MALO según el Censo de pobalción y vivienda 2010. CPV 2010: V02: categoría 3 (techo). V04: categoría 3 (paredes). V06: categoría 3 (piso).</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(N° de viviendas con carencias / total de viviendas)*100<br/>" 
+                "<span>(Viviendas con carencias / Total de viviendas)*100<br/>" 
