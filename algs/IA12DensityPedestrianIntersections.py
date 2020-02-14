@@ -48,7 +48,7 @@ from .ZHelpers import *
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class IA14DensityPedestrianIntersections(QgsProcessingAlgorithm):
+class IA12DensityPedestrianIntersections(QgsProcessingAlgorithm):
     """
     Mide la conectividad de un territorio para el peatón. Relación entre el
     número de intersecciones de calles e intersecciones peatonales y
@@ -74,7 +74,7 @@ class IA14DensityPedestrianIntersections(QgsProcessingAlgorithm):
     def initAlgorithm(self, config):
 
         currentPath = getCurrentPath(self)
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA14'][1]))
+        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA12'][1]))
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -285,7 +285,7 @@ class IA14DensityPedestrianIntersections(QgsProcessingAlgorithm):
         feedback.setCurrentStep(steps)
         formulaDummy = 'idx_count_count / (area_grid / 1000)'
         result = calculateField(result['OUTPUT'],
-                                   NAMES_INDEX['IA14'][0],
+                                   NAMES_INDEX['IA12'][0],
                                    formulaDummy,
                                    context,
                                    feedback, params['OUTPUT'])
@@ -337,7 +337,7 @@ class IA14DensityPedestrianIntersections(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return IA14DensityPedestrianIntersections()
+        return IA12DensityPedestrianIntersections()
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\

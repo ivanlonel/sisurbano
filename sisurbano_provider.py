@@ -43,6 +43,7 @@ from .algs import (
     IA03Compactness,
     IA04EfficiencyUseTerritory,
     IA05EmptyProperties,
+    IA06StreetProportion,
     IA07proximity2BasicUrbanServices,
     IA08proximity2OpenPublicSpace,
     IA09CoverageDailyBusinessActivities,
@@ -120,6 +121,7 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(IA03Compactness.IA03Compactness())
         self.addAlgorithm(IA04EfficiencyUseTerritory.IA04EfficiencyUseTerritory())
         self.addAlgorithm(IA05EmptyProperties.IA05EmptyProperties())
+        self.addAlgorithm(IA06StreetProportion.IA06StreetProportion())
         self.addAlgorithm(IA07proximity2BasicUrbanServices.IA07proximity2BasicUrbanServices())
         self.addAlgorithm(IA08proximity2OpenPublicSpace.IA08proximity2OpenPublicSpace())
         self.addAlgorithm(IA09CoverageDailyBusinessActivities.IA09CoverageDailyBusinessActivities())

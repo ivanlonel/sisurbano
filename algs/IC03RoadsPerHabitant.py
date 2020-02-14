@@ -268,7 +268,7 @@ class IC03RoadsPerHabitant(QgsProcessingAlgorithm):
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Mide la repartición de espacio vial con relación a la población. Es un indicador que puede dar información sobre la flexibiliad del sistema de transporte y la matriz urbana. Relación entre el número de kilómetros lineales de carril de vías públicas y la cantidad de población en el área de estudio.</span>"\
+                "<span>Mide la repartición de espacio vial con relación a la población. Es un indicador que puede dar información sobre la flexibiliad del sistema de transporte y la matriz urbana. Relación entre el número de metros lineales de carril de vías públicas y la cantidad de población en el área de estudio.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
