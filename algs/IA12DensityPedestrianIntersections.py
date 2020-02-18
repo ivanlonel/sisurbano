@@ -307,7 +307,7 @@ class IA12DensityPedestrianIntersections(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'A14 Densidad de intersecciones peatonales'
+        return 'A12 Densidad de intersecciones peatonales'
 
     def displayName(self):
         """

@@ -49,7 +49,7 @@ from .ZHelpers import *
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class ID10Proximity2PublicMarket(QgsProcessingAlgorithm):
+class ID08Proximity2PublicMarket(QgsProcessingAlgorithm):
     """
     Mide la distribución en la ciudad de los puntos de venta de
     comida asequible. Se entiende como cercano y asequible,
@@ -73,7 +73,7 @@ class ID10Proximity2PublicMarket(QgsProcessingAlgorithm):
     def initAlgorithm(self, config):
 
         currentPath = getCurrentPath(self)
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID10'][1]))           
+        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID08'][1]))           
           
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -281,7 +281,7 @@ class ID10Proximity2PublicMarket(QgsProcessingAlgorithm):
         steps = steps+1
         feedback.setCurrentStep(steps)
         formulaProximity = 'coalesce((coalesce(has_sum,0) /  coalesce(hou_seg_sum,""))*100, "")'
-        proximity2OpenSpace = calculateField(gridNetoAndSegmentsServed['OUTPUT'], NAMES_INDEX['ID10'][0],
+        proximity2OpenSpace = calculateField(gridNetoAndSegmentsServed['OUTPUT'], NAMES_INDEX['ID08'][0],
                                           formulaProximity,
                                           context,
                                           feedback,  params['OUTPUT'])        
@@ -359,7 +359,7 @@ class ID10Proximity2PublicMarket(QgsProcessingAlgorithm):
         steps = steps+1
         feedback.setCurrentStep(steps)
         formulaProximity = 'coalesce((coalesce(hou_seg_sum_2,0) /  coalesce(hou_seg_sum,""))*100, "")'
-        proximity2OpenSpace = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['ID10'][0],
+        proximity2OpenSpace = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['ID08'][0],
                                           formulaProximity,
                                           context,
                                           feedback,  params['OUTPUT'])
@@ -390,7 +390,7 @@ class ID10Proximity2PublicMarket(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'D10 Cercanía y asequibilidad a alimentos'
+        return 'D08 Cercanía y asequibilidad a alimentos'
 
     def displayName(self):
         """
@@ -420,7 +420,7 @@ class ID10Proximity2PublicMarket(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return ID10Proximity2PublicMarket()
+        return ID08Proximity2PublicMarket()
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\

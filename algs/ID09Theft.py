@@ -48,7 +48,7 @@ from .ZHelpers import *
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class ID11Theft(QgsProcessingAlgorithm):
+class ID09Theft(QgsProcessingAlgorithm):
     """
     Mide la cantidad de robos a personas, viviendas, instituciones,
     comercios y vehículos en el área de estudio con respecto al
@@ -71,7 +71,7 @@ class ID11Theft(QgsProcessingAlgorithm):
     def initAlgorithm(self, config):
 
         currentPath = getCurrentPath(self)
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID11'][1]))
+        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID09'][1]))
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -221,7 +221,7 @@ class ID11Theft(QgsProcessingAlgorithm):
         # feedback.setCurrentStep(steps)
         # formulaThefPerHab = 'idx_count/' + str(fieldHab)
         # thefPerHab = calculateField(gridNetoAndSegments['OUTPUT'],
-        #                            NAMES_INDEX['ID11'][0],
+        #                            NAMES_INDEX['ID09'][0],
         #                            formulaThefPerHab,
         #                            context,
         #                            feedback, params['OUTPUT'])
@@ -231,7 +231,7 @@ class ID11Theft(QgsProcessingAlgorithm):
         feedback.setCurrentStep(steps)
         formulaThefPerHab = 'coalesce((coalesce(idx_count, 0)/sum(idx_count)) * 100, "")'
         thefPerHab = calculateField(gridNetoAndSegments['OUTPUT'],
-                                   NAMES_INDEX['ID11'][0],
+                                   NAMES_INDEX['ID09'][0],
                                    formulaThefPerHab,
                                    context,
                                    feedback, params['OUTPUT'])        
@@ -258,7 +258,7 @@ class ID11Theft(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'D11 Número de robos anuales'
+        return 'D09 Número de robos anuales'
 
     def displayName(self):
         """
@@ -288,7 +288,7 @@ class ID11Theft(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return ID11Theft()
+        return ID09Theft()
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\

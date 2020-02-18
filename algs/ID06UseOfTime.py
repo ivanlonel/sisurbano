@@ -50,13 +50,18 @@ import numpy as np
 import pandas as pd
 import tempfile
 import subprocess
+import datetime
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class ID21PerceptionInsecurity(QgsProcessingAlgorithm):
+class ID06UseOfTime(QgsProcessingAlgorithm):
     """
-    Porcentaje de ciudadanos que se sienten inseguros en su barrio
-    Formula:(Población que se siente insegura / Población total)*100
+    Informa sobre la asignación semanal de tiempo de la población de 12 años
+    y más para actividades personales (actividades no remuneradas para otros
+    hogares, para la comunidad, trabajo voluntario; esparcimiento y cultura; familia y sociabilidad)
+    de lunes a viernes.
+    Formula: Promedio del tiempo semanal en horas que los miembros del
+    hogar de 12 años o más utilizaron para actividades personales.
     """
 
     BLOCKS = 'BLOCKS'
@@ -70,7 +75,7 @@ class ID21PerceptionInsecurity(QgsProcessingAlgorithm):
     def initAlgorithm(self, config):
         currentPath = getCurrentPath(self)
         self.CURRENT_PATH = currentPath        
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID21'][1]))
+        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID06'][1]))
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -94,7 +99,7 @@ class ID21PerceptionInsecurity(QgsProcessingAlgorithm):
                 self.ENCUESTA,
                 self.tr('Censo vivienda'),
                 extension='csv',
-                defaultValue='/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/victimizacion_personas.csv'
+                defaultValue='/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Base EUT 2012.csv'
             )
         )           
 
@@ -151,53 +156,71 @@ class ID21PerceptionInsecurity(QgsProcessingAlgorithm):
 
         file = path
 
-        cols = ['CIUDAD', 'ZONA', 'SECTOR', 'VIVIENDA', 'HOGAR', 'I52']
+        #p03 edad
+        cols = ['id_hogar', 'P03', 
+                'UT98A', 'UT98B', 'UT99A', 'UT99B', 'UT100A', 'UT100B', 
+                'UT101A', 'UT101B', 'UT102A', 'UT102B', 'UT103A', 'UT103B', 'UT104A',
+                'UT104B', 'UT105A', 'UT105B', 'UT106A', 'UT106B', 'UT107A', 'UT107B', 
+                'UT108A','UT108B', 'UT109A','UT109B', 'UT110A', 'UT110B', 'UT111A', 
+                'UT111B', 'UT112A', 'UT112B', 'UT113A','UT113B', 'UT114A','UT114B',
+                'UT116A', 'UT116B', 'UT117A', 'UT117B', 'UT118A', 'UT118B', 'UT119A', 
+                'UT119B', 'UT120A','UT120B', 'UT121A', 'UT121B', 'UT122A', 'UT122B']
+
         df = pd.read_csv(file, usecols=cols)
 
+        df['id_hogar'] = df['id_hogar'].astype(str)
+        df['P03'] = df['P03'].astype(str)
 
-        # fix codes 
-        df['CIUDAD'] = df['CIUDAD'].astype(str)
-        df['ZONA'] = df['ZONA'].astype(str)
-        df['SECTOR'] = df['SECTOR'].astype(str)
-        df['VIVIENDA'] = df['VIVIENDA'].astype(str)
-        df['HOGAR'] = df['HOGAR'].astype(str)
+        df.loc[df['id_hogar'].str.len() == 14, 'id_hogar'] = "0" + df['id_hogar']
+        df['codsec'] = df['id_hogar'].str[0:12]
+        df['codzon'] = df['id_hogar'].str[0:9]
+
+        df = df[(df['P03'] >= '12')]
+
+        fieldTimes = cols[2:]
+        fildTimesRename = []
+
+        # print(fieldTimes[:])
+
+        for fieldTime in fieldTimes:
+            df.loc[(df[fieldTime] == ' '), fieldTime] = "00"
+            df[fieldTime] = df[fieldTime].astype(int)
+            timerSplit = fieldTime.split('A')
+            newName = timerSplit[0]
+            isA = len(timerSplit) == 2
+            indexElement = fieldTimes.index(fieldTime)
+            if isA: 
+                nameB = newName + "B"
+                df.loc[(df[nameB] == ' '), nameB] = "00"
+                df[newName] = df[fieldTime].astype(str) + ":" + df[nameB].astype(str) + ":00"
+                fildTimesRename.append(newName) 
 
 
-        df.loc[df['CIUDAD'].str.len() == 5, 'CIUDAD'] = "0" + df['CIUDAD']
-        df.loc[df['ZONA'].str.len() == 1, 'ZONA'] = "00" + df['ZONA']
-        df.loc[df['ZONA'].str.len() == 2, 'ZONA'] = "0" + df['ZONA']
-        df.loc[df['SECTOR'].str.len() == 1, 'SECTOR'] = "00" + df['SECTOR']
-        df.loc[df['SECTOR'].str.len() == 2, 'SECTOR'] = "0" + df['SECTOR']
-        df.loc[df['VIVIENDA'].str.len() == 1, 'VIVIENDA'] = "0" + df['VIVIENDA']
+        df['sumTime'] = datetime.timedelta() 
 
-        # I52, categorías 1 y 2 (muy inseguro e inseguro)
+        for field in fildTimesRename:
+            df[field] = pd.to_timedelta(df[field])
+            df['sumTime'] = df['sumTime'] + df[field]
 
-        df['pobinse'] = 0.0
-        df.loc[(df['I52'] == 'Inseguro') | (df['I52'] == 'Muy inseguro'), 'pobinse'] = 1.0
 
-        # codigo sector
-        df['codsec'] = df['CIUDAD'].astype(str) + df['ZONA'].astype(str) + df['SECTOR'].astype(str) 
-        df['codzon'] = df['CIUDAD'].astype(str) + df['ZONA'].astype(str)
+        df['hours'] = df['sumTime'].dt.total_seconds() / 3600
+        df['hours'] = df['hours'].astype(float)
 
-        df.rename(columns={'CIUDAD':'pbt'}, inplace=True) 
         aggOptions = {
                       'codzon' : 'first',
-                      'pbt' : 'count',
-                      'pobinse' : 'sum',
+                      'hours' : 'mean',
                      } 
 
-        resManzanas = df.groupby('codzon').agg(aggOptions)
-        resManzanas['percepcionins'] = None
-        resManzanas['percepcionins'] = (resManzanas['pobinse'] / resManzanas['pbt']) * 100   
+        resSectores = df.groupby('codzon').agg(aggOptions)
+    
 
-        df = resManzanas   
-
+        df = resSectores   
                   
         steps = steps+1
         feedback.setCurrentStep(steps)
 
-        outputCsv = self.CURRENT_PATH+'/percepcionins.csv'
-        feedback.pushConsoleInfo(str(('percepcionins en ' + outputCsv)))    
+        outputCsv = self.CURRENT_PATH+'/usoTiempo.csv'
+        feedback.pushConsoleInfo(str(('usoTiempo en ' + outputCsv)))    
         df.to_csv(outputCsv, index=False)
 
         steps = steps+1
@@ -229,126 +252,48 @@ class ID21PerceptionInsecurity(QgsProcessingAlgorithm):
 
         # steps = steps+1
         # feedback.setCurrentStep(steps)
-        # expressionNotNull = "percepcionins IS NOT '' AND percepcionins is NOT NULL"    
+        # expressionNotNull = "des IS NOT '' AND des is NOT NULL"    
         # result =   filterByExpression(result['OUTPUT'], expressionNotNull, context, feedback) 
 
 
 
-  # ----------------------CONVERTIR A NUMERICOS --------------------     
-  
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = 'pobinse * 1.0'
+        formulaDummy = 'hours * 1.0'
         result = calculateField(result['OUTPUT'], 
-                                 'pobinse_n',
+                                 'hours_n',
                                  formulaDummy,
                                  context,
                                  feedback)  
 
+ 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = 'pbt * 1.0'
-        result = calculateField(result['OUTPUT'], 
-                                 'pbt_n',
-                                 formulaDummy,
-                                 context,
-                                 feedback)    
-
-       # ----------------------PROPORCIONES AREA--------------------------
-       
-        steps = steps+1
-        feedback.setCurrentStep(steps)        
-        blocks = calculateArea(result['OUTPUT'], 'area_bloc', context,
-                               feedback)     
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                                ['pobinse_n','pbt_n','area_bloc'],
-                                ['id_grid','area_grid'],
-                                context, feedback)        
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        segmentsArea = calculateArea(segments['OUTPUT'],
-                                     'area_seg',
-                                     context, feedback)
-
-        # -------------------------PROPORCIONES VALORES-------------------------
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * pobinse_n' 
-        result = calculateField(segmentsArea['OUTPUT'], 'pobinse_n_seg',
-                                               formulaDummy,
-                                               context,
-                                               feedback)     
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * pbt_n' 
-        result = calculateField(result['OUTPUT'], 'pbt_n_seg',
-                               formulaDummy,
-                               context,
-                               feedback)   
-
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        result = makeSureInside(result['OUTPUT'],
-                                context,
-                                feedback)                                    
-
-        #----------------------------------------------------------------------   
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        result = joinByLocation(gridNeto['OUTPUT'],
+        gridNeto = joinByLocation(gridNeto['OUTPUT'],
                              result['OUTPUT'],
-                             ['pobinse_n_seg','pbt_n_seg'],                                   
-                              [CONTIENE], [SUM],
+                             ['hours_n'],                                   
+                              [INTERSECTA], [MEDIA],
                               UNDISCARD_NONMATCHING,
                               context,
-                              feedback)  
+                              feedback)         
+ 
 
-
+        fieldsMapping = [
+            {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
+            {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
+            {'expression': '"hours_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID06'][0], 'precision': 2, 'type': 6}
+        ]      
+        
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(pobinse_n_seg_sum/pbt_n_seg_sum) * 100' 
-        result = calculateField(result['OUTPUT'], NAMES_INDEX['ID21'][0],
-                               formulaDummy,
-                               context,
-                               feedback, params['OUTPUT'])    
-
-
- 
-        # steps = steps+1
-        # feedback.setCurrentStep(steps)
-        # gridNeto = joinByLocation(gridNeto['OUTPUT'],
-        #                      result['OUTPUT'],
-        #                      ['pobinse_viv_n'],                                   
-        #                       [INTERSECTA], [MEDIA],
-        #                       UNDISCARD_NONMATCHING,
-        #                       context,
-        #                       feedback)         
- 
-
-        # fieldsMapping = [
-        #     {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
-        #     {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
-        #     {'expression': '"tenencia_viv_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID21'][0], 'precision': 2, 'type': 6}
-        # ]      
-        
-        # steps = steps+1
-        # feedback.setCurrentStep(steps)
-        # result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 
-        #                         context,
-        #                         feedback, params['OUTPUT'])                                                                
+        result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 
+                                context,
+                                feedback, params['OUTPUT'])                                                                
 
         return result
           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'inseguridad.png'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'timer3.png'))
 
     def name(self):
         """
@@ -358,7 +303,7 @@ class ID21PerceptionInsecurity(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'D21 Percepción de inseguridad'
+        return 'D06 Uso del tiempo'
 
     def displayName(self):
         """
@@ -388,13 +333,13 @@ class ID21PerceptionInsecurity(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return ID21PerceptionInsecurity()
+        return ID06UseOfTime()
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Porcentaje de ciudadanos que se sienten inseguros en su barrio.</span>"\
+                "<span>Informa sobre la asignación semanal de tiempo de la población de 12 años y más para actividades personales (actividades no remuneradas para otros hogares, para la comunidad, trabajo voluntario; esparcimiento y cultura; familia y sociabilidad) de lunes a viernes.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
-                "<span>Encuesta de Victimización y Percepción de Inseguridad, 2011. I52, categorías 1 y 2 (muy inseguro e inseguro)</span>"\
+                "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Población que se siente insegura / Población total)*100</span><br/>"         
+                "<span>Promedio del tiempo semanal en horas que los miembros del hogar de 12 años o más utilizaron para actividades personales.</span><br/>"         
 

@@ -23,7 +23,7 @@
 """
 
 __author__ = 'Johnatan Astudillo'
-__date__ = '2020-01-14'
+__date__ = '2020-01-23'
 __copyright__ = '(C) 2019 by LlactaLAB'
 
 # This will get replaced with a git SHA1 when you do a git archive
@@ -53,19 +53,15 @@ import subprocess
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class ID12HomeTenureSecurity(QgsProcessingAlgorithm):
+class ID15PerceptionInsecurity(QgsProcessingAlgorithm):
     """
-    Mide el porcentaje de hogares con acceso a una vivienda segura; 
-    considerando una tenecia segura aquella vivienda que es propia o 
-    rentada con un contrato de arrendamiento.
-    Formula:(Hogares con vivienda propia o arrendada / Hogares totales)*100
+    Porcentaje de ciudadanos que se sienten inseguros en su barrio
+    Formula:(Población que se siente insegura / Población total)*100
     """
 
     BLOCKS = 'BLOCKS'
-    DPA_MAN = 'DPA_MAN'
-    CENSO_VIVIENDA = 'CENSO_VIVIENDA'
-    # CENSO_POBLACION = 'CENSO_POBLACION'
-    CENSO_HOGAR = 'CENSO_HOGAR'
+    DPA_SECTOR = 'DPA_SECTOR'
+    ENCUESTA = 'ENCUESTA'
     CELL_SIZE = 'CELL_SIZE'
     OUTPUT = 'OUTPUT'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'
@@ -74,48 +70,31 @@ class ID12HomeTenureSecurity(QgsProcessingAlgorithm):
     def initAlgorithm(self, config):
         currentPath = getCurrentPath(self)
         self.CURRENT_PATH = currentPath        
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID12'][1]))
+        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID15'][1]))
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.BLOCKS,
-                self.tr('Manzanas'),
+                self.tr('Zonas Censales'),
                 [QgsProcessing.TypeVectorPolygon]
             )
         )
 
         self.addParameter(
             QgsProcessingParameterField(
-                self.DPA_MAN,
-                self.tr('DPA Manzanas'),
-                'dpa_manzan', 'BLOCKS'
+                self.DPA_SECTOR,
+                self.tr('DPA Zona'),
+                'dpa_zona', 'BLOCKS'
             )
         )           
 
-        # self.addParameter(
-        #     QgsProcessingParameterFile(
-        #         self.CENSO_POBLACION,
-        #         self.tr('Censo población'),
-        #         extension='csv',
-        #         defaultValue="/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Pob_Manz.csv"
-        #     )
-        # ) 
 
         self.addParameter(
             QgsProcessingParameterFile(
-                self.CENSO_HOGAR,
-                self.tr('Censo hogar'),
-                extension='csv',
-                defaultValue="/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Hog_Manz.csv"
-            )
-        )           
-
-        self.addParameter(
-            QgsProcessingParameterFile(
-                self.CENSO_VIVIENDA,
+                self.ENCUESTA,
                 self.tr('Censo vivienda'),
                 extension='csv',
-                defaultValue='/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Viv_Manz.csv'
+                defaultValue='/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/victimizacion_personas.csv'
             )
         )           
 
@@ -140,15 +119,6 @@ class ID12HomeTenureSecurity(QgsProcessingAlgorithm):
             )          
 
 
-        # self.addParameter(
-        #     QgsProcessingParameterNumber(
-        #         self.NUMBER_HABITANTS,
-        #         self.tr('Por cada número de habitantes'),
-        #         QgsProcessingParameterNumber.Integer,
-        #         100000, False, 1, 99999999
-        #     )
-        # )   
-
         self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT,
@@ -162,7 +132,7 @@ class ID12HomeTenureSecurity(QgsProcessingAlgorithm):
     def processAlgorithm(self, params, context, feedback):
         steps = 0
         totalStpes = 17
-        fieldDpaMan = params['DPA_MAN']
+        fieldDpa = params['DPA_SECTOR']
         # fieldHab = params['NUMBER_HABITANTS']
 
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
@@ -177,124 +147,57 @@ class ID12HomeTenureSecurity(QgsProcessingAlgorithm):
         steps = steps+1
         feedback.setCurrentStep(steps)
 
+        path = params['ENCUESTA']
 
-        # pathCsvPoblacion = params['CENSO_POBLACION']
-        pathCsvHogar = params['CENSO_HOGAR']
-        pathCsvVivienda = params['CENSO_VIVIENDA']
+        file = path
 
-        fileH = pathCsvHogar
+        cols = ['CIUDAD', 'ZONA', 'SECTOR', 'VIVIENDA', 'HOGAR', 'I52']
+        df = pd.read_csv(file, usecols=cols)
 
-        colsH = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09','H15']
-        df = pd.read_csv(fileH, usecols=colsH)
 
         # fix codes 
-        df['I01'] = df['I01'].astype(str)
-        df['I02'] = df['I02'].astype(str)
-        df['I03'] = df['I03'].astype(str)
-        df['I04'] = df['I04'].astype(str)
-        df['I05'] = df['I05'].astype(str)
-        df['I06'] = df['I06'].astype(str)
-        df['I09'] = df['I09'].astype(str)
-
-        df.loc[df['I01'].str.len() < 2, 'I01'] = "0" + df['I01']
-        df.loc[df['I02'].str.len() < 2, 'I02'] = "0" + df['I02']
-        df.loc[df['I03'].str.len() < 2, 'I03'] = "0" + df['I03']
-        df.loc[df['I04'].str.len() == 1, 'I04'] = "00" + df['I04']
-        df.loc[df['I04'].str.len() == 2, 'I04'] = "0" + df['I04']
-        df.loc[df['I05'].str.len() == 1, 'I05'] = "00" + df['I05']
-        df.loc[df['I05'].str.len() == 2, 'I05'] = "0" + df['I05']
-        df.loc[df['I06'].str.len() < 2, 'I06'] = "0" + df['I06']
-        df.loc[df['I09'].str.len() == 1, 'I09'] = "00" + df['I09']
-        df.loc[df['I09'].str.len() == 2, 'I09'] = "0" + df['I09']
+        df['CIUDAD'] = df['CIUDAD'].astype(str)
+        df['ZONA'] = df['ZONA'].astype(str)
+        df['SECTOR'] = df['SECTOR'].astype(str)
+        df['VIVIENDA'] = df['VIVIENDA'].astype(str)
+        df['HOGAR'] = df['HOGAR'].astype(str)
 
 
-        df['codv'] = df['I01'].astype(str) + df['I02'].astype(str) + df['I03'].astype(str) \
-                  + df['I04'].astype(str) + df['I05'].astype(str) +  df['I06'].astype(str) \
-                  + df['I09'].astype(str)
+        df.loc[df['CIUDAD'].str.len() == 5, 'CIUDAD'] = "0" + df['CIUDAD']
+        df.loc[df['ZONA'].str.len() == 1, 'ZONA'] = "00" + df['ZONA']
+        df.loc[df['ZONA'].str.len() == 2, 'ZONA'] = "0" + df['ZONA']
+        df.loc[df['SECTOR'].str.len() == 1, 'SECTOR'] = "00" + df['SECTOR']
+        df.loc[df['SECTOR'].str.len() == 2, 'SECTOR'] = "0" + df['SECTOR']
+        df.loc[df['VIVIENDA'].str.len() == 1, 'VIVIENDA'] = "0" + df['VIVIENDA']
 
+        # I52, categorías 1 y 2 (muy inseguro e inseguro)
 
-        # Calcular tenencia de la vivienda
-        # 1 Propia y totalmente pagada
-        # 2 Propia y la está pagando
-        # 3 Propia? (regalada, donada, heredada o por posesión
-        # 4 Prestada o cedida (no paga)
-        # 5 Por servicios
-        # 6 Arrendada
-        # 7 Anticresis
+        df['pobinse'] = 0.0
+        df.loc[(df['I52'] == 'Inseguro') | (df['I52'] == 'Muy inseguro'), 'pobinse'] = 1.0
 
-        df['tenencia'] = None
-        df.loc[(df['H15'] >= '1') & (df['H15'] <= '3'), 'tenencia'] = 1
-        df.loc[(df['H15'] >= '4') & (df['H15'] < '6'), 'tenencia'] = 0
-        df.loc[df['H15'] == '6', 'tenencia'] = 1
-        df.loc[df['H15'] > '6', 'tenencia'] = 0
+        # codigo sector
+        df['codsec'] = df['CIUDAD'].astype(str) + df['ZONA'].astype(str) + df['SECTOR'].astype(str) 
+        df['codzon'] = df['CIUDAD'].astype(str) + df['ZONA'].astype(str)
 
-        df['tenencia'] = df['tenencia'].astype(float)
-        group = df.groupby('codv')['tenencia'].sum()
-        df = group
-
-
-        fileV = pathCsvVivienda
-        colsV = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 
-                 'I10', 'V16', 'TOTPER', 'id_man', 'id_viv', 'id_provin',
-                 'id_can', 'id_parr', 'id_viv', 'id_man'
-                ]
-        dfV = pd.read_csv(fileV, usecols=colsV)
-
-        # fix codes 
-        dfV['I01'] = dfV['I01'].astype(str)
-        dfV['I02'] = dfV['I02'].astype(str)
-        dfV['I03'] = dfV['I03'].astype(str)
-        dfV['I04'] = dfV['I04'].astype(str)
-        dfV['I05'] = dfV['I05'].astype(str)
-        dfV['I06'] = dfV['I06'].astype(str)
-        dfV['I09'] = dfV['I09'].astype(str)
-        dfV['I10'] = dfV['I10'].astype(str)
-
-        dfV.loc[dfV['I01'].str.len() < 2, 'I01'] = "0" + dfV['I01']
-        dfV.loc[dfV['I02'].str.len() < 2, 'I02'] = "0" + dfV['I02']
-        dfV.loc[dfV['I03'].str.len() < 2, 'I03'] = "0" + dfV['I03']
-        dfV.loc[dfV['I04'].str.len() == 1, 'I04'] = "00" + dfV['I04']
-        dfV.loc[dfV['I04'].str.len() == 2, 'I04'] = "0" + dfV['I04']
-        dfV.loc[dfV['I05'].str.len() == 1, 'I05'] = "00" + dfV['I05']
-        dfV.loc[dfV['I05'].str.len() == 2, 'I05'] = "0" + dfV['I05']
-        dfV.loc[dfV['I06'].str.len() < 2, 'I06'] = "0" + dfV['I06']
-        dfV.loc[dfV['I09'].str.len() == 1, 'I09'] = "00" + dfV['I09']
-        dfV.loc[dfV['I09'].str.len() == 2, 'I09'] = "0" + dfV['I09']
-        dfV.loc[dfV['I10'].str.len() < 2, 'I10'] = "0" + dfV['I10']
-
-
-        dfV['codv'] = dfV['I01'].astype(str) + dfV['I02'].astype(str) + dfV['I03'].astype(str) \
-                  + dfV['I04'].astype(str) + dfV['I05'].astype(str) +  dfV['I06'].astype(str) \
-                  + dfV['I09'].astype(str)
-
-
-        merge = None
-        merge = pd.merge(dfV, df,  how='left', on='codv')
-        merge.loc[merge['V16'] == ' ', 'V16'] = None
-
-        df = merge
-        df['codman'] = df['I01'].astype(str) + df['I02'].astype(str) + df['I03'].astype(str) \
-                  + df['I04'].astype(str) + df['I05'].astype(str) + df['I06'].astype(str)
-
-
-        df['V16'] = df['V16'].astype(float)
-        aggOptions = {'codv' : 'count',
-                      'tenencia':'sum', 
-                       'V16' : 'sum', 
-                      'codman' : 'first'
+        df.rename(columns={'CIUDAD':'pbt'}, inplace=True) 
+        aggOptions = {
+                      'codzon' : 'first',
+                      'pbt' : 'count',
+                      'pobinse' : 'sum',
                      } 
 
-        resManzanas = df.groupby('codman').agg(aggOptions)
+        resManzanas = df.groupby('codzon').agg(aggOptions)
+        resManzanas['percepcionins'] = None
+        resManzanas['percepcionins'] = (resManzanas['pobinse'] / resManzanas['pbt']) * 100   
 
-        df = resManzanas
-        df['tenencia_viv'] = (df['tenencia'] / df['V16']) * 100
+        df = resManzanas   
 
                   
         steps = steps+1
         feedback.setCurrentStep(steps)
 
-        outputCsv = self.CURRENT_PATH+'/tenencia_viv.csv'
-        feedback.pushConsoleInfo(str(('tenencia_viv en ' + outputCsv)))    
+        outputCsv = self.CURRENT_PATH+'/percepcionins.csv'
+        feedback.pushConsoleInfo(str(('percepcionins en ' + outputCsv)))    
         df.to_csv(outputCsv, index=False)
 
         steps = steps+1
@@ -312,13 +215,11 @@ class ID12HomeTenureSecurity(QgsProcessingAlgorithm):
         field_names = [field.name() for field in CSV.fields()]       
         print(field_names)            
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        result = joinByAttr2(params['BLOCKS'], fieldDpaMan,
-                                outputCsv, 'codman',
+        result = joinByAttr2(params['BLOCKS'], fieldDpa,
+                                outputCsv, 'codzon',
                                 [],
                                 UNDISCARD_NONMATCHING,
                                 '',
@@ -326,38 +227,29 @@ class ID12HomeTenureSecurity(QgsProcessingAlgorithm):
                                 context,
                                 feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        expressionNotNull = "tenencia_viv IS NOT '' AND tenencia_viv is NOT NULL"    
-        notNull =   filterByExpression(result['OUTPUT'], expressionNotNull, context, feedback) 
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # expressionNotNull = "percepcionins IS NOT '' AND percepcionins is NOT NULL"    
+        # result =   filterByExpression(result['OUTPUT'], expressionNotNull, context, feedback) 
 
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = 'tenencia_viv * 1.0'
-        result = calculateField(notNull['OUTPUT'], 
-                                 'tenencia_viv_n',
-                                 formulaDummy,
-                                 context,
-                                 feedback)   
 
 
   # ----------------------CONVERTIR A NUMERICOS --------------------     
   
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = 'tenencia * 1.0'
+        formulaDummy = 'pobinse * 1.0'
         result = calculateField(result['OUTPUT'], 
-                                 'tenencia_n',
+                                 'pobinse_n',
                                  formulaDummy,
                                  context,
                                  feedback)  
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = 'V16 * 1.0'
+        formulaDummy = 'pbt * 1.0'
         result = calculateField(result['OUTPUT'], 
-                                 'V16_n',
+                                 'pbt_n',
                                  formulaDummy,
                                  context,
                                  feedback)    
@@ -372,7 +264,7 @@ class ID12HomeTenureSecurity(QgsProcessingAlgorithm):
         steps = steps+1
         feedback.setCurrentStep(steps)
         segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                                ['tenencia_n','V16_n','area_bloc'],
+                                ['pobinse_n','pbt_n','area_bloc'],
                                 ['id_grid','area_grid'],
                                 context, feedback)        
 
@@ -386,16 +278,16 @@ class ID12HomeTenureSecurity(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * tenencia_n' 
-        result = calculateField(segmentsArea['OUTPUT'], 'tenencia_n_seg',
+        formulaDummy = '(area_seg/area_bloc) * pobinse_n' 
+        result = calculateField(segmentsArea['OUTPUT'], 'pobinse_n_seg',
                                                formulaDummy,
                                                context,
                                                feedback)     
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * V16_n' 
-        result = calculateField(result['OUTPUT'], 'V16_n_seg',
+        formulaDummy = '(area_seg/area_bloc) * pbt_n' 
+        result = calculateField(result['OUTPUT'], 'pbt_n_seg',
                                formulaDummy,
                                context,
                                feedback)   
@@ -413,7 +305,7 @@ class ID12HomeTenureSecurity(QgsProcessingAlgorithm):
         feedback.setCurrentStep(steps)
         result = joinByLocation(gridNeto['OUTPUT'],
                              result['OUTPUT'],
-                             ['tenencia_n_seg','V16_n_seg'],                                   
+                             ['pobinse_n_seg','pbt_n_seg'],                                   
                               [CONTIENE], [SUM],
                               UNDISCARD_NONMATCHING,
                               context,
@@ -422,8 +314,8 @@ class ID12HomeTenureSecurity(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(tenencia_n_seg_sum/V16_n_seg_sum) * 100' 
-        result = calculateField(result['OUTPUT'], NAMES_INDEX['ID12'][0],
+        formulaDummy = '(pobinse_n_seg_sum/pbt_n_seg_sum) * 100' 
+        result = calculateField(result['OUTPUT'], NAMES_INDEX['ID15'][0],
                                formulaDummy,
                                context,
                                feedback, params['OUTPUT'])    
@@ -434,7 +326,7 @@ class ID12HomeTenureSecurity(QgsProcessingAlgorithm):
         # feedback.setCurrentStep(steps)
         # gridNeto = joinByLocation(gridNeto['OUTPUT'],
         #                      result['OUTPUT'],
-        #                      ['tenencia_viv_n'],                                   
+        #                      ['pobinse_viv_n'],                                   
         #                       [INTERSECTA], [MEDIA],
         #                       UNDISCARD_NONMATCHING,
         #                       context,
@@ -444,7 +336,7 @@ class ID12HomeTenureSecurity(QgsProcessingAlgorithm):
         # fieldsMapping = [
         #     {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
         #     {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
-        #     {'expression': '"tenencia_viv_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID12'][0], 'precision': 2, 'type': 6}
+        #     {'expression': '"tenencia_viv_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID15'][0], 'precision': 2, 'type': 6}
         # ]      
         
         # steps = steps+1
@@ -456,7 +348,7 @@ class ID12HomeTenureSecurity(QgsProcessingAlgorithm):
         return result
           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'landtenure.png'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'inseguridad.png'))
 
     def name(self):
         """
@@ -466,7 +358,7 @@ class ID12HomeTenureSecurity(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'D12 Seguridad de tenencia de la vivienda'
+        return 'D15 Percepción de inseguridad'
 
     def displayName(self):
         """
@@ -496,13 +388,13 @@ class ID12HomeTenureSecurity(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return ID12HomeTenureSecurity()
+        return ID15PerceptionInsecurity()
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Mide el porcentaje de hogares con acceso a una vivienda segura; considerando una tenecia segura aquella vivienda que es propia o rentada con un contrato de arrendamiento.</span>"\
+                "<span>Porcentaje de ciudadanos que se sienten inseguros en su barrio.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
-                "<span></span>"\
+                "<span>Encuesta de Victimización y Percepción de Inseguridad, 2011. I52, categorías 1 y 2 (muy inseguro e inseguro)</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Hogares con vivienda propia o arrendada / Hogares totales)*100</span><br/>"         
+                "<span>(Población que se siente insegura / Población total)*100</span><br/>"         
 

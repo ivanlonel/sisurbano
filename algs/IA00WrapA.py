@@ -357,7 +357,6 @@ class IA00WrapA(QgsProcessingAlgorithm):
             )
         )  
 
-
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.STUDY_AREA_GRID,

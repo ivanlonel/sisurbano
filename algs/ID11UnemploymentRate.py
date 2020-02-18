@@ -50,18 +50,14 @@ import numpy as np
 import pandas as pd
 import tempfile
 import subprocess
-import datetime
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class ID09UseOfTime(QgsProcessingAlgorithm):
+class ID11UnemploymentRate(QgsProcessingAlgorithm):
     """
-    Informa sobre la asignación semanal de tiempo de la población de 12 años
-    y más para actividades personales (actividades no remuneradas para otros
-    hogares, para la comunidad, trabajo voluntario; esparcimiento y cultura; familia y sociabilidad)
-    de lunes a viernes.
-    Formula: Promedio del tiempo semanal en horas que los miembros del
-    hogar de 12 años o más utilizaron para actividades personales.
+    Mide el porcentaje de la población económicamente activa (PEA) en condición de desempleo. 
+    La PEA se define como aquellas personas de 15 y más años.
+    Formula:(PEA desempleada / PEA total)*100
     """
 
     BLOCKS = 'BLOCKS'
@@ -75,7 +71,7 @@ class ID09UseOfTime(QgsProcessingAlgorithm):
     def initAlgorithm(self, config):
         currentPath = getCurrentPath(self)
         self.CURRENT_PATH = currentPath        
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID09'][1]))
+        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID11'][1]))
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -99,7 +95,7 @@ class ID09UseOfTime(QgsProcessingAlgorithm):
                 self.ENCUESTA,
                 self.tr('Censo vivienda'),
                 extension='csv',
-                defaultValue='/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Base EUT 2012.csv'
+                defaultValue='/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/ENEMDU_acumulada_BDDpersona2018.csv'
             )
         )           
 
@@ -157,70 +153,45 @@ class ID09UseOfTime(QgsProcessingAlgorithm):
         file = path
 
         #p03 edad
-        cols = ['id_hogar', 'P03', 
-                'UT98A', 'UT98B', 'UT99A', 'UT99B', 'UT100A', 'UT100B', 
-                'UT101A', 'UT101B', 'UT102A', 'UT102B', 'UT103A', 'UT103B', 'UT104A',
-                'UT104B', 'UT105A', 'UT105B', 'UT106A', 'UT106B', 'UT107A', 'UT107B', 
-                'UT108A','UT108B', 'UT109A','UT109B', 'UT110A', 'UT110B', 'UT111A', 
-                'UT111B', 'UT112A', 'UT112B', 'UT113A','UT113B', 'UT114A','UT114B',
-                'UT116A', 'UT116B', 'UT117A', 'UT117B', 'UT118A', 'UT118B', 'UT119A', 
-                'UT119B', 'UT120A','UT120B', 'UT121A', 'UT121B', 'UT122A', 'UT122B']
-
-        df = pd.read_csv(file, usecols=cols)
-
-        df['id_hogar'] = df['id_hogar'].astype(str)
-        df['P03'] = df['P03'].astype(str)
-
-        df.loc[df['id_hogar'].str.len() == 14, 'id_hogar'] = "0" + df['id_hogar']
-        df['codsec'] = df['id_hogar'].str[0:12]
-        df['codzon'] = df['id_hogar'].str[0:9]
-
-        df = df[(df['P03'] >= '12')]
-
-        fieldTimes = cols[2:]
-        fildTimesRename = []
-
-        # print(fieldTimes[:])
-
-        for fieldTime in fieldTimes:
-            df.loc[(df[fieldTime] == ' '), fieldTime] = "00"
-            df[fieldTime] = df[fieldTime].astype(int)
-            timerSplit = fieldTime.split('A')
-            newName = timerSplit[0]
-            isA = len(timerSplit) == 2
-            indexElement = fieldTimes.index(fieldTime)
-            if isA: 
-                nameB = newName + "B"
-                df.loc[(df[nameB] == ' '), nameB] = "00"
-                df[newName] = df[fieldTime].astype(str) + ":" + df[nameB].astype(str) + ":00"
-                fildTimesRename.append(newName) 
+        cols = ['id_vivienda','id_hogar', 'p03', 'empleo', 'desempleo']
+        df = pd.read_csv(file, usecols=cols, sep=";")
 
 
-        df['sumTime'] = datetime.timedelta() 
+        df['id_vivienda'] = df['id_vivienda'].astype(str)
 
-        for field in fildTimesRename:
-            df[field] = pd.to_timedelta(df[field])
-            df['sumTime'] = df['sumTime'] + df[field]
+        df.loc[df['id_vivienda'].str.len() == 18, 'id_vivienda'] = "0" + df['id_vivienda']
+        df['codsec'] = df['id_vivienda'].str[0:12]
+        df['codzon'] = df['id_vivienda'].str[0:9]
+        df['pbt'] = df['codsec'].astype(str)
+
+        # CAMBIAR A TODA LA POBLACION MAYOR DE 15
+        # df = df[(df['p03'] >= 15) & ((df['empleo'].astype(str) != ' ') | (df['desempleo'].astype(str) != ' '))]
+        df = df[(df['p03'] >= 15)]
+
+                
+        df.loc[df['empleo'] == ' ', 'empleo'] = 0
+        df.loc[df['desempleo'] == ' ', 'desempleo'] = 0
 
 
-        df['hours'] = df['sumTime'].dt.total_seconds() / 3600
-        df['hours'] = df['hours'].astype(float)
+        df['desempleo'] = df['desempleo'].astype(float)
 
         aggOptions = {
                       'codzon' : 'first',
-                      'hours' : 'mean',
+                      'pbt' : 'count',
+                      'desempleo' : 'sum',
                      } 
 
-        resSectores = df.groupby('codzon').agg(aggOptions)
-    
+        resManzanas = df.groupby('codzon').agg(aggOptions)
 
-        df = resSectores   
+        resManzanas['des'] = None
+        resManzanas['des'] = (resManzanas['desempleo'] / resManzanas['pbt'] * 100)
+        df = resManzanas   
                   
         steps = steps+1
         feedback.setCurrentStep(steps)
 
-        outputCsv = self.CURRENT_PATH+'/usoTiempo.csv'
-        feedback.pushConsoleInfo(str(('usoTiempo en ' + outputCsv)))    
+        outputCsv = self.CURRENT_PATH+'/des.csv'
+        feedback.pushConsoleInfo(str(('des en ' + outputCsv)))    
         df.to_csv(outputCsv, index=False)
 
         steps = steps+1
@@ -257,43 +228,121 @@ class ID09UseOfTime(QgsProcessingAlgorithm):
 
 
 
+  # ----------------------CONVERTIR A NUMERICOS --------------------     
+  
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = 'hours * 1.0'
+        formulaDummy = 'desempleo * 1.0'
         result = calculateField(result['OUTPUT'], 
-                                 'hours_n',
+                                 'desempleo_n',
                                  formulaDummy,
                                  context,
                                  feedback)  
 
- 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        gridNeto = joinByLocation(gridNeto['OUTPUT'],
+        formulaDummy = 'pbt * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'pbt_n',
+                                 formulaDummy,
+                                 context,
+                                 feedback)    
+
+       # ----------------------PROPORCIONES AREA--------------------------
+       
+        steps = steps+1
+        feedback.setCurrentStep(steps)        
+        blocks = calculateArea(result['OUTPUT'], 'area_bloc', context,
+                               feedback)     
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                                ['desempleo_n','pbt_n','area_bloc'],
+                                ['id_grid','area_grid'],
+                                context, feedback)        
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                     'area_seg',
+                                     context, feedback)
+
+        # -------------------------PROPORCIONES VALORES-------------------------
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * desempleo_n' 
+        result = calculateField(segmentsArea['OUTPUT'], 'desempleo_n_seg',
+                                               formulaDummy,
+                                               context,
+                                               feedback)     
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = '(area_seg/area_bloc) * pbt_n' 
+        result = calculateField(result['OUTPUT'], 'pbt_n_seg',
+                               formulaDummy,
+                               context,
+                               feedback)   
+
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        result = makeSureInside(result['OUTPUT'],
+                                context,
+                                feedback)                                    
+
+        #----------------------------------------------------------------------   
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        result = joinByLocation(gridNeto['OUTPUT'],
                              result['OUTPUT'],
-                             ['hours_n'],                                   
-                              [INTERSECTA], [MEDIA],
+                             ['desempleo_n_seg','pbt_n_seg'],                                   
+                              [CONTIENE], [SUM],
                               UNDISCARD_NONMATCHING,
                               context,
-                              feedback)         
- 
+                              feedback)  
 
-        fieldsMapping = [
-            {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
-            {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
-            {'expression': '"hours_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID09'][0], 'precision': 2, 'type': 6}
-        ]      
-        
+
         steps = steps+1
         feedback.setCurrentStep(steps)
-        result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 
-                                context,
-                                feedback, params['OUTPUT'])                                                                
+        formulaDummy = '(desempleo_n_seg_sum/pbt_n_seg_sum) * 100' 
+        result = calculateField(result['OUTPUT'], NAMES_INDEX['ID11'][0],
+                               formulaDummy,
+                               context,
+                               feedback, params['OUTPUT'])    
+
+
+ 
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # gridNeto = joinByLocation(gridNeto['OUTPUT'],
+        #                      result['OUTPUT'],
+        #                      ['desempleo_viv_n'],                                   
+        #                       [INTERSECTA], [MEDIA],
+        #                       UNDISCARD_NONMATCHING,
+        #                       context,
+        #                       feedback)         
+ 
+
+        # fieldsMapping = [
+        #     {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
+        #     {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
+        #     {'expression': '"tenencia_viv_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID11'][0], 'precision': 2, 'type': 6}
+        # ]      
+        
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 
+        #                         context,
+        #                         feedback, params['OUTPUT'])                                                                
 
         return result
           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'timer3.png'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'unemployment.png'))
 
     def name(self):
         """
@@ -303,7 +352,7 @@ class ID09UseOfTime(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'D09 Uso del tiempo'
+        return 'D11 Tasa de desempleo'
 
     def displayName(self):
         """
@@ -333,13 +382,13 @@ class ID09UseOfTime(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return ID09UseOfTime()
+        return ID11UnemploymentRate()
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Informa sobre la asignación semanal de tiempo de la población de 12 años y más para actividades personales (actividades no remuneradas para otros hogares, para la comunidad, trabajo voluntario; esparcimiento y cultura; familia y sociabilidad) de lunes a viernes.</span>"\
+                "<span>Mide el porcentaje de la población económicamente activa (PEA) en condición de desempleo. La PEA se define como aquellas personas de 15 y más años.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
-                "<span></span>"\
+                "<span>Encuesta de Empleo, Desempleo y Subempleo, tabla acumulada de enero a diciembre de 2018: categoría DESEMPLEO.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>Promedio del tiempo semanal en horas que los miembros del hogar de 12 años o más utilizaron para actividades personales.</span><br/>"         
+                "<span>(PEA desempleada / PEA total)*100</span><br/>"         
 

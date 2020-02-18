@@ -85,9 +85,9 @@ class IB00WrapB(QgsProcessingAlgorithm):
     OUTPUT_B02 = 'OUTPUT_B02'
     OUTPUT_B03 = 'OUTPUT_B03'
     OUTPUT_B05 = 'OUTPUT_B05'
-    OUTPUT_B06 = 'OUTPUT_B06'
+    OUTPUT_B04 = 'OUTPUT_B04'
     OUTPUT_B07 = 'OUTPUT_B07'
-    OUTPUT_B08 = 'OUTPUT_B08'
+    OUTPUT_B06 = 'OUTPUT_B06'
 
 
     def initAlgorithm(self, config):
@@ -96,10 +96,10 @@ class IB00WrapB(QgsProcessingAlgorithm):
         FULL_PATH_B01 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IB01'][1]))
         FULL_PATH_B02 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IB02'][1]))
         FULL_PATH_B03 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IB03'][1]))
+        FULL_PATH_B04 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IB04'][1]))        
         FULL_PATH_B05 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IB05'][1]))
-        FULL_PATH_B06 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IB06'][1]))
         FULL_PATH_B07 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IB07'][1]))
-        FULL_PATH_B08 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IB08'][1]))
+        FULL_PATH_B06 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IB06'][1]))
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -206,7 +206,7 @@ class IB00WrapB(QgsProcessingAlgorithm):
             )
         )
 
-        #-----------------B06----------------------    
+        #-----------------B04----------------------    
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.EQUIPMENT_GREEN,
@@ -222,7 +222,7 @@ class IB00WrapB(QgsProcessingAlgorithm):
                 [QgsProcessing.TypeVectorAnyGeometry]
             )
         )
-        #-----------------B08----------------------    
+        #-----------------B06----------------------    
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.AGRICULTRURAL,
@@ -267,6 +267,16 @@ class IB00WrapB(QgsProcessingAlgorithm):
             )
         )  
 
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSink(
+                self.OUTPUT_B04,
+                self.tr('B04 Proximidad al espacio verde público más cercano'),
+                QgsProcessing.TypeVectorAnyGeometry,
+                str(FULL_PATH_B04)
+            )
+        )           
+
         self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT_B05,
@@ -279,11 +289,11 @@ class IB00WrapB(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT_B06,
-                self.tr('B06 Proximidad al espacio verde público más cercano'),
+                self.tr('B06 Superficie agrícola y huertos'),
                 QgsProcessing.TypeVectorAnyGeometry,
                 str(FULL_PATH_B06)
             )
-        )   
+        )  
 
         self.addParameter(
             QgsProcessingParameterFeatureSink(
@@ -293,15 +303,7 @@ class IB00WrapB(QgsProcessingAlgorithm):
                 str(FULL_PATH_B07)
             )
         )
-
-        self.addParameter(
-            QgsProcessingParameterFeatureSink(
-                self.OUTPUT_B08,
-                self.tr('B08 Superficie agrícola y huertos'),
-                QgsProcessing.TypeVectorAnyGeometry,
-                str(FULL_PATH_B08)
-            )
-        )                                    
+                                  
 
              
 
@@ -380,7 +382,7 @@ class IB00WrapB(QgsProcessingAlgorithm):
         outputs['B05SuperficieVerdePorHabitante'] = processing.run('SISURBANO:B05 Superficie verde por habitante', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
         results['OUTPUT_B05'] = outputs['B05SuperficieVerdePorHabitante']['OUTPUT']                          
 
-        # B06 Proximidad al espacio verde público más cercano
+        # B04 Proximidad al espacio verde público más cercano
         steps = steps+1
         feedback.setCurrentStep(steps)  
         if feedback.isCanceled():
@@ -390,10 +392,10 @@ class IB00WrapB(QgsProcessingAlgorithm):
             'EQUIPMENT_GREEN': params['EQUIPMENT_GREEN'],
             'FIELD_POPULATION': params['FIELD_POPULATION'],
             'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_B06']
+            'OUTPUT': params['OUTPUT_B04']
         }
-        outputs['B06ProximidadAlEspacioVerdePblicoMsCercano'] = processing.run('SISURBANO:B06 Proximidad al espacio verde público más cercano', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_B06'] = outputs['B06ProximidadAlEspacioVerdePblicoMsCercano']['OUTPUT']
+        outputs['B04ProximidadAlEspacioVerdePblicoMsCercano'] = processing.run('SISURBANO:B04 Proximidad al espacio verde público más cercano', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        results['OUTPUT_B04'] = outputs['B04ProximidadAlEspacioVerdePblicoMsCercano']['OUTPUT']
 
         # B07 Permeabilidad del suelo
         steps = steps+1
@@ -418,10 +420,10 @@ class IB00WrapB(QgsProcessingAlgorithm):
             'AGRICULTRURAL': params['AGRICULTRURAL'],
             'BLOCKS': params['BLOCKS'],
             'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_B08']
+            'OUTPUT': params['OUTPUT_B06']
         }
-        outputs['B08SuperficieDeReaAgrcolahuertos'] = processing.run('SISURBANO:B08 Superficie agrícola y huertos', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_B08'] = outputs['B08SuperficieDeReaAgrcolahuertos']['OUTPUT']            
+        outputs['B06SuperficieDeReaAgrcolahuertos'] = processing.run('SISURBANO:B06 Superficie agrícola y huertos', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        results['OUTPUT_B06'] = outputs['B06SuperficieDeReaAgrcolahuertos']['OUTPUT']            
 
         return results
 

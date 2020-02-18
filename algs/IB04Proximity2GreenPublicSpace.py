@@ -49,7 +49,7 @@ from .ZHelpers import *
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
+class IB04Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
     """
     Mide la proximidad, a pie, de la población al espacio verde más cercano,
     sin distinción de la actividad que acoge o de su función ecológica.
@@ -71,7 +71,7 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
     def initAlgorithm(self, config):
 
         currentPath = getCurrentPath(self)
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IB06'][1]))           
+        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IB04'][1]))           
           
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -275,7 +275,7 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
         steps = steps+1
         feedback.setCurrentStep(steps)
         formulaProximity = 'coalesce((coalesce(has_sum,0) /  coalesce(pop_seg_sum,""))*100, "")'
-        proximity2OpenSpace = calculateField(gridNetoAndSegmentsServed['OUTPUT'], NAMES_INDEX['IB06'][0],
+        proximity2OpenSpace = calculateField(gridNetoAndSegmentsServed['OUTPUT'], NAMES_INDEX['IB04'][0],
                                           formulaProximity,
                                           context,
                                           feedback,  params['OUTPUT'])        
@@ -353,7 +353,7 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
         steps = steps+1
         feedback.setCurrentStep(steps)
         formulaProximity = 'coalesce((coalesce(pop_seg_sum_2,0) /  coalesce(pop_seg_sum,""))*100,"")'
-        proximity2OpenSpace = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['IB06'][0],
+        proximity2OpenSpace = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['IB04'][0],
                                           formulaProximity,
                                           context,
                                           feedback,  params['OUTPUT'])
@@ -384,7 +384,7 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'B06 Proximidad al espacio verde público más cercano'
+        return 'B04 Proximidad al espacio verde público más cercano'
 
     def displayName(self):
         """
@@ -414,7 +414,7 @@ class IB06Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return IB06Proximity2GreenPublicSpace()
+        return IB04Proximity2GreenPublicSpace()
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\

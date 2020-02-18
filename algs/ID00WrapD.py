@@ -72,15 +72,15 @@ class ID00WrapD(QgsProcessingAlgorithm):
     SPACE2IMPROVEMENT = 'SPACE2IMPROVEMENT'
     #-----------------D10----------------------    
     EQUIPMENT_MARKET = 'EQUIPMENT_MARKET'
-    #-----------------D11----------------------    
+    #-----------------D09----------------------    
     THEFTS = 'THEFTS'
     #-----------------OUTPUTS----------------------
     OUTPUT_D01 = 'OUTPUT_D01'
     OUTPUT_D02 = 'OUTPUT_D02'
     OUTPUT_D03 = 'OUTPUT_D03'
     OUTPUT_D04 = 'OUTPUT_D04'
-    OUTPUT_D10 = 'OUTPUT_D10'
-    OUTPUT_D11 = 'OUTPUT_D11'
+    OUTPUT_D08 = 'OUTPUT_D08'
+    OUTPUT_D09 = 'OUTPUT_D09'
 
 
     def initAlgorithm(self, config):
@@ -90,8 +90,8 @@ class ID00WrapD(QgsProcessingAlgorithm):
         FULL_PATH_D02 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID02'][1]))
         FULL_PATH_D03 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID03'][1]))
         FULL_PATH_D04 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID04'][1]))
-        FULL_PATH_D10 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID10'][1]))
-        FULL_PATH_D11 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID11'][1]))
+        FULL_PATH_D10 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID08'][1]))
+        FULL_PATH_D09 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID09'][1]))
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -175,7 +175,7 @@ class ID00WrapD(QgsProcessingAlgorithm):
             )
         )
 
-        #-----------------D11----------------------       
+        #-----------------D09----------------------       
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.THEFTS,
@@ -234,7 +234,7 @@ class ID00WrapD(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterFeatureSink(
-                self.OUTPUT_D10,
+                self.OUTPUT_D08,
                 self.tr('D10 Cercanía y asequibilidad a alimentos'),
                 QgsProcessing.TypeVectorAnyGeometry,
                 str(FULL_PATH_D10)
@@ -243,10 +243,10 @@ class ID00WrapD(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterFeatureSink(
-                self.OUTPUT_D11,
-                self.tr('D11 Número de robos anuales'),
+                self.OUTPUT_D09,
+                self.tr('D09 Número de robos anuales'),
                 QgsProcessing.TypeVectorAnyGeometry,
-                str(FULL_PATH_D11)
+                str(FULL_PATH_D09)
             )
         )             
 
@@ -321,7 +321,7 @@ class ID00WrapD(QgsProcessingAlgorithm):
         results['OUTPUT_D04'] = outputs['D04EspaciosPblicosAbiertosQueNecesitanMejoras']['OUTPUT']   
 
 
-        # D10 Cercanía y asequibilidad a alimentos
+        # D08 Cercanía y asequibilidad a alimentos
         steps = steps+1
         feedback.setCurrentStep(steps)  
         if feedback.isCanceled():
@@ -331,12 +331,12 @@ class ID00WrapD(QgsProcessingAlgorithm):
             'EQUIPMENT_MARKET': params['EQUIPMENT_MARKET'],
             'FIELD_HOUSING': params['FIELD_HOUSING'],
             'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_D10']
+            'OUTPUT': params['OUTPUT_D08']
         }
         outputs['D10CercanaYAsequibilidadAAlimentos'] = processing.run('SISURBANO:D10 Cercanía y asequibilidad a alimentos', alg_params, context=context, feedback=feedback, is_child_algorithm=True)    
-        results['OUTPUT_D10'] = outputs['D10CercanaYAsequibilidadAAlimentos']['OUTPUT']     
+        results['OUTPUT_D08'] = outputs['D10CercanaYAsequibilidadAAlimentos']['OUTPUT']     
 
-        # D11 Número de robos anuales
+        # D09 Número de robos anuales
         steps = steps+1
         feedback.setCurrentStep(steps)  
         if feedback.isCanceled():
@@ -346,10 +346,10 @@ class ID00WrapD(QgsProcessingAlgorithm):
             'FIELD_POPULATION': params['FIELD_POPULATION'],
             'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
             'THEFTS': params['THEFTS'],
-            'OUTPUT': params['OUTPUT_D11']
+            'OUTPUT': params['OUTPUT_D09']
         }
-        outputs['D11RobosPorNmeroDeHabitantes'] = processing.run('SISURBANO:D11 Número de robos anuales', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_D11'] = outputs['D11RobosPorNmeroDeHabitantes']['OUTPUT']                       
+        outputs['D09RobosPorNmeroDeHabitantes'] = processing.run('SISURBANO:D09 Número de robos anuales', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        results['OUTPUT_D09'] = outputs['D09RobosPorNmeroDeHabitantes']['OUTPUT']                       
 
 
         return results

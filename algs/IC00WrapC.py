@@ -69,7 +69,7 @@ class IC00WrapC(QgsProcessingAlgorithm):
     BIKESTOP = 'BIKESTOP'    
     BIKEWAY = 'BIKEWAY'    
     CROSSWALK = 'CROSSWALK'
-    #-----------------C08----------------------
+    #-----------------C05----------------------
     PARKING = 'PARKING'
     AREA_PER_PARKING = 'AREA_PER_PARKING'
     #-----------------C13----------------------
@@ -78,7 +78,7 @@ class IC00WrapC(QgsProcessingAlgorithm):
     OUTPUT_C01 = 'OUTPUT_C01'
     OUTPUT_C03 = 'OUTPUT_C03'
     OUTPUT_C04 = 'OUTPUT_C04'
-    OUTPUT_C08 = 'OUTPUT_C08'
+    OUTPUT_C05 = 'OUTPUT_C05'
     OUTPUT_C13 = 'OUTPUT_C13'
 
 
@@ -88,7 +88,7 @@ class IC00WrapC(QgsProcessingAlgorithm):
         FULL_PATH_C01 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IC01'][1]))
         FULL_PATH_C03 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IC03'][1]))
         FULL_PATH_C04 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IC04'][1]))
-        FULL_PATH_C08 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IC08'][1]))
+        FULL_PATH_C05 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IC05'][1]))
         FULL_PATH_C13 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IC13'][1]))
 
         self.addParameter(
@@ -179,7 +179,7 @@ class IC00WrapC(QgsProcessingAlgorithm):
                 [QgsProcessing.TypeVectorLine]
             )
         )                                
-    #-----------------C08----------------------
+    #-----------------C05----------------------
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.PARKING,
@@ -247,10 +247,10 @@ class IC00WrapC(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterFeatureSink(
-                self.OUTPUT_C08,
-                self.tr('C08 Espacio público ocupado por vehículos parqueados'),
+                self.OUTPUT_C05,
+                self.tr('C05 Espacio público ocupado por vehículos parqueados'),
                 QgsProcessing.TypeVectorAnyGeometry,
-                str(FULL_PATH_C08)
+                str(FULL_PATH_C05)
             )
         )  
 
@@ -321,7 +321,7 @@ class IC00WrapC(QgsProcessingAlgorithm):
         results['OUTPUT_C04'] = outputs['C04ProximidadARedesDeTransporteAlternativo']['OUTPUT']                    
                           
 
-        # C08 Espacio público ocupado por vehículos parqueados
+        # C05 Espacio público ocupado por vehículos parqueados
         steps = steps+1
         feedback.setCurrentStep(steps)  
         if feedback.isCanceled():
@@ -331,10 +331,10 @@ class IC00WrapC(QgsProcessingAlgorithm):
             'PARKING': params['PARKING'],
             'ROADS': params['ROADS'],
             'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_C08']
+            'OUTPUT': params['OUTPUT_C05']
         }
-        outputs['C08EspacioPblicoOcupadoPorVehculosParqueados'] = processing.run('SISURBANO:C08 Espacio público ocupado por vehículos parqueados', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_C08'] = outputs['C08EspacioPblicoOcupadoPorVehculosParqueados']['OUTPUT']
+        outputs['C05EspacioPblicoOcupadoPorVehculosParqueados'] = processing.run('SISURBANO:C05 Espacio público ocupado por vehículos parqueados', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        results['OUTPUT_C05'] = outputs['C05EspacioPblicoOcupadoPorVehculosParqueados']['OUTPUT']
 
         # C13 Cobertura del servicio de alcantarillado
         steps = steps+1

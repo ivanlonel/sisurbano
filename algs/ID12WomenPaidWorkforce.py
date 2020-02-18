@@ -23,7 +23,7 @@
 """
 
 __author__ = 'Johnatan Astudillo'
-__date__ = '2020-01-20'
+__date__ = '2020-01-15'
 __copyright__ = '(C) 2019 by LlactaLAB'
 
 # This will get replaced with a git SHA1 when you do a git archive
@@ -53,11 +53,11 @@ import subprocess
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class ID19CommunityStability(QgsProcessingAlgorithm):
+class ID12WomenPaidWorkforce(QgsProcessingAlgorithm):
     """
-    Porcentaje de la población que reside en el mismo lugar
-    (parroquia) desde hace más de 5 años.
-    Formula: (Población que vive en el mismo lugar / Población total)*100
+    Mide la proporción de trabajadoras expresado como porcentaje
+    del empleo total (excluido el sector agrícola). 
+    Formula: (Población femenina empleada en el sector no-agrícola / Población total empleada en el sector no-agrícola)*100
     """
 
     BLOCKS = 'BLOCKS'
@@ -73,7 +73,7 @@ class ID19CommunityStability(QgsProcessingAlgorithm):
     def initAlgorithm(self, config):
         currentPath = getCurrentPath(self)
         self.CURRENT_PATH = currentPath        
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID19'][1]))
+        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID12'][1]))
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -160,7 +160,7 @@ class ID19CommunityStability(QgsProcessingAlgorithm):
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 9
+        totalStpes = 17
         fieldDpaMan = params['DPA_MAN']
         # fieldHab = params['NUMBER_HABITANTS']
 
@@ -179,7 +179,7 @@ class ID19CommunityStability(QgsProcessingAlgorithm):
         pathCsvPoblacion = params['CENSO_POBLACION']
 
         file = pathCsvPoblacion
-        cols = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 'I10', 'P01', 'P23', 'GEDAD', 'P13']
+        cols = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 'I10', 'P01', 'P29']
         df = pd.read_csv(file, usecols=cols)
 
         # fix codes 
@@ -204,42 +204,40 @@ class ID19CommunityStability(QgsProcessingAlgorithm):
         df.loc[df['I09'].str.len() == 2, 'I09'] = "0" + df['I09']
         df.loc[df['I10'].str.len() < 2, 'I10'] = "0" + df['I10']
 
-        # --------------P13 LUGAR DONDE VIVIA HACE 4 ANIOS
-        df.loc[df['P13'].str.len() == 5, 'P13'] = "0" + df['P13']
-        df['codpar'] = df['I01'].astype(str) + df['I02'].astype(str) + df['I03'].astype(str)
+
+        df.loc[df['P29'].str.len() == 3 , 'P29'] = "0" + df['P29']
+        # P01 con valor 2: mujeres, P29 rama económica (eliminar sector agricultura y ganadería).
+        df['sector'] = df['P29'].str[0:1]
 
 
+        df['mutra'] = 0.0
+        df.loc[(df['P01'] == 2) & ((df['sector'] > "0")), 'mutra'] = 1.0
 
-        df['mismolugar'] = 0.0
-        df.loc[(df['codpar'] == df['P13']), 'mismolugar'] = 1.0
+        df['poblacion'] = 0.00
+        df.loc[((df['sector'] != " ") & (df['sector'] > "0")), 'poblacion'] = 1.0
 
-        df['poblacion'] = 0.0
-        df.loc[(df['P13'] != " "), 'poblacion'] = 1.0
-
-
-        # df[0:50]
 
         df['codman'] = df['I01'].astype(str) + df['I02'].astype(str) + df['I03'].astype(str) \
                   + df['I04'].astype(str) + df['I05'].astype(str) + df['I06'].astype(str)
 
 
-        df['mismolugar'] = df['mismolugar'].astype(float)
+        df['mutra'] = df['mutra'].astype(float)
         df['poblacion'] = df['poblacion'].astype(float)
 
 
         aggOptions = {
                       'codman' : 'first',
-                      'poblacion' : 'sum',
-                      'mismolugar' : 'sum',
+                      'mutra' : 'sum',
+                      'poblacion': 'sum'
                      } 
 
 
         resManzanas = df.groupby('codman').agg(aggOptions)
 
-        resManzanas['pobmismolugar'] = None
-        resManzanas['pobmismolugar'] = (resManzanas['mismolugar'] / resManzanas['poblacion']) * 100
-        resManzanas['pb'] = resManzanas['poblacion']
+        resManzanas['mftr'] = None
+        resManzanas['mftr'] = (resManzanas['mutra'] / resManzanas['poblacion']) * 100   
 
+        resManzanas['pobt'] = resManzanas['poblacion']   
 
         df = resManzanas
 
@@ -247,8 +245,8 @@ class ID19CommunityStability(QgsProcessingAlgorithm):
         steps = steps+1
         feedback.setCurrentStep(steps)
 
-        outputCsv = self.CURRENT_PATH+'/pobmismolugar.csv'
-        feedback.pushConsoleInfo(str(('pobmismolugar en ' + outputCsv)))    
+        outputCsv = self.CURRENT_PATH+'/mftr.csv'
+        feedback.pushConsoleInfo(str(('mftr en ' + outputCsv)))    
         df.to_csv(outputCsv, index=False)
 
         steps = steps+1
@@ -282,30 +280,38 @@ class ID19CommunityStability(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        expressionNotNull = "pobmismolugar IS NOT '' AND pobmismolugar is NOT NULL"    
+        expressionNotNull = "mftr IS NOT '' AND mftr is NOT NULL"    
         notNull =   filterByExpression(result['OUTPUT'], expressionNotNull, context, feedback) 
 
 
-
-        # ----------------------CONVERTIR A NUMERICOS --------------------
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = 'pb * 1.0'
+        formulaDummy = 'mftr * 1.0'
         result = calculateField(notNull['OUTPUT'], 
-                                 'pobt',
-                                 formulaDummy,
-                                 context,
-                                 feedback)     
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = 'mismolugar * 1.0'
-        result = calculateField(result['OUTPUT'], 
-                                 'pobml',
+                                 'mftr_n',
                                  formulaDummy,
                                  context,
                                  feedback)  
 
+  # ----------------------CONVERTIR A NUMERICOS --------------------     
+  
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'mutra * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'mutra_n',
+                                 formulaDummy,
+                                 context,
+                                 feedback)  
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'pobt * 1.0'
+        result = calculateField(result['OUTPUT'], 
+                                 'pobt_n',
+                                 formulaDummy,
+                                 context,
+                                 feedback)    
 
        # ----------------------PROPORCIONES AREA--------------------------
        
@@ -317,7 +323,7 @@ class ID19CommunityStability(QgsProcessingAlgorithm):
         steps = steps+1
         feedback.setCurrentStep(steps)
         segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                                ['pb','pobml','area_bloc'],
+                                ['mutra_n','pobt_n','area_bloc'],
                                 ['id_grid','area_grid'],
                                 context, feedback)        
 
@@ -331,16 +337,16 @@ class ID19CommunityStability(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * pb' 
-        result = calculateField(segmentsArea['OUTPUT'], 'poblacion_seg',
+        formulaDummy = '(area_seg/area_bloc) * mutra_n' 
+        result = calculateField(segmentsArea['OUTPUT'], 'mutra_n_seg',
                                                formulaDummy,
                                                context,
                                                feedback)     
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * pobml' 
-        result = calculateField(result['OUTPUT'], 'mismolugar_seg',
+        formulaDummy = '(area_seg/area_bloc) * pobt_n' 
+        result = calculateField(result['OUTPUT'], 'pobt_n_seg',
                                formulaDummy,
                                context,
                                feedback)   
@@ -352,13 +358,13 @@ class ID19CommunityStability(QgsProcessingAlgorithm):
                                 context,
                                 feedback)                                    
 
-        #----------------------------------------------------------------------                                                                              
-    
+        #----------------------------------------------------------------------   
+
         steps = steps+1
         feedback.setCurrentStep(steps)
         result = joinByLocation(gridNeto['OUTPUT'],
                              result['OUTPUT'],
-                             ['poblacion_seg','mismolugar_seg'],                                   
+                             ['mutra_n_seg','pobt_n_seg'],                                   
                               [CONTIENE], [SUM],
                               UNDISCARD_NONMATCHING,
                               context,
@@ -367,29 +373,39 @@ class ID19CommunityStability(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(mismolugar_seg_sum/poblacion_seg_sum) * 100' 
-        result = calculateField(result['OUTPUT'], NAMES_INDEX['ID19'][0],
+        formulaDummy = '(mutra_n_seg_sum/pobt_n_seg_sum) * 100' 
+        result = calculateField(result['OUTPUT'], NAMES_INDEX['ID12'][0],
                                formulaDummy,
                                context,
-                               feedback, params['OUTPUT'])                                        
+                               feedback, params['OUTPUT'])                                    
+    
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # gridNeto = joinByLocation(gridNeto['OUTPUT'],
+        #                      result['OUTPUT'],
+        #                      ['mftr_n'],                                   
+        #                       [INTERSECTA], [MEDIA],
+        #                       UNDISCARD_NONMATCHING,
+        #                       context,
+        #                       feedback)         
  
 
         # fieldsMapping = [
         #     {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
         #     {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
-        #     {'expression': '"pobmismolugar_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID19'][0], 'precision': 2, 'type': 6}
+        #     {'expression': '"mftr_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID12'][0], 'precision': 2, 'type': 6}
         # ]      
         
         # steps = steps+1
         # feedback.setCurrentStep(steps)
-        # result = refactorFields(fieldsMapping, result['OUTPUT'], 
+        # result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 
         #                         context,
         #                         feedback, params['OUTPUT'])                                                                
 
         return result
           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'community2.png'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'woman.png'))
 
     def name(self):
         """
@@ -399,7 +415,7 @@ class ID19CommunityStability(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'D19 Estabilidad de la comunidad'
+        return 'D12 Mujeres en la fuerza de trabajo remunerado'
 
     def displayName(self):
         """
@@ -429,13 +445,13 @@ class ID19CommunityStability(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return ID19CommunityStability()
+        return ID12WomenPaidWorkforce()
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Porcentaje de la población que reside en el mismo lugar (parroquia) desde hace más de 5 años.</span>"\
+                "<span>Mide la proporción de trabajadoras expresado como porcentaje del empleo total (excluido el sector agrícola).</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Población que vive en el mismo lugar / Población total)*100</span><br/>"         
+                "<span>(Población femenina empleada en el sector no-agrícola / Población total empleada en el sector no-agrícola)*100</span><br/>"         
 

@@ -23,7 +23,7 @@
 """
 
 __author__ = 'Johnatan Astudillo'
-__date__ = '2020-01-15'
+__date__ = '2020-01-14'
 __copyright__ = '(C) 2019 by LlactaLAB'
 
 # This will get replaced with a git SHA1 when you do a git archive
@@ -53,18 +53,19 @@ import subprocess
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class ID15WomenPaidWorkforce(QgsProcessingAlgorithm):
+class ID10HomeTenureSecurity(QgsProcessingAlgorithm):
     """
-    Mide la proporción de trabajadoras expresado como porcentaje
-    del empleo total (excluido el sector agrícola). 
-    Formula: (Población femenina empleada en el sector no-agrícola / Población total empleada en el sector no-agrícola)*100
+    Mide el porcentaje de hogares con acceso a una vivienda segura; 
+    considerando una tenecia segura aquella vivienda que es propia o 
+    rentada con un contrato de arrendamiento.
+    Formula:(Hogares con vivienda propia o arrendada / Hogares totales)*100
     """
 
     BLOCKS = 'BLOCKS'
     DPA_MAN = 'DPA_MAN'
-    # CENSO_VIVIENDA = 'CENSO_VIVIENDA'
-    CENSO_POBLACION = 'CENSO_POBLACION'
-    # CENSO_HOGAR = 'CENSO_HOGAR'
+    CENSO_VIVIENDA = 'CENSO_VIVIENDA'
+    # CENSO_POBLACION = 'CENSO_POBLACION'
+    CENSO_HOGAR = 'CENSO_HOGAR'
     CELL_SIZE = 'CELL_SIZE'
     OUTPUT = 'OUTPUT'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'
@@ -73,7 +74,7 @@ class ID15WomenPaidWorkforce(QgsProcessingAlgorithm):
     def initAlgorithm(self, config):
         currentPath = getCurrentPath(self)
         self.CURRENT_PATH = currentPath        
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID15'][1]))
+        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['ID10'][1]))
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -91,32 +92,32 @@ class ID15WomenPaidWorkforce(QgsProcessingAlgorithm):
             )
         )           
 
+        # self.addParameter(
+        #     QgsProcessingParameterFile(
+        #         self.CENSO_POBLACION,
+        #         self.tr('Censo población'),
+        #         extension='csv',
+        #         defaultValue="/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Pob_Manz.csv"
+        #     )
+        # ) 
+
         self.addParameter(
             QgsProcessingParameterFile(
-                self.CENSO_POBLACION,
-                self.tr('Censo población'),
+                self.CENSO_HOGAR,
+                self.tr('Censo hogar'),
                 extension='csv',
-                defaultValue="/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Pob_Manz.csv"
+                defaultValue="/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Hog_Manz.csv"
             )
-        ) 
+        )           
 
-        # self.addParameter(
-        #     QgsProcessingParameterFile(
-        #         self.CENSO_HOGAR,
-        #         self.tr('Censo hogar'),
-        #         extension='csv',
-        #         defaultValue="/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Hog_Manz.csv"
-        #     )
-        # )           
-
-        # self.addParameter(
-        #     QgsProcessingParameterFile(
-        #         self.CENSO_VIVIENDA,
-        #         self.tr('Censo vivienda'),
-        #         extension='csv',
-        #         defaultValue='/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Viv_Manz.csv'
-        #     )
-        # )           
+        self.addParameter(
+            QgsProcessingParameterFile(
+                self.CENSO_VIVIENDA,
+                self.tr('Censo vivienda'),
+                extension='csv',
+                defaultValue='/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Viv_Manz.csv'
+            )
+        )           
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -172,15 +173,19 @@ class ID15WomenPaidWorkforce(QgsProcessingAlgorithm):
                                          context, feedback)
         gridNeto = grid  
 
+
         steps = steps+1
         feedback.setCurrentStep(steps)
 
 
-        pathCsvPoblacion = params['CENSO_POBLACION']
+        # pathCsvPoblacion = params['CENSO_POBLACION']
+        pathCsvHogar = params['CENSO_HOGAR']
+        pathCsvVivienda = params['CENSO_VIVIENDA']
 
-        file = pathCsvPoblacion
-        cols = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 'I10', 'P01', 'P29']
-        df = pd.read_csv(file, usecols=cols)
+        fileH = pathCsvHogar
+
+        colsH = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09','H15']
+        df = pd.read_csv(fileH, usecols=colsH)
 
         # fix codes 
         df['I01'] = df['I01'].astype(str)
@@ -190,7 +195,6 @@ class ID15WomenPaidWorkforce(QgsProcessingAlgorithm):
         df['I05'] = df['I05'].astype(str)
         df['I06'] = df['I06'].astype(str)
         df['I09'] = df['I09'].astype(str)
-        df['I10'] = df['I10'].astype(str)
 
         df.loc[df['I01'].str.len() < 2, 'I01'] = "0" + df['I01']
         df.loc[df['I02'].str.len() < 2, 'I02'] = "0" + df['I02']
@@ -202,51 +206,95 @@ class ID15WomenPaidWorkforce(QgsProcessingAlgorithm):
         df.loc[df['I06'].str.len() < 2, 'I06'] = "0" + df['I06']
         df.loc[df['I09'].str.len() == 1, 'I09'] = "00" + df['I09']
         df.loc[df['I09'].str.len() == 2, 'I09'] = "0" + df['I09']
-        df.loc[df['I10'].str.len() < 2, 'I10'] = "0" + df['I10']
 
 
-        df.loc[df['P29'].str.len() == 3 , 'P29'] = "0" + df['P29']
-        # P01 con valor 2: mujeres, P29 rama económica (eliminar sector agricultura y ganadería).
-        df['sector'] = df['P29'].str[0:1]
+        df['codv'] = df['I01'].astype(str) + df['I02'].astype(str) + df['I03'].astype(str) \
+                  + df['I04'].astype(str) + df['I05'].astype(str) +  df['I06'].astype(str) \
+                  + df['I09'].astype(str)
 
 
-        df['mutra'] = 0.0
-        df.loc[(df['P01'] == 2) & ((df['sector'] > "0")), 'mutra'] = 1.0
+        # Calcular tenencia de la vivienda
+        # 1 Propia y totalmente pagada
+        # 2 Propia y la está pagando
+        # 3 Propia? (regalada, donada, heredada o por posesión
+        # 4 Prestada o cedida (no paga)
+        # 5 Por servicios
+        # 6 Arrendada
+        # 7 Anticresis
 
-        df['poblacion'] = 0.00
-        df.loc[((df['sector'] != " ") & (df['sector'] > "0")), 'poblacion'] = 1.0
+        df['tenencia'] = None
+        df.loc[(df['H15'] >= '1') & (df['H15'] <= '3'), 'tenencia'] = 1
+        df.loc[(df['H15'] >= '4') & (df['H15'] < '6'), 'tenencia'] = 0
+        df.loc[df['H15'] == '6', 'tenencia'] = 1
+        df.loc[df['H15'] > '6', 'tenencia'] = 0
+
+        df['tenencia'] = df['tenencia'].astype(float)
+        group = df.groupby('codv')['tenencia'].sum()
+        df = group
 
 
+        fileV = pathCsvVivienda
+        colsV = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 
+                 'I10', 'V16', 'TOTPER', 'id_man', 'id_viv', 'id_provin',
+                 'id_can', 'id_parr', 'id_viv', 'id_man'
+                ]
+        dfV = pd.read_csv(fileV, usecols=colsV)
+
+        # fix codes 
+        dfV['I01'] = dfV['I01'].astype(str)
+        dfV['I02'] = dfV['I02'].astype(str)
+        dfV['I03'] = dfV['I03'].astype(str)
+        dfV['I04'] = dfV['I04'].astype(str)
+        dfV['I05'] = dfV['I05'].astype(str)
+        dfV['I06'] = dfV['I06'].astype(str)
+        dfV['I09'] = dfV['I09'].astype(str)
+        dfV['I10'] = dfV['I10'].astype(str)
+
+        dfV.loc[dfV['I01'].str.len() < 2, 'I01'] = "0" + dfV['I01']
+        dfV.loc[dfV['I02'].str.len() < 2, 'I02'] = "0" + dfV['I02']
+        dfV.loc[dfV['I03'].str.len() < 2, 'I03'] = "0" + dfV['I03']
+        dfV.loc[dfV['I04'].str.len() == 1, 'I04'] = "00" + dfV['I04']
+        dfV.loc[dfV['I04'].str.len() == 2, 'I04'] = "0" + dfV['I04']
+        dfV.loc[dfV['I05'].str.len() == 1, 'I05'] = "00" + dfV['I05']
+        dfV.loc[dfV['I05'].str.len() == 2, 'I05'] = "0" + dfV['I05']
+        dfV.loc[dfV['I06'].str.len() < 2, 'I06'] = "0" + dfV['I06']
+        dfV.loc[dfV['I09'].str.len() == 1, 'I09'] = "00" + dfV['I09']
+        dfV.loc[dfV['I09'].str.len() == 2, 'I09'] = "0" + dfV['I09']
+        dfV.loc[dfV['I10'].str.len() < 2, 'I10'] = "0" + dfV['I10']
+
+
+        dfV['codv'] = dfV['I01'].astype(str) + dfV['I02'].astype(str) + dfV['I03'].astype(str) \
+                  + dfV['I04'].astype(str) + dfV['I05'].astype(str) +  dfV['I06'].astype(str) \
+                  + dfV['I09'].astype(str)
+
+
+        merge = None
+        merge = pd.merge(dfV, df,  how='left', on='codv')
+        merge.loc[merge['V16'] == ' ', 'V16'] = None
+
+        df = merge
         df['codman'] = df['I01'].astype(str) + df['I02'].astype(str) + df['I03'].astype(str) \
                   + df['I04'].astype(str) + df['I05'].astype(str) + df['I06'].astype(str)
 
 
-        df['mutra'] = df['mutra'].astype(float)
-        df['poblacion'] = df['poblacion'].astype(float)
-
-
-        aggOptions = {
-                      'codman' : 'first',
-                      'mutra' : 'sum',
-                      'poblacion': 'sum'
+        df['V16'] = df['V16'].astype(float)
+        aggOptions = {'codv' : 'count',
+                      'tenencia':'sum', 
+                       'V16' : 'sum', 
+                      'codman' : 'first'
                      } 
-
 
         resManzanas = df.groupby('codman').agg(aggOptions)
 
-        resManzanas['mftr'] = None
-        resManzanas['mftr'] = (resManzanas['mutra'] / resManzanas['poblacion']) * 100   
-
-        resManzanas['pobt'] = resManzanas['poblacion']   
-
         df = resManzanas
+        df['tenencia_viv'] = (df['tenencia'] / df['V16']) * 100
 
                   
         steps = steps+1
         feedback.setCurrentStep(steps)
 
-        outputCsv = self.CURRENT_PATH+'/mftr.csv'
-        feedback.pushConsoleInfo(str(('mftr en ' + outputCsv)))    
+        outputCsv = self.CURRENT_PATH+'/tenencia_viv.csv'
+        feedback.pushConsoleInfo(str(('tenencia_viv en ' + outputCsv)))    
         df.to_csv(outputCsv, index=False)
 
         steps = steps+1
@@ -280,35 +328,36 @@ class ID15WomenPaidWorkforce(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        expressionNotNull = "mftr IS NOT '' AND mftr is NOT NULL"    
+        expressionNotNull = "tenencia_viv IS NOT '' AND tenencia_viv is NOT NULL"    
         notNull =   filterByExpression(result['OUTPUT'], expressionNotNull, context, feedback) 
 
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = 'mftr * 1.0'
+        formulaDummy = 'tenencia_viv * 1.0'
         result = calculateField(notNull['OUTPUT'], 
-                                 'mftr_n',
+                                 'tenencia_viv_n',
                                  formulaDummy,
                                  context,
-                                 feedback)  
+                                 feedback)   
+
 
   # ----------------------CONVERTIR A NUMERICOS --------------------     
   
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = 'mutra * 1.0'
+        formulaDummy = 'tenencia * 1.0'
         result = calculateField(result['OUTPUT'], 
-                                 'mutra_n',
+                                 'tenencia_n',
                                  formulaDummy,
                                  context,
                                  feedback)  
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = 'pobt * 1.0'
+        formulaDummy = 'V16 * 1.0'
         result = calculateField(result['OUTPUT'], 
-                                 'pobt_n',
+                                 'V16_n',
                                  formulaDummy,
                                  context,
                                  feedback)    
@@ -323,7 +372,7 @@ class ID15WomenPaidWorkforce(QgsProcessingAlgorithm):
         steps = steps+1
         feedback.setCurrentStep(steps)
         segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                                ['mutra_n','pobt_n','area_bloc'],
+                                ['tenencia_n','V16_n','area_bloc'],
                                 ['id_grid','area_grid'],
                                 context, feedback)        
 
@@ -337,16 +386,16 @@ class ID15WomenPaidWorkforce(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * mutra_n' 
-        result = calculateField(segmentsArea['OUTPUT'], 'mutra_n_seg',
+        formulaDummy = '(area_seg/area_bloc) * tenencia_n' 
+        result = calculateField(segmentsArea['OUTPUT'], 'tenencia_n_seg',
                                                formulaDummy,
                                                context,
                                                feedback)     
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * pobt_n' 
-        result = calculateField(result['OUTPUT'], 'pobt_n_seg',
+        formulaDummy = '(area_seg/area_bloc) * V16_n' 
+        result = calculateField(result['OUTPUT'], 'V16_n_seg',
                                formulaDummy,
                                context,
                                feedback)   
@@ -364,7 +413,7 @@ class ID15WomenPaidWorkforce(QgsProcessingAlgorithm):
         feedback.setCurrentStep(steps)
         result = joinByLocation(gridNeto['OUTPUT'],
                              result['OUTPUT'],
-                             ['mutra_n_seg','pobt_n_seg'],                                   
+                             ['tenencia_n_seg','V16_n_seg'],                                   
                               [CONTIENE], [SUM],
                               UNDISCARD_NONMATCHING,
                               context,
@@ -373,17 +422,19 @@ class ID15WomenPaidWorkforce(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(mutra_n_seg_sum/pobt_n_seg_sum) * 100' 
-        result = calculateField(result['OUTPUT'], NAMES_INDEX['ID15'][0],
+        formulaDummy = '(tenencia_n_seg_sum/V16_n_seg_sum) * 100' 
+        result = calculateField(result['OUTPUT'], NAMES_INDEX['ID10'][0],
                                formulaDummy,
                                context,
-                               feedback, params['OUTPUT'])                                    
-    
+                               feedback, params['OUTPUT'])    
+
+
+ 
         # steps = steps+1
         # feedback.setCurrentStep(steps)
         # gridNeto = joinByLocation(gridNeto['OUTPUT'],
         #                      result['OUTPUT'],
-        #                      ['mftr_n'],                                   
+        #                      ['tenencia_viv_n'],                                   
         #                       [INTERSECTA], [MEDIA],
         #                       UNDISCARD_NONMATCHING,
         #                       context,
@@ -393,7 +444,7 @@ class ID15WomenPaidWorkforce(QgsProcessingAlgorithm):
         # fieldsMapping = [
         #     {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
         #     {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
-        #     {'expression': '"mftr_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID15'][0], 'precision': 2, 'type': 6}
+        #     {'expression': '"tenencia_viv_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID10'][0], 'precision': 2, 'type': 6}
         # ]      
         
         # steps = steps+1
@@ -405,7 +456,7 @@ class ID15WomenPaidWorkforce(QgsProcessingAlgorithm):
         return result
           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'woman.png'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'landtenure.png'))
 
     def name(self):
         """
@@ -415,7 +466,7 @@ class ID15WomenPaidWorkforce(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'D15 Mujeres en la fuerza de trabajo remunerado'
+        return 'D10 Seguridad de tenencia de la vivienda'
 
     def displayName(self):
         """
@@ -445,13 +496,13 @@ class ID15WomenPaidWorkforce(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return ID15WomenPaidWorkforce()
+        return ID10HomeTenureSecurity()
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Mide la proporción de trabajadoras expresado como porcentaje del empleo total (excluido el sector agrícola).</span>"\
+                "<span>Mide el porcentaje de hogares con acceso a una vivienda segura; considerando una tenecia segura aquella vivienda que es propia o rentada con un contrato de arrendamiento.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Población femenina empleada en el sector no-agrícola / Población total empleada en el sector no-agrícola)*100</span><br/>"         
+                "<span>(Hogares con vivienda propia o arrendada / Hogares totales)*100</span><br/>"         
 

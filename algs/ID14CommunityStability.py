@@ -23,7 +23,7 @@
 """
 
 __author__ = 'Johnatan Astudillo'
-__date__ = '2020-01-23'
+__date__ = '2020-01-20'
 __copyright__ = '(C) 2019 by LlactaLAB'
 
 # This will get replaced with a git SHA1 when you do a git archive
@@ -53,16 +53,18 @@ import subprocess
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class ID14UnemploymentRate(QgsProcessingAlgorithm):
+class ID14CommunityStability(QgsProcessingAlgorithm):
     """
-    Mide el porcentaje de la población económicamente activa (PEA) en condición de desempleo. 
-    La PEA se define como aquellas personas de 15 y más años.
-    Formula:(PEA desempleada / PEA total)*100
+    Porcentaje de la población que reside en el mismo lugar
+    (parroquia) desde hace más de 5 años.
+    Formula: (Población que vive en el mismo lugar / Población total)*100
     """
 
     BLOCKS = 'BLOCKS'
-    DPA_SECTOR = 'DPA_SECTOR'
-    ENCUESTA = 'ENCUESTA'
+    DPA_MAN = 'DPA_MAN'
+    # CENSO_VIVIENDA = 'CENSO_VIVIENDA'
+    CENSO_POBLACION = 'CENSO_POBLACION'
+    # CENSO_HOGAR = 'CENSO_HOGAR'
     CELL_SIZE = 'CELL_SIZE'
     OUTPUT = 'OUTPUT'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'
@@ -76,28 +78,45 @@ class ID14UnemploymentRate(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.BLOCKS,
-                self.tr('Zonas Censales'),
+                self.tr('Manzanas'),
                 [QgsProcessing.TypeVectorPolygon]
             )
         )
 
         self.addParameter(
             QgsProcessingParameterField(
-                self.DPA_SECTOR,
-                self.tr('DPA Zona'),
-                'dpa_zona', 'BLOCKS'
+                self.DPA_MAN,
+                self.tr('DPA Manzanas'),
+                'dpa_manzan', 'BLOCKS'
             )
         )           
-
 
         self.addParameter(
             QgsProcessingParameterFile(
-                self.ENCUESTA,
-                self.tr('Censo vivienda'),
+                self.CENSO_POBLACION,
+                self.tr('Censo población'),
                 extension='csv',
-                defaultValue='/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/ENEMDU_acumulada_BDDpersona2018.csv'
+                defaultValue="/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Pob_Manz.csv"
             )
-        )           
+        ) 
+
+        # self.addParameter(
+        #     QgsProcessingParameterFile(
+        #         self.CENSO_HOGAR,
+        #         self.tr('Censo hogar'),
+        #         extension='csv',
+        #         defaultValue="/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Hog_Manz.csv"
+        #     )
+        # )           
+
+        # self.addParameter(
+        #     QgsProcessingParameterFile(
+        #         self.CENSO_VIVIENDA,
+        #         self.tr('Censo vivienda'),
+        #         extension='csv',
+        #         defaultValue='/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Viv_Manz.csv'
+        #     )
+        # )           
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -120,6 +139,15 @@ class ID14UnemploymentRate(QgsProcessingAlgorithm):
             )          
 
 
+        # self.addParameter(
+        #     QgsProcessingParameterNumber(
+        #         self.NUMBER_HABITANTS,
+        #         self.tr('Por cada número de habitantes'),
+        #         QgsProcessingParameterNumber.Integer,
+        #         100000, False, 1, 99999999
+        #     )
+        # )   
+
         self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT,
@@ -132,8 +160,8 @@ class ID14UnemploymentRate(QgsProcessingAlgorithm):
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 17
-        fieldDpa = params['DPA_SECTOR']
+        totalStpes = 9
+        fieldDpaMan = params['DPA_MAN']
         # fieldHab = params['NUMBER_HABITANTS']
 
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
@@ -144,54 +172,83 @@ class ID14UnemploymentRate(QgsProcessingAlgorithm):
                                          context, feedback)
         gridNeto = grid  
 
-
         steps = steps+1
         feedback.setCurrentStep(steps)
 
-        path = params['ENCUESTA']
 
-        file = path
+        pathCsvPoblacion = params['CENSO_POBLACION']
 
-        #p03 edad
-        cols = ['id_vivienda','id_hogar', 'p03', 'empleo', 'desempleo']
-        df = pd.read_csv(file, usecols=cols, sep=";")
+        file = pathCsvPoblacion
+        cols = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 'I10', 'P01', 'P23', 'GEDAD', 'P13']
+        df = pd.read_csv(file, usecols=cols)
+
+        # fix codes 
+        df['I01'] = df['I01'].astype(str)
+        df['I02'] = df['I02'].astype(str)
+        df['I03'] = df['I03'].astype(str)
+        df['I04'] = df['I04'].astype(str)
+        df['I05'] = df['I05'].astype(str)
+        df['I06'] = df['I06'].astype(str)
+        df['I09'] = df['I09'].astype(str)
+        df['I10'] = df['I10'].astype(str)
+
+        df.loc[df['I01'].str.len() < 2, 'I01'] = "0" + df['I01']
+        df.loc[df['I02'].str.len() < 2, 'I02'] = "0" + df['I02']
+        df.loc[df['I03'].str.len() < 2, 'I03'] = "0" + df['I03']
+        df.loc[df['I04'].str.len() == 1, 'I04'] = "00" + df['I04']
+        df.loc[df['I04'].str.len() == 2, 'I04'] = "0" + df['I04']
+        df.loc[df['I05'].str.len() == 1, 'I05'] = "00" + df['I05']
+        df.loc[df['I05'].str.len() == 2, 'I05'] = "0" + df['I05']
+        df.loc[df['I06'].str.len() < 2, 'I06'] = "0" + df['I06']
+        df.loc[df['I09'].str.len() == 1, 'I09'] = "00" + df['I09']
+        df.loc[df['I09'].str.len() == 2, 'I09'] = "0" + df['I09']
+        df.loc[df['I10'].str.len() < 2, 'I10'] = "0" + df['I10']
+
+        # --------------P13 LUGAR DONDE VIVIA HACE 4 ANIOS
+        df.loc[df['P13'].str.len() == 5, 'P13'] = "0" + df['P13']
+        df['codpar'] = df['I01'].astype(str) + df['I02'].astype(str) + df['I03'].astype(str)
 
 
-        df['id_vivienda'] = df['id_vivienda'].astype(str)
 
-        df.loc[df['id_vivienda'].str.len() == 18, 'id_vivienda'] = "0" + df['id_vivienda']
-        df['codsec'] = df['id_vivienda'].str[0:12]
-        df['codzon'] = df['id_vivienda'].str[0:9]
-        df['pbt'] = df['codsec'].astype(str)
+        df['mismolugar'] = 0.0
+        df.loc[(df['codpar'] == df['P13']), 'mismolugar'] = 1.0
 
-        # CAMBIAR A TODA LA POBLACION MAYOR DE 15
-        # df = df[(df['p03'] >= 15) & ((df['empleo'].astype(str) != ' ') | (df['desempleo'].astype(str) != ' '))]
-        df = df[(df['p03'] >= 15)]
-
-                
-        df.loc[df['empleo'] == ' ', 'empleo'] = 0
-        df.loc[df['desempleo'] == ' ', 'desempleo'] = 0
+        df['poblacion'] = 0.0
+        df.loc[(df['P13'] != " "), 'poblacion'] = 1.0
 
 
-        df['desempleo'] = df['desempleo'].astype(float)
+        # df[0:50]
+
+        df['codman'] = df['I01'].astype(str) + df['I02'].astype(str) + df['I03'].astype(str) \
+                  + df['I04'].astype(str) + df['I05'].astype(str) + df['I06'].astype(str)
+
+
+        df['mismolugar'] = df['mismolugar'].astype(float)
+        df['poblacion'] = df['poblacion'].astype(float)
+
 
         aggOptions = {
-                      'codzon' : 'first',
-                      'pbt' : 'count',
-                      'desempleo' : 'sum',
+                      'codman' : 'first',
+                      'poblacion' : 'sum',
+                      'mismolugar' : 'sum',
                      } 
 
-        resManzanas = df.groupby('codzon').agg(aggOptions)
 
-        resManzanas['des'] = None
-        resManzanas['des'] = (resManzanas['desempleo'] / resManzanas['pbt'] * 100)
-        df = resManzanas   
+        resManzanas = df.groupby('codman').agg(aggOptions)
+
+        resManzanas['pobmismolugar'] = None
+        resManzanas['pobmismolugar'] = (resManzanas['mismolugar'] / resManzanas['poblacion']) * 100
+        resManzanas['pb'] = resManzanas['poblacion']
+
+
+        df = resManzanas
+
                   
         steps = steps+1
         feedback.setCurrentStep(steps)
 
-        outputCsv = self.CURRENT_PATH+'/des.csv'
-        feedback.pushConsoleInfo(str(('des en ' + outputCsv)))    
+        outputCsv = self.CURRENT_PATH+'/pobmismolugar.csv'
+        feedback.pushConsoleInfo(str(('pobmismolugar en ' + outputCsv)))    
         df.to_csv(outputCsv, index=False)
 
         steps = steps+1
@@ -209,11 +266,13 @@ class ID14UnemploymentRate(QgsProcessingAlgorithm):
         field_names = [field.name() for field in CSV.fields()]       
         print(field_names)            
 
+        steps = steps+1
+        feedback.setCurrentStep(steps)
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        result = joinByAttr2(params['BLOCKS'], fieldDpa,
-                                outputCsv, 'codzon',
+        result = joinByAttr2(params['BLOCKS'], fieldDpaMan,
+                                outputCsv, 'codman',
                                 [],
                                 UNDISCARD_NONMATCHING,
                                 '',
@@ -221,32 +280,32 @@ class ID14UnemploymentRate(QgsProcessingAlgorithm):
                                 context,
                                 feedback)
 
-        # steps = steps+1
-        # feedback.setCurrentStep(steps)
-        # expressionNotNull = "des IS NOT '' AND des is NOT NULL"    
-        # result =   filterByExpression(result['OUTPUT'], expressionNotNull, context, feedback) 
-
-
-
-  # ----------------------CONVERTIR A NUMERICOS --------------------     
-  
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = 'desempleo * 1.0'
+        expressionNotNull = "pobmismolugar IS NOT '' AND pobmismolugar is NOT NULL"    
+        notNull =   filterByExpression(result['OUTPUT'], expressionNotNull, context, feedback) 
+
+
+
+        # ----------------------CONVERTIR A NUMERICOS --------------------
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'pb * 1.0'
+        result = calculateField(notNull['OUTPUT'], 
+                                 'pobt',
+                                 formulaDummy,
+                                 context,
+                                 feedback)     
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'mismolugar * 1.0'
         result = calculateField(result['OUTPUT'], 
-                                 'desempleo_n',
+                                 'pobml',
                                  formulaDummy,
                                  context,
                                  feedback)  
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = 'pbt * 1.0'
-        result = calculateField(result['OUTPUT'], 
-                                 'pbt_n',
-                                 formulaDummy,
-                                 context,
-                                 feedback)    
 
        # ----------------------PROPORCIONES AREA--------------------------
        
@@ -258,7 +317,7 @@ class ID14UnemploymentRate(QgsProcessingAlgorithm):
         steps = steps+1
         feedback.setCurrentStep(steps)
         segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                                ['desempleo_n','pbt_n','area_bloc'],
+                                ['pb','pobml','area_bloc'],
                                 ['id_grid','area_grid'],
                                 context, feedback)        
 
@@ -272,16 +331,16 @@ class ID14UnemploymentRate(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * desempleo_n' 
-        result = calculateField(segmentsArea['OUTPUT'], 'desempleo_n_seg',
+        formulaDummy = '(area_seg/area_bloc) * pb' 
+        result = calculateField(segmentsArea['OUTPUT'], 'poblacion_seg',
                                                formulaDummy,
                                                context,
                                                feedback)     
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * pbt_n' 
-        result = calculateField(result['OUTPUT'], 'pbt_n_seg',
+        formulaDummy = '(area_seg/area_bloc) * pobml' 
+        result = calculateField(result['OUTPUT'], 'mismolugar_seg',
                                formulaDummy,
                                context,
                                feedback)   
@@ -293,13 +352,13 @@ class ID14UnemploymentRate(QgsProcessingAlgorithm):
                                 context,
                                 feedback)                                    
 
-        #----------------------------------------------------------------------   
-
+        #----------------------------------------------------------------------                                                                              
+    
         steps = steps+1
         feedback.setCurrentStep(steps)
         result = joinByLocation(gridNeto['OUTPUT'],
                              result['OUTPUT'],
-                             ['desempleo_n_seg','pbt_n_seg'],                                   
+                             ['poblacion_seg','mismolugar_seg'],                                   
                               [CONTIENE], [SUM],
                               UNDISCARD_NONMATCHING,
                               context,
@@ -308,41 +367,29 @@ class ID14UnemploymentRate(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(desempleo_n_seg_sum/pbt_n_seg_sum) * 100' 
+        formulaDummy = '(mismolugar_seg_sum/poblacion_seg_sum) * 100' 
         result = calculateField(result['OUTPUT'], NAMES_INDEX['ID14'][0],
                                formulaDummy,
                                context,
-                               feedback, params['OUTPUT'])    
-
-
- 
-        # steps = steps+1
-        # feedback.setCurrentStep(steps)
-        # gridNeto = joinByLocation(gridNeto['OUTPUT'],
-        #                      result['OUTPUT'],
-        #                      ['desempleo_viv_n'],                                   
-        #                       [INTERSECTA], [MEDIA],
-        #                       UNDISCARD_NONMATCHING,
-        #                       context,
-        #                       feedback)         
+                               feedback, params['OUTPUT'])                                        
  
 
         # fieldsMapping = [
         #     {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
         #     {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
-        #     {'expression': '"tenencia_viv_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID14'][0], 'precision': 2, 'type': 6}
+        #     {'expression': '"pobmismolugar_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID14'][0], 'precision': 2, 'type': 6}
         # ]      
         
         # steps = steps+1
         # feedback.setCurrentStep(steps)
-        # result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 
+        # result = refactorFields(fieldsMapping, result['OUTPUT'], 
         #                         context,
         #                         feedback, params['OUTPUT'])                                                                
 
         return result
           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'unemployment.png'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'community2.png'))
 
     def name(self):
         """
@@ -352,7 +399,7 @@ class ID14UnemploymentRate(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'D14 Tasa de desempleo'
+        return 'D14 Estabilidad de la comunidad'
 
     def displayName(self):
         """
@@ -382,13 +429,13 @@ class ID14UnemploymentRate(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return ID14UnemploymentRate()
+        return ID14CommunityStability()
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Mide el porcentaje de la población económicamente activa (PEA) en condición de desempleo. La PEA se define como aquellas personas de 15 y más años.</span>"\
+                "<span>Porcentaje de la población que reside en el mismo lugar (parroquia) desde hace más de 5 años.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
-                "<span>Encuesta de Empleo, Desempleo y Subempleo, tabla acumulada de enero a diciembre de 2018: categoría DESEMPLEO.</span>"\
+                "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(PEA desempleada / PEA total)*100</span><br/>"         
+                "<span>(Población que vive en el mismo lugar / Población total)*100</span><br/>"         
 

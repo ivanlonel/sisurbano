@@ -49,21 +49,21 @@ from .algs import (
     IA09CoverageDailyBusinessActivities,
     IA10RelationshipActivityResidence,
     IA11UrbanComplexity,
-    IA14DensityPedestrianIntersections,
-    IA15TissueAccessibility,
+    IA12DensityPedestrianIntersections,
+    IA13TissueAccessibility,
     IB00WrapB,
     IB01AirQuality,
     IB02LuminaryPerRoad,
     IB03AcousticComfort,
+    IB04Proximity2GreenPublicSpace,    
     IB05GreenPerHabitant,
-    IB06Proximity2GreenPublicSpace,
+    IB06AgriculturalGrove,    
     IB07SoilPermeability,
-    IB08AgriculturalGrove,
     IC00WrapC,
     IC01PublicPedestrianRoadDistribution,
     IC03RoadsPerHabitant,
     IC04Proximity2AlternativeTransport,
-    IC08ParkedVehicles,
+    IC05ParkedVehicles,
     IC09PowerConsumption,
     IC13Sewerage,
     ID00WrapD,
@@ -72,18 +72,18 @@ from .algs import (
     ID03HousingRisk,
     ID04OpenPublicSpacesNeedImprovement,
     ID05InternetAccess,
+    ID06UseOfTime,    
     ID07QualityLifeIndex,
-    ID09UseOfTime,
-    ID10Proximity2PublicMarket,
-    ID11Theft,
-    ID12HomeTenureSecurity,
+    ID08Proximity2PublicMarket,
+    ID09Theft,
+    ID10HomeTenureSecurity,
+    ID11UnemploymentRate,    
+    ID12WomenPaidWorkforce,    
     ID13ActivePopulationWithDegree,
-    ID14UnemploymentRate,
-    ID15WomenPaidWorkforce,
+    ID14CommunityStability,
+    ID15PerceptionInsecurity,        
     ID16AgingIndex,
     ID17SpatialSegregation,
-    ID19CommunityStability,
-    ID21PerceptionInsecurity,
     ZN00CreateGrid,
     ZN01FuzzyVectorial,
     ZN02AllocateValues,
@@ -127,21 +127,21 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(IA09CoverageDailyBusinessActivities.IA09CoverageDailyBusinessActivities())
         self.addAlgorithm(IA10RelationshipActivityResidence.IA10RelationshipActivityResidence())
         self.addAlgorithm(IA11UrbanComplexity.IA11UrbanComplexity())
-        self.addAlgorithm(IA14DensityPedestrianIntersections.IA14DensityPedestrianIntersections())
-        self.addAlgorithm(IA15TissueAccessibility.IA15TissueAccessibility())
+        self.addAlgorithm(IA12DensityPedestrianIntersections.IA12DensityPedestrianIntersections())
+        self.addAlgorithm(IA13TissueAccessibility.IA13TissueAccessibility())
         self.addAlgorithm(IB00WrapB.IB00WrapB())
         self.addAlgorithm(IB01AirQuality.IB01AirQuality())
         self.addAlgorithm(IB02LuminaryPerRoad.IB02LuminaryPerRoad())
         self.addAlgorithm(IB03AcousticComfort.IB03AcousticComfort())
+        self.addAlgorithm(IB04Proximity2GreenPublicSpace.IB04Proximity2GreenPublicSpace())        
         self.addAlgorithm(IB05GreenPerHabitant.IB05GreenPerHabitant())
-        self.addAlgorithm(IB06Proximity2GreenPublicSpace.IB06Proximity2GreenPublicSpace())
+        self.addAlgorithm(IB06AgriculturalGrove.IB06AgriculturalGrove())        
         self.addAlgorithm(IB07SoilPermeability.IB07SoilPermeability())
-        self.addAlgorithm(IB08AgriculturalGrove.IB08AgriculturalGrove())
         self.addAlgorithm(IC00WrapC.IC00WrapC())
         self.addAlgorithm(IC01PublicPedestrianRoadDistribution.IC01PublicPedestrianRoadDistribution())
         self.addAlgorithm(IC03RoadsPerHabitant.IC03RoadsPerHabitant())
         self.addAlgorithm(IC04Proximity2AlternativeTransport.IC04Proximity2AlternativeTransport())
-        self.addAlgorithm(IC08ParkedVehicles.IC08ParkedVehicles())
+        self.addAlgorithm(IC05ParkedVehicles.IC05ParkedVehicles())
         self.addAlgorithm(IC09PowerConsumption.IC09PowerConsumption())
         self.addAlgorithm(IC13Sewerage.IC13Sewerage())
         self.addAlgorithm(ID00WrapD.ID00WrapD())
@@ -151,17 +151,17 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(ID04OpenPublicSpacesNeedImprovement.ID04OpenPublicSpacesNeedImprovement())
         self.addAlgorithm(ID05InternetAccess.ID05InternetAccess())
         self.addAlgorithm(ID07QualityLifeIndex.ID07QualityLifeIndex())
-        self.addAlgorithm(ID09UseOfTime.ID09UseOfTime())
-        self.addAlgorithm(ID10Proximity2PublicMarket.ID10Proximity2PublicMarket())
-        self.addAlgorithm(ID11Theft.ID11Theft())
-        self.addAlgorithm(ID12HomeTenureSecurity.ID12HomeTenureSecurity())
+        self.addAlgorithm(ID06UseOfTime.ID06UseOfTime())
+        self.addAlgorithm(ID08Proximity2PublicMarket.ID08Proximity2PublicMarket())
+        self.addAlgorithm(ID09Theft.ID09Theft())
+        self.addAlgorithm(ID10HomeTenureSecurity.ID10HomeTenureSecurity())
+        self.addAlgorithm(ID11UnemploymentRate.ID11UnemploymentRate())        
+        self.addAlgorithm(ID12WomenPaidWorkforce.ID12WomenPaidWorkforce())        
         self.addAlgorithm(ID13ActivePopulationWithDegree.ID13ActivePopulationWithDegree())
-        self.addAlgorithm(ID14UnemploymentRate.ID14UnemploymentRate())
-        self.addAlgorithm(ID15WomenPaidWorkforce.ID15WomenPaidWorkforce())
+        self.addAlgorithm(ID14CommunityStability.ID14CommunityStability())        
         self.addAlgorithm(ID16AgingIndex.ID16AgingIndex())
+        self.addAlgorithm(ID15PerceptionInsecurity.ID15PerceptionInsecurity())        
         self.addAlgorithm(ID17SpatialSegregation.ID17SpatialSegregation())
-        self.addAlgorithm(ID19CommunityStability.ID19CommunityStability())
-        self.addAlgorithm(ID21PerceptionInsecurity.ID21PerceptionInsecurity())
         self.addAlgorithm(ZN00CreateGrid.ZN00CreateGrid())
         self.addAlgorithm(ZN01FuzzyVectorial.ZN01FuzzyVectorial())
         self.addAlgorithm(ZN02AllocateValues.ZN02AllocateValues())

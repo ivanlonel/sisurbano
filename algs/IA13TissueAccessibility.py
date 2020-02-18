@@ -48,7 +48,7 @@ from .ZHelpers import *
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class IA15TissueAccessibility(QgsProcessingAlgorithm):
+class IA13TissueAccessibility(QgsProcessingAlgorithm):
     """
     Mide que tan conectadas o aisladas se encuentran las
     calles de un tejido con el resto de la ciudad a través
@@ -65,7 +65,7 @@ class IA15TissueAccessibility(QgsProcessingAlgorithm):
     def initAlgorithm(self, config):
 
         currentPath = getCurrentPath(self)
-        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA15'][1]))
+        FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA13'][1]))
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -147,7 +147,7 @@ class IA15TissueAccessibility(QgsProcessingAlgorithm):
         feedback.setCurrentStep(steps)
         formulaDummy = fieldSintaxis+'_mean * 1.00'
         result = calculateField(result['OUTPUT'],
-                                   NAMES_INDEX['IA15'][0],
+                                   NAMES_INDEX['IA13'][0],
                                    formulaDummy,
                                    context,
                                    feedback, params['OUTPUT'])
@@ -169,7 +169,7 @@ class IA15TissueAccessibility(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'A15 Accesibilidad al tejido'
+        return 'A13 Accesibilidad al tejido'
 
     def displayName(self):
         """
@@ -199,7 +199,7 @@ class IA15TissueAccessibility(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return IA15TissueAccessibility()
+        return IA13TissueAccessibility()
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
