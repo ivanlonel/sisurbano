@@ -119,7 +119,7 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.ROADS,
-                self.tr('Red vial'),
+                self.tr('Red vial (obligatorio para distancia ISOCRONA)'),
                 [QgsProcessing.TypeVectorLine],
                 optional = True,
                 defaultValue = ''
@@ -151,7 +151,8 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.BUSSTOP,
                 self.tr('Paradas de bus'),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.TypeVectorPoint],
+                optional = True
             )
         )
 
@@ -159,7 +160,8 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.TRAMSTOP,
                 self.tr('Tranvía'),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.TypeVectorPoint],
+                optional = True
             )
         )
 
@@ -167,7 +169,8 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.BIKESTOP,
                 self.tr('Bici pública'),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.TypeVectorPoint],
+                optional = True
             )
         )
 
@@ -175,7 +178,8 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.BIKEWAY,
                 self.tr('Ciclovía'),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.TypeVectorLine],
+                optional = True
             )
         )
 
@@ -183,7 +187,8 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.CROSSWALK,
                 self.tr('Caminos peatonales'),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.TypeVectorLine],
+                optional = True
             )
         )                                
 
@@ -197,452 +202,475 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-      steps = 0
-      totalStpes = 37
-      fieldPopulateOrHousing = params['FIELD_POPULATE_HOUSING']
-      DISTANCE_BUSSTOP = 300
-      DISTANCE_TRAMSTOP = 500
-      DISTANCE_BKESTOP = 300
-      DISTANCE_BIKEWAY = 300
-      DISTANCE_CROSSWALK = 300
+      isValid = lambda x: 0 if x is None else 1
+      isBusStop = isValid(params['BUSSTOP'])
+      isTramStop = isValid(params['TRAMSTOP'])
+      isBikeStop = isValid(params['BIKESTOP'])
+      isBikeWay = isValid(params['BIKEWAY'])
+      isCrossWalk = isValid(params['CROSSWALK'])
+      isRoads = isValid(params['ROADS'])
+      totalValides = isBusStop + isTramStop+ isBikeStop + isBikeWay + isCrossWalk
+
+      if(totalValides >=3):
+        if isRoads == 0 and params['DISTANCE_OPTIONS'] == 0:
+          feedback.reportError(str(('Distancia isocrona requiere la red vial')))            
+          return {}
+
+        steps = 0
+        totalStpes = 37
+        fieldPopulateOrHousing = params['FIELD_POPULATE_HOUSING']
+        DISTANCE_BUSSTOP = 300
+        DISTANCE_TRAMSTOP = 500
+        DISTANCE_BKESTOP = 300
+        DISTANCE_BIKEWAY = 300
+        DISTANCE_CROSSWALK = 300
 
 
-      MIN_FACILITIES = 3
-      OPERATOR_GE = 3
+        MIN_FACILITIES = 3
+        OPERATOR_GE = 3
 
-      feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
+        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-      """
-      -----------------------------------------------------------------
-      Calcular las facilidades
-      -----------------------------------------------------------------
-      """
+        """
+        -----------------------------------------------------------------
+        Calcular las facilidades
+        -----------------------------------------------------------------
+        """
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-                                         params['STUDY_AREA_GRID'],
-                                         context, feedback)
-      gridNeto = grid  
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
+        gridNeto = grid  
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)        
-      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
-                             feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                              'area_bloc;' + fieldPopulateOrHousing,
-                              'id_grid',
-                              context, feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsArea = calculateArea(segments['OUTPUT'],
-                                   'area_seg',
-                                   context, feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulateOrHousing
-      populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
-                                          formulaPopulationSegments,
-                                          context,
-                                          feedback)
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      blocksWithId = calculateField(populationForSegments['OUTPUT'], 'id_block', '$id', context,
-                                    feedback, type=1)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      centroidsBlocks = createCentroids(blocksWithId['OUTPUT'], context,
-                                        feedback)
-
-      result = []
-
-      idxs = ['idxbus','idxtram','idxbikestop','idkbikeway','idxwalk']
-
-      if(params['DISTANCE_OPTIONS'] == 0):
         steps = steps+1
         feedback.setCurrentStep(steps)        
-        feedback.pushConsoleInfo(str(('Cálculo de áreas de servicio')))   
-        layers = [
-                  [params['BUSSTOP'], STRATEGY_DISTANCE, DISTANCE_BUSSTOP],
-                  [params['TRAMSTOP'], STRATEGY_DISTANCE, DISTANCE_TRAMSTOP],
-                  [params['BIKESTOP'], STRATEGY_DISTANCE, DISTANCE_BKESTOP],
-                  [params['BIKEWAY'], STRATEGY_DISTANCE, DISTANCE_BIKEWAY],
-                  [params['CROSSWALK'], STRATEGY_DISTANCE, DISTANCE_CROSSWALK],
-
-                 ]
-        serviceAreas = multiBufferIsocrono(params['ROADS'], layers, context, feedback)
-
-        iidx = -1
-        for serviceArea in serviceAreas:
-          iidx = iidx + 1
-          idx = idxs[iidx] 
-          steps = steps+1
-          feedback.setCurrentStep(steps)
-          serviceArea = calculateField(serviceArea, idx, '$id', context,
-                                        feedback, type=1)        
-          steps = steps+1
-          feedback.setCurrentStep(steps)
-          centroidsBlocks = joinByLocation(centroidsBlocks['OUTPUT'],
-                                    serviceArea['OUTPUT'],
-                                    [idx], [INTERSECTA], [COUNT],
-                                    UNDISCARD_NONMATCHING,
-                                    context,
-                                    feedback)        
-   
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        # formulaDummy = 'idxbus_count * 1'
-        formulaDummy = 'coalesce(idxbus_count, 0) + coalesce(idxtram_count, 0) + coalesce(idxbikestop_count,0) + coalesce(idkbikeway_count, 0) + coalesce(idxwalk_count, 0)'
-        facilitiesCover = calculateField(centroidsBlocks['OUTPUT'], 'facilities',
-                                          formulaDummy,
-                                          context,
-                                          feedback)      
+        blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                               feedback)
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        facilitiesFullCover = filter(facilitiesCover['OUTPUT'],
-                                                   'facilities', OPERATOR_GE,
-                                                   MIN_FACILITIES, context, feedback)       
-
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNetoFacilitiesCover = joinByLocation(gridNeto['OUTPUT'],
-                                             facilitiesCover['OUTPUT'],
-                                             ['pop_seg','facilities'],
-                                             [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
-                                             context,
-                                             feedback)     
-
-        fieldsMapping = [
-            {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
-            {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
-            {'expression': '"pop_seg_sum"', 'length': 20, 'name': 'ptotal', 'precision': 2, 'type': 6},
-            {'expression': '"facilities_sum"', 'length': 20, 'name': 'facilities', 'precision': 2, 'type': 6}
-        ]      
-        
+        segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                                'area_bloc;' + fieldPopulateOrHousing,
+                                'id_grid',
+                                context, feedback)
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        gridNetoFacilitiesCover = refactorFields(fieldsMapping, gridNetoFacilitiesCover['OUTPUT'], 
-                                context,
-                                feedback)             
-
-
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                     'area_seg',
+                                     context, feedback)
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        gridNetoFacilities = joinByLocation(gridNetoFacilitiesCover['OUTPUT'],
-                                             facilitiesFullCover['OUTPUT'],
-                                             ['pop_seg'],
-                                             [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
-                                             context,
-                                             feedback)
-
+        formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulateOrHousing
+        populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
+                                            formulaPopulationSegments,
+                                            context,
+                                            feedback)
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaProximity = 'coalesce((coalesce(pop_seg_sum,0) / coalesce(ptotal,""))*100,"")'
-        proximity2AlternativeTransport = calculateField(gridNetoFacilities['OUTPUT'], NAMES_INDEX['IC04'][0],
-                                          formulaProximity,
-                                          context,
-                                          feedback, params['OUTPUT'])        
-
-        result = proximity2AlternativeTransport                                                                                                                               
-        
-              
-      else:
-        feedback.pushConsoleInfo(str(('Cálculo de buffer radial')))
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blockBuffer4BusStop = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_BUSSTOP,
-                                             context,
-                                             feedback)
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blockBuffer4TramStop = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_TRAMSTOP, context,
-                                          feedback)
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blockBuffer4BikeStop = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_BKESTOP, context,
-                                           feedback)
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        BlockBuffer4BikeWay = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_BIKEWAY,
-                                          context, feedback)
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        BlockBuffer4CrossWalk = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_CROSSWALK,
-                                          context, feedback)    
-
-
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        layerBusStop = calculateField(params['BUSSTOP'], 'idx', '$id', context,
+        blocksWithId = calculateField(populationForSegments['OUTPUT'], 'id_block', '$id', context,
                                       feedback, type=1)
 
-
         steps = steps+1
         feedback.setCurrentStep(steps)
-        layerTramStop = calculateField(params['TRAMSTOP'], 'idx', '$id', context,
-                                      feedback, type=1)    
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        layerBikeStop = calculateField(params['BIKESTOP'], 'idx', '$id', context,
-                                      feedback, type=1)       
-
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        layerBikeWay = calculateField(params['BIKEWAY'], 'idx', '$id', context,
-                                      feedback, type=1)   
-
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        layerCrossWalk = calculateField(params['CROSSWALK'], 'idx', '$id', context,
-                                      feedback, type=1)                                        
-
-
-        layerBusStop = layerBusStop['OUTPUT']
-        layerTramStop = layerTramStop['OUTPUT']
-        layerBikeStop = layerBikeStop['OUTPUT']
-        layerBikeWay = layerBikeWay['OUTPUT']
-        layerCrossWalk = layerCrossWalk['OUTPUT']
-
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        counterBusStop = joinByLocation(blockBuffer4BusStop['OUTPUT'],
-                                          layerBusStop,
-                                          'idx', [INTERSECTA], [COUNT],
-                                          UNDISCARD_NONMATCHING,
-                                          context,
+        centroidsBlocks = createCentroids(blocksWithId['OUTPUT'], context,
                                           feedback)
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        counterTramStop = joinByLocation(blockBuffer4TramStop['OUTPUT'],
-                                       layerTramStop,
-                                       'idx', [INTERSECTA], [COUNT],
-                                       UNDISCARD_NONMATCHING,
-                                       context,
-                                       feedback)
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        counteBikeStop = joinByLocation(blockBuffer4BikeStop['OUTPUT'],
-                                        layerBikeStop,
-                                        'idx', [INTERSECTA], [COUNT],
-                                        UNDISCARD_NONMATCHING,
-                                        context,
-                                        feedback)
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        counterBikeWay = joinByLocation(BlockBuffer4BikeWay['OUTPUT'],
-                                      layerBikeWay,
-                                      'idx', [INTERSECTA], [COUNT],
+
+        result = []
+
+        idxs = ['idxbus','idxtram','idxbikestop','idkbikeway','idxwalk']
+
+        layers = []
+
+        if(params['DISTANCE_OPTIONS'] == 0):
+          steps = steps+1
+          feedback.setCurrentStep(steps)        
+          feedback.pushConsoleInfo(str(('Cálculo de áreas de servicio')))   
+
+          pointsBikeWay = pointsAlongLines(params['BIKEWAY'], 50, context, feedback)  
+          pointsCrossWalk = pointsAlongLines(params['CROSSWALK'], 50, context, feedback) 
+
+
+          if isBusStop == 1: layers.append([params['BUSSTOP'], STRATEGY_DISTANCE, DISTANCE_BUSSTOP])
+          if isTramStop == 1: layers.append([params['TRAMSTOP'], STRATEGY_DISTANCE, DISTANCE_TRAMSTOP])
+          if isBikeStop == 1: layers.append([params['BIKESTOP'], STRATEGY_DISTANCE, DISTANCE_BKESTOP])
+          if isBikeWay == 1:  layers.append([pointsBikeWay['OUTPUT'], STRATEGY_DISTANCE, DISTANCE_BIKEWAY])
+          if isCrossWalk == 1:  layers.append([pointsCrossWalk['OUTPUT'], STRATEGY_DISTANCE, DISTANCE_CROSSWALK])
+
+          serviceAreas = multiBufferIsocrono(params['ROADS'], layers, context, feedback)
+
+          iidx = -1
+          for serviceArea in serviceAreas:
+            iidx = iidx + 1
+            idx = idxs[iidx] 
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            serviceArea = calculateField(serviceArea, idx, '$id', context,
+                                          feedback, type=1)        
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            centroidsBlocks = joinByLocation(centroidsBlocks['OUTPUT'],
+                                      serviceArea['OUTPUT'],
+                                      [idx], [INTERSECTA], [COUNT],
                                       UNDISCARD_NONMATCHING,
+                                      context,
+                                      feedback)        
+     
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          # formulaDummy = 'idxbus_count * 1'
+          formulaDummy = 'coalesce(idxbus_count, 0) + coalesce(idxtram_count, 0) + coalesce(idxbikestop_count,0) + coalesce(idkbikeway_count, 0) + coalesce(idxwalk_count, 0)'
+          facilitiesCover = calculateField(centroidsBlocks['OUTPUT'], 'facilities',
+                                            formulaDummy,
+                                            context,
+                                            feedback)      
+
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          facilitiesFullCover = filter(facilitiesCover['OUTPUT'],
+                                                     'facilities', OPERATOR_GE,
+                                                     MIN_FACILITIES, context, feedback)       
+
+
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          gridNetoFacilitiesCover = joinByLocation(gridNeto['OUTPUT'],
+                                               facilitiesCover['OUTPUT'],
+                                               ['pop_seg','facilities'],
+                                               [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
+                                               context,
+                                               feedback)     
+
+          fieldsMapping = [
+              {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
+              {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
+              {'expression': '"pop_seg_sum"', 'length': 20, 'name': 'ptotal', 'precision': 2, 'type': 6},
+              {'expression': '"facilities_sum"', 'length': 20, 'name': 'facilities', 'precision': 2, 'type': 6}
+          ]      
+          
+
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          gridNetoFacilitiesCover = refactorFields(fieldsMapping, gridNetoFacilitiesCover['OUTPUT'], 
+                                  context,
+                                  feedback)             
+
+
+
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          gridNetoFacilities = joinByLocation(gridNetoFacilitiesCover['OUTPUT'],
+                                               facilitiesFullCover['OUTPUT'],
+                                               ['pop_seg'],
+                                               [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
+                                               context,
+                                               feedback)
+
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          formulaProximity = 'coalesce((coalesce(pop_seg_sum,0) / coalesce(ptotal,""))*100,"")'
+          proximity2AlternativeTransport = calculateField(gridNetoFacilities['OUTPUT'], NAMES_INDEX['IC04'][0],
+                                            formulaProximity,
+                                            context,
+                                            feedback, params['OUTPUT'])        
+
+          result = proximity2AlternativeTransport                                                                                                                               
+                
+        else:
+          feedback.pushConsoleInfo(str(('Cálculo de buffer radial')))
+          blocksJoined = blocksWithId
+          
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          blockBuffer4BusStop = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_BUSSTOP,
+                                               context,
+                                               feedback)
+          
+          # ------------------------------------
+
+          if isBusStop == 1:
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            layerBusStop = calculateField(params['BUSSTOP'], 'idx', '$id', context,
+                                          feedback, type=1)          
+
+            layerBusStop = layerBusStop['OUTPUT']
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            counterBusStop = joinByLocation(blockBuffer4BusStop['OUTPUT'],
+                                              layerBusStop,
+                                              'idx', [INTERSECTA], [COUNT],
+                                              UNDISCARD_NONMATCHING,
+                                              context,
+                                              feedback)
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
+                                      counterBusStop['OUTPUT'], 'id_block',
+                                      'idx_count',
+                                      UNDISCARD_NONMATCHING,
+                                      'bs_',
                                       context,
                                       feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        counterCrossWalk = joinByLocation(BlockBuffer4CrossWalk['OUTPUT'],
-                                      layerCrossWalk,
-                                      'idx', [INTERSECTA], [COUNT],
+
+          # ---------------------------------------------------
+          if isTramStop == 1:
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            blockBuffer4TramStop = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_TRAMSTOP, context,
+                                              feedback)
+
+
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            layerTramStop = calculateField(params['TRAMSTOP'], 'idx', '$id', context,
+                                          feedback, type=1)              
+
+            layerTramStop = layerTramStop['OUTPUT']
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            counterTramStop = joinByLocation(blockBuffer4TramStop['OUTPUT'],
+                                           layerTramStop,
+                                           'idx', [INTERSECTA], [COUNT],
+                                           UNDISCARD_NONMATCHING,
+                                           context,
+                                           feedback)   
+
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
+                                      counterTramStop['OUTPUT'], 'id_block',
+                                      'idx_count',
                                       UNDISCARD_NONMATCHING,
+                                      'ts_',
                                       context,
-                                      feedback)    
+                                      feedback)             
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksJoined = joinByAttr(blocksWithId['OUTPUT'], 'id_block',
-                                  counterBusStop['OUTPUT'], 'id_block',
-                                  'idx_count',
-                                  UNDISCARD_NONMATCHING,
-                                  'bs_',
-                                  context,
-                                  feedback)
+          # -----------------------------------------------  
+          if isBikeStop == 1:                                              
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            blockBuffer4BikeStop = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_BKESTOP, context,
+                                               feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
-                                  counterTramStop['OUTPUT'], 'id_block',
-                                  'idx_count',
-                                  UNDISCARD_NONMATCHING,
-                                  'ts_',
-                                  context,
-                                  feedback)
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            layerBikeStop = calculateField(params['BIKESTOP'], 'idx', '$id', context,
+                                          feedback, type=1)      
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
-                                  counteBikeStop['OUTPUT'], 'id_block',
-                                  'idx_count',
-                                  UNDISCARD_NONMATCHING,
-                                  'bks_',
-                                  context,
-                                  feedback)
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
-                                  counterBikeWay['OUTPUT'], 'id_block',
-                                  'idx_count',
-                                  UNDISCARD_NONMATCHING,
-                                  'bw_',
-                                  context,
-                                  feedback)
+            layerBikeStop = layerBikeStop['OUTPUT']
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            counteBikeStop = joinByLocation(blockBuffer4BikeStop['OUTPUT'],
+                                            layerBikeStop,
+                                            'idx', [INTERSECTA], [COUNT],
+                                            UNDISCARD_NONMATCHING,
+                                            context,
+                                            feedback)
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
-                                  counterCrossWalk['OUTPUT'], 'id_block',
-                                  'idx_count',
-                                  UNDISCARD_NONMATCHING,
-                                  'cw_',
-                                  context,
-                                  feedback)    
-
-        #FIXME: CAMBIAR POR UN METODO BUCLE
-
-        formulaParseBS = 'CASE WHEN coalesce(bs_idx_count, 0) > 0 THEN 1 ELSE 0 END'
-        formulaParseTS = 'CASE WHEN coalesce(ts_idx_count, 0) > 0 THEN 1 ELSE 0 END'
-        formulaParseBKS = 'CASE WHEN coalesce(bks_idx_count, 0) > 0 THEN 1 ELSE 0 END'
-        formulaParseBW = 'CASE WHEN coalesce(bw_idx_count, 0) > 0 THEN 1 ELSE 0 END'
-        formulaParseCW = 'CASE WHEN coalesce(cw_idx_count, 0) > 0 THEN 1 ELSE 0 END'
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
+                                      counteBikeStop['OUTPUT'], 'id_block',
+                                      'idx_count',
+                                      UNDISCARD_NONMATCHING,
+                                      'bks_',
+                                      context,
+                                      feedback)   
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksFacilities = calculateField(blocksJoined['OUTPUT'], 'parse_bs',
-                                          formulaParseBS,
+          # -----------------------------------------
+
+          if isBikeWay == 1:
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            BlockBuffer4BikeWay = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_BIKEWAY,
+                                              context, feedback)
+
+            pointsBikeWay = pointsAlongLines(params['BIKEWAY'], 50, context, feedback)                   
+
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            layerBikeWay = calculateField(pointsBikeWay['OUTPUT'], 'idx', '$id', context,
+                                          feedback, type=1)   
+
+            layerBikeWay = layerBikeWay['OUTPUT']
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            counterBikeWay = joinByLocation(BlockBuffer4BikeWay['OUTPUT'],
+                                          layerBikeWay,
+                                          'idx', [INTERSECTA], [COUNT],
+                                          UNDISCARD_NONMATCHING,
                                           context,
-                                          feedback)
+                                          feedback)          
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksFacilities = calculateField(blocksFacilities['OUTPUT'], 'parse_ts',
-                                          formulaParseTS,
-                                          context,
-                                          feedback)    
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
+                                      counterBikeWay['OUTPUT'], 'id_block',
+                                      'idx_count',
+                                      UNDISCARD_NONMATCHING,
+                                      'bw_',
+                                      context,
+                                      feedback)
 
+          # ------------------------------------------
+          if isCrossWalk == 1:
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            BlockBuffer4CrossWalk = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_CROSSWALK,
+                                              context, feedback)  
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksFacilities = calculateField(blocksFacilities['OUTPUT'], 'parse_bks',
-                                          formulaParseBKS,
-                                          context,
-                                          feedback)    
+            pointsCrossWalk = pointsAlongLines(params['CROSSWALK'], 50, context, feedback)              
 
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            layerCrossWalk = calculateField(pointsCrossWalk['OUTPUT'], 'idx', '$id', context,
+                                          feedback, type=1)      
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksFacilities = calculateField(blocksFacilities['OUTPUT'], 'parse_bw',
-                                          formulaParseBW,
-                                          context,
-                                          feedback)  
-
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksFacilities = calculateField(blocksFacilities['OUTPUT'], 'parse_cw',
-                                          formulaParseCW,
+            layerCrossWalk = layerCrossWalk['OUTPUT']
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            counterCrossWalk = joinByLocation(BlockBuffer4CrossWalk['OUTPUT'],
+                                          layerCrossWalk,
+                                          'idx', [INTERSECTA], [COUNT],
+                                          UNDISCARD_NONMATCHING,
                                           context,
                                           feedback)  
 
 
-        formulaFacilities = 'parse_bs + parse_ts + parse_bks + parse_bw + parse_cw'
+            steps = steps+1
+            feedback.setCurrentStep(steps)
+            blocksJoined = joinByAttr(blocksJoined['OUTPUT'], 'id_block',
+                                      counterCrossWalk['OUTPUT'], 'id_block',
+                                      'idx_count',
+                                      UNDISCARD_NONMATCHING,
+                                      'cw_',
+                                      context,
+                                      feedback)              
+          # --------------------------------------------                                                                                     
+                        
+       
+          #TODO: CAMBIAR POR UN METODO BUCLE
+
+          formulaParseBS = 'CASE WHEN coalesce(bs_idx_count, 0) > 0 THEN 1 ELSE 0 END'
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          blocksFacilities = calculateField(blocksJoined['OUTPUT'], 'parse_bs',
+                                            formulaParseBS,
+                                            context,
+                                            feedback)
+
+          formulaParseTS = 'CASE WHEN coalesce(ts_idx_count, 0) > 0 THEN 1 ELSE 0 END'
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          blocksFacilities = calculateField(blocksFacilities['OUTPUT'], 'parse_ts',
+                                            formulaParseTS,
+                                            context,
+                                            feedback)    
+
+          formulaParseBKS = 'CASE WHEN coalesce(bks_idx_count, 0) > 0 THEN 1 ELSE 0 END'
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          blocksFacilities = calculateField(blocksFacilities['OUTPUT'], 'parse_bks',
+                                            formulaParseBKS,
+                                            context,
+                                            feedback)    
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksFacilities = calculateField(blocksFacilities['OUTPUT'], 'facilities',
-                                          formulaFacilities,
-                                          context,
-                                          feedback)
+          formulaParseBW = 'CASE WHEN coalesce(bw_idx_count, 0) > 0 THEN 1 ELSE 0 END'
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          blocksFacilities = calculateField(blocksFacilities['OUTPUT'], 'parse_bw',
+                                            formulaParseBW,
+                                            context,
+                                            feedback)  
 
 
+          formulaParseCW = 'CASE WHEN coalesce(cw_idx_count, 0) > 0 THEN 1 ELSE 0 END'
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          blocksFacilities = calculateField(blocksFacilities['OUTPUT'], 'parse_cw',
+                                            formulaParseCW,
+                                            context,
+                                            feedback)  
 
 
-        """
-        -----------------------------------------------------------------
-        Calcular numero de viviendas por hexagano
-        -----------------------------------------------------------------
-        """
+          formulaFacilities = 'parse_bs + parse_ts + parse_bks + parse_bw + parse_cw'
 
 
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          blocksFacilities = calculateField(blocksFacilities['OUTPUT'], 'facilities',
+                                            formulaFacilities,
+                                            context,
+                                            feedback)
 
-        # Haciendo el buffer inverso aseguramos que los segmentos
-        # quden dentro de la malla
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        facilitiesForSegmentsFixed = makeSureInside(blocksFacilities['OUTPUT'],
-                                                    context,
-                                                    feedback)
+          # Haciendo el buffer inverso aseguramos que los segmentos
+          # quden dentro de la malla
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          facilitiesForSegmentsFixed = makeSureInside(blocksFacilities['OUTPUT'],
+                                                      context,
+                                                      feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                             facilitiesForSegmentsFixed['OUTPUT'],
-                                             'bs_idx_count;ts_idx_count;bks_idx_count;bw_idx_count;cw_idx_count;facilities;pop_seg',
-                                             [CONTIENE], [MAX, SUM], UNDISCARD_NONMATCHING,                 
-                                             context,
-                                             feedback)
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
+                                               facilitiesForSegmentsFixed['OUTPUT'],
+                                               'bs_idx_count;ts_idx_count;bks_idx_count;bw_idx_count;cw_idx_count;facilities;pop_seg',
+                                               [CONTIENE], [MAX, SUM], UNDISCARD_NONMATCHING,                 
+                                               context,
+                                               feedback)
 
-        # tomar solo los que tienen cercania simultanea (descartar lo menores de 3)
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        facilitiesNotNullForSegmentsFixed = filter(facilitiesForSegmentsFixed['OUTPUT'],
-                                                   'facilities', OPERATOR_GE,
-                                                   MIN_FACILITIES, context, feedback)
+          # tomar solo los que tienen cercania simultanea (descartar lo menores de 3)
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          facilitiesNotNullForSegmentsFixed = filter(facilitiesForSegmentsFixed['OUTPUT'],
+                                                     'facilities', OPERATOR_GE,
+                                                     MIN_FACILITIES, context, feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNetoAndSegmentsSimulta = joinByLocation(gridNeto['OUTPUT'],
-                                                    facilitiesNotNullForSegmentsFixed['OUTPUT'],
-                                                    'pop_seg',
-                                                    [CONTIENE], [MAX, SUM], UNDISCARD_NONMATCHING,               
-                                                    context,
-                                                    feedback)
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          gridNetoAndSegmentsSimulta = joinByLocation(gridNeto['OUTPUT'],
+                                                      facilitiesNotNullForSegmentsFixed['OUTPUT'],
+                                                      'pop_seg',
+                                                      [CONTIENE], [MAX, SUM], UNDISCARD_NONMATCHING,               
+                                                      context,
+                                                      feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        totalHousing = joinByAttr(gridNetoAndSegments['OUTPUT'], 'id_grid',
-                                  gridNetoAndSegmentsSimulta['OUTPUT'], 'id_grid',
-                                  'pop_seg_sum',
-                                  UNDISCARD_NONMATCHING,
-                                  'net_',
-                                  context,
-                                  feedback)
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          totalHousing = joinByAttr(gridNetoAndSegments['OUTPUT'], 'id_grid',
+                                    gridNetoAndSegmentsSimulta['OUTPUT'], 'id_grid',
+                                    'pop_seg_sum',
+                                    UNDISCARD_NONMATCHING,
+                                    'net_',
+                                    context,
+                                    feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaProximity = 'coalesce((coalesce(net_pop_seg_sum,0) /  coalesce(pop_seg_sum,""))*100,"")'
-        proximity2AlternativeTransport = calculateField(totalHousing['OUTPUT'], NAMES_INDEX['IC04'][0],
-                                          formulaProximity,
-                                          context,
-                                          feedback, params['OUTPUT'])
+          steps = steps+1
+          feedback.setCurrentStep(steps)
+          formulaProximity = 'coalesce((coalesce(net_pop_seg_sum,0) /  coalesce(pop_seg_sum,""))*100,"")'
+          proximity2AlternativeTransport = calculateField(totalHousing['OUTPUT'], NAMES_INDEX['IC04'][0],
+                                            formulaProximity,
+                                            context,
+                                            feedback, params['OUTPUT'])
 
-        result = proximity2AlternativeTransport
+          result = proximity2AlternativeTransport
 
-      return result
+        return result
+      else:
+         feedback.reportError(str(('Se necesita al menos tres redes de transporte')))    
 
-
+         return {}
 
 
         # Return the results of the algorithm. In this case our only result is

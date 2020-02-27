@@ -19,6 +19,21 @@ import processing
 from .Zettings import *
 
 
+
+def pointsAlongLines(input, distance, context, feedback, output=QgsProcessing.TEMPORARY_OUTPUT):
+    if feedback.isCanceled():
+        return {}    
+    # Puntos a lo largo de geometría
+    alg_params = {
+        'DISTANCE': distance,
+        'END_OFFSET': 0,
+        'INPUT': input,
+        'START_OFFSET': 0,
+        'OUTPUT': output
+    }
+    result = processing.run('native:pointsalonglines', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+    return result
+
 def multiBufferIsocrono(red, colecStartPoints, context, feedback, output=QgsProcessing.TEMPORARY_OUTPUT):      
     result = []
     for startPoints, strategy, travelCost in colecStartPoints:
@@ -454,23 +469,28 @@ def createGrid(input, cellSize, context, feedback,
 
 def calculateField(input, field, formula, context, feedback,
                    output=QgsProcessing.TEMPORARY_OUTPUT, type=0):
+
     if feedback.isCanceled():
         return {}
-    alg_params = {
-        'FIELD_LENGTH': 10,
-        'FIELD_NAME': field,
-        'FIELD_PRECISION': 3,
-        'FIELD_TYPE': type,
-        'FORMULA': formula,
-        'INPUT': input,
-        'NEW_FIELD': True,
-        'OUTPUT': output
-    }
-    result = processing.run('qgis:fieldcalculator', alg_params,
-                            context=context,
-                            feedback=feedback,
-                            is_child_algorithm=True)
-    return result
+
+    if input is not None:
+        alg_params = {
+            'FIELD_LENGTH': 10,
+            'FIELD_NAME': field,
+            'FIELD_PRECISION': 3,
+            'FIELD_TYPE': type,
+            'FORMULA': formula,
+            'INPUT': input,
+            'NEW_FIELD': True,
+            'OUTPUT': output
+        }
+        result = processing.run('qgis:fieldcalculator', alg_params,
+                                context=context,
+                                feedback=feedback,
+                                is_child_algorithm=True)
+        return result
+    else:
+        return None
 
 
 def intersection(input, inputOverlay,
@@ -491,6 +511,7 @@ def intersection(input, inputOverlay,
                             context=context,
                             feedback=feedback,
                             is_child_algorithm=True)
+
     return result
 
 
@@ -527,6 +548,7 @@ def makeSureInside(input, context, feedback,
 def joinByLocation(input, inputJoin, fields, predicate, summaries,
                    discard, context, feedback,
                    output=QgsProcessing.TEMPORARY_OUTPUT):
+
     if feedback.isCanceled():
         return {}
 
@@ -542,4 +564,27 @@ def joinByLocation(input, inputJoin, fields, predicate, summaries,
     result = processing.run('qgis:joinbylocationsummary', alg_params,
                             context=context,
                             feedback=feedback, is_child_algorithm=True)
+    return result
+
+
+def joinByLocationNotSummary(input, inputJoin, fields, predicate,
+                   discard, method, context, feedback,
+                   output=QgsProcessing.TEMPORARY_OUTPUT):
+
+    if feedback.isCanceled():
+        return {}
+    # Unir atributos por localización
+    alg_params = {
+        'DISCARD_NONMATCHING': discard,
+        'INPUT': input,
+        'JOIN': inputJoin,
+        'JOIN_FIELDS': fields,
+        'METHOD': method,
+        'PREDICATE': predicate,
+        'PREFIX': '',
+        'OUTPUT': output
+    }
+    result = processing.run('qgis:joinattributesbylocation', alg_params, 
+        context=context, feedback=feedback, is_child_algorithm=True)
+
     return result

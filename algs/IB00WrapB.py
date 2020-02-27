@@ -37,6 +37,7 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.core import (QgsProcessing,
                        QgsProcessingMultiStepFeedback,
                        QgsFeatureSink,
+                       QgsProcessingParameterEnum,
                        QgsProcessingAlgorithm,
                        QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterField,
@@ -72,7 +73,9 @@ class IB00WrapB(QgsProcessingAlgorithm):
     #-----------------B03----------------------
     NOISE_NIGHT = 'NOISE_NIGHT'
     NOISE_DAY = 'NOISE_DAY'
-    #-----------------B05----------------------
+    #-----------------B04----------------------
+    DISTANCE_OPTIONS = 'DISTANCE_OPTIONS'
+    ROADS = 'ROADS'         
     GREEN = 'GREEN'
     #-----------------B06----------------------    
     EQUIPMENT_GREEN = 'EQUIPMENT_GREEN'
@@ -103,9 +106,20 @@ class IB00WrapB(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
+                self.STUDY_AREA_GRID,
+                self.tr(TEXT_GRID_INPUT),
+                [QgsProcessing.TypeVectorPolygon],
+                '', OPTIONAL_GRID_INPUT
+            )
+        )        
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
                 self.BLOCKS,
                 self.tr('Manzanas'),
-                [QgsProcessing.TypeVectorPolygon]
+                [QgsProcessing.TypeVectorPolygon],
+                optional = True,
+                defaultValue=""
             )
         )
 
@@ -113,7 +127,8 @@ class IB00WrapB(QgsProcessingAlgorithm):
             QgsProcessingParameterField(
                 self.FIELD_POPULATION,
                 self.tr('Población'),
-                'poblacion', 'BLOCKS'
+                'poblacion', 'BLOCKS',
+                optional = True
             )
         )  
 
@@ -121,7 +136,8 @@ class IB00WrapB(QgsProcessingAlgorithm):
             QgsProcessingParameterField(
                 self.FIELD_HOUSING,
                 self.tr('Viviendas'),
-                'viviendas', 'BLOCKS'
+                'viviendas', 'BLOCKS',
+                optional = True
             )
         )   
 
@@ -132,7 +148,8 @@ class IB00WrapB(QgsProcessingAlgorithm):
             QgsProcessingParameterRasterLayer(
                 self.O3,
                 self.tr('O3 OZONO'),
-                # defaultValue=None,
+                optional = True,
+                defaultValue=""
             )
         )          
 
@@ -141,7 +158,8 @@ class IB00WrapB(QgsProcessingAlgorithm):
             QgsProcessingParameterRasterLayer(
                 self.NO2,
                 self.tr('NO2 DIOXIDO DE NITROGENO'),
-                defaultValue=None
+                defaultValue="",
+                optional = True
             )
         )
      
@@ -150,7 +168,8 @@ class IB00WrapB(QgsProcessingAlgorithm):
             QgsProcessingParameterRasterLayer(
                 self.SO2,
                 self.tr('SO2 DIOXIDO DE AZUFRE'),
-                defaultValue=None
+                defaultValue="",
+                optional = True
             )
         )   
 
@@ -159,7 +178,8 @@ class IB00WrapB(QgsProcessingAlgorithm):
             QgsProcessingParameterRasterLayer(
                 self.PS,
                 self.tr('Ps PARTICULAS FINAS'),
-                defaultValue=None
+                defaultValue="",
+                optional = True
             )
         )  
 
@@ -168,7 +188,9 @@ class IB00WrapB(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.ROADS,
                 self.tr('Vías públicas'),
-                [QgsProcessing.TypeVectorLine]
+                [QgsProcessing.TypeVectorLine],
+                optional = True,
+                defaultValue=""
             )
         )
 
@@ -176,7 +198,9 @@ class IB00WrapB(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.LUMINARY,
                 self.tr('Luminarias'),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.TypeVectorPoint],
+                optional = True,
+                defaultValue=""
             )
         )      
         #-----------------B03----------------------
@@ -184,7 +208,8 @@ class IB00WrapB(QgsProcessingAlgorithm):
             QgsProcessingParameterRasterLayer(
                 self.NOISE_DAY,
                 self.tr('Ruido día'),
-                defaultValue=None
+                defaultValue="",
+                optional = True
             )
         )
      
@@ -193,52 +218,77 @@ class IB00WrapB(QgsProcessingAlgorithm):
             QgsProcessingParameterRasterLayer(
                 self.NOISE_NIGHT,
                 self.tr('Ruido noche'),
-                # defaultValue=None,
+                optional = True,
+                defaultValue=""
             )
         )          
 
-        #-----------------B05----------------------
-        self.addParameter(
-            QgsProcessingParameterFeatureSource(
-                self.GREEN,
-                self.tr('Areas verdes'),
-                [QgsProcessing.TypeVectorAnyGeometry]
-            )
-        )
 
         #-----------------B04----------------------    
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.ROADS,
+                self.tr('Red vial'),
+                [QgsProcessing.TypeVectorLine],
+                optional = True,
+                defaultValue = ""
+            )
+        )  
+
+        self.addParameter(
+          QgsProcessingParameterEnum(
+          self.DISTANCE_OPTIONS,
+          self.tr('Tipo de distancia'),
+          options=['ISOCRONA','RADIAL'], 
+          allowMultiple=False, 
+          defaultValue=1)
+        )  
+
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.EQUIPMENT_GREEN,
                 self.tr('Espacio verde público'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorPoint],
+                optional = True,
+                defaultValue=""
             )
         )
-        #-----------------B07----------------------    
+
+        #-----------------B05----------------------
+
         self.addParameter(
             QgsProcessingParameterFeatureSource(
-                self.SOIL,
-                self.tr('Suelo permeable'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                self.GREEN,
+                self.tr('Areas verdes'),
+                [QgsProcessing.TypeVectorAnyGeometry],
+                optional = True,
+                defaultValue=""
             )
         )
+
         #-----------------B06----------------------    
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.AGRICULTRURAL,
                 self.tr('Areas verdes'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorAnyGeometry],
+                optional = True,
+                defaultValue=""
             )
         )
-        #-----------------OTHERS----------------------
+
+        #-----------------B07----------------------    
         self.addParameter(
             QgsProcessingParameterFeatureSource(
-                self.STUDY_AREA_GRID,
-                self.tr(TEXT_GRID_INPUT),
-                [QgsProcessing.TypeVectorPolygon],
-                '', OPTIONAL_GRID_INPUT
+                self.SOIL,
+                self.tr('Suelo permeable'),
+                [QgsProcessing.TypeVectorAnyGeometry],
+                optional = True,
+                defaultValue=""
             )
-        )
+        )        
+        #-----------------OTHERS----------------------
 
         self.addParameter(
             QgsProcessingParameterFeatureSink(
@@ -314,116 +364,165 @@ class IB00WrapB(QgsProcessingAlgorithm):
         results = {}
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-        # B01 Calidad del aire
-        steps = steps+1
-        feedback.setCurrentStep(steps)  
-        if feedback.isCanceled():
-            return {}
-        alg_params = {
-            'BLOCKS': params['BLOCKS'],
-            'FIELD_POPULATION': params['FIELD_POPULATION'],
-            'NO2': params['NO2'],
-            'O3': params['O3'],
-            'PS': params['PS'],
-            'SO2': params['SO2'],
-            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_B01']
-        }
-        outputs['B01CalidadDelAire'] = processing.run('SISURBANO:B01 Calidad del aire', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_B01'] = outputs['B01CalidadDelAire']['OUTPUT']    
+        isValid = lambda x: False if x is None else True
+
+        isBlocks = isValid(params['BLOCKS'])        
+        isFieldPopulation = isValid(params['FIELD_POPULATION'])
+        isFieldHousing = isValid(params['FIELD_HOUSING'])
+        isStudyArea = isValid(params['STUDY_AREA_GRID']) 
+
+        isNo2 = isValid(params['NO2'])     
+        isO3 = isValid(params['O3'])     
+        isPS = isValid(params['PS'])     
+        isSO2 = isValid(params['SO2'])    
 
 
-        # B02 Luminación nocturna del viario público
-        steps = steps+1
-        feedback.setCurrentStep(steps)  
-        if feedback.isCanceled():
-            return {}        
-        alg_params = {
-            'BLOCKS': params['BLOCKS'],
-            'FIELD_POPULATION': params['FIELD_POPULATION'],
-            'LUMINARY': params['LUMINARY'],
-            'ROADS': params['ROADS'],
-            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_B02']
-        }
-        outputs['B02LuminacinNocturnaDelViarioPblico'] = processing.run('SISURBANO:B02 Luminación nocturna del viario público', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_B02'] = outputs['B02LuminacinNocturnaDelViarioPblico']['OUTPUT']        
+        if isBlocks and isFieldPopulation and isNo2 and isO3 and isPS and isSO2:
+            # B01 Calidad del aire
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}
+            alg_params = {
+                'BLOCKS': params['BLOCKS'],
+                'FIELD_POPULATION': params['FIELD_POPULATION'],
+                'NO2': params['NO2'],
+                'O3': params['O3'],
+                'PS': params['PS'],
+                'SO2': params['SO2'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'OUTPUT': params['OUTPUT_B01']
+            }
+            outputs['B01CalidadDelAire'] = processing.run('SISURBANO:B01 Calidad del aire', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_B01'] = outputs['B01CalidadDelAire']['OUTPUT']    
 
 
-        # B03 Confort acústico
-        steps = steps+1
-        feedback.setCurrentStep(steps)  
-        if feedback.isCanceled():
-            return {}            
-        alg_params = {
-            'BLOCKS': params['BLOCKS'],
-            'FIELD_POPULATION': params['FIELD_POPULATION'],
-            'NOISE_DAY': params['NOISE_DAY'],
-            'NOISE_NIGHT': params['NOISE_NIGHT'],
-            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_B03']
-        }
-        outputs['B03ConfortAcstico'] = processing.run('SISURBANO:B03 Confort acústico', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_B03'] = outputs['B03ConfortAcstico']['OUTPUT']        
-                    
 
-        # B05 Superficie verde por habitante
-        steps = steps+1
-        feedback.setCurrentStep(steps)  
-        if feedback.isCanceled():
-            return {}          
-        alg_params = {
-            'BLOCKS': params['BLOCKS'],
-            'FIELD_POPULATION': params['FIELD_POPULATION'],
-            'GREEN': params['GREEN'],
-            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_B05']
-        }
-        outputs['B05SuperficieVerdePorHabitante'] = processing.run('SISURBANO:B05 Superficie verde por habitante', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_B05'] = outputs['B05SuperficieVerdePorHabitante']['OUTPUT']                          
+        isLuminary = isValid(params['LUMINARY'])    
+        isRoads = isValid(params['ROADS'])    
 
-        # B04 Proximidad al espacio verde público más cercano
-        steps = steps+1
-        feedback.setCurrentStep(steps)  
-        if feedback.isCanceled():
-            return {}            
-        alg_params = {
-            'BLOCKS': params['BLOCKS'],
-            'EQUIPMENT_GREEN': params['EQUIPMENT_GREEN'],
-            'FIELD_POPULATION': params['FIELD_POPULATION'],
-            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_B04']
-        }
-        outputs['B04ProximidadAlEspacioVerdePblicoMsCercano'] = processing.run('SISURBANO:B04 Proximidad al espacio verde público más cercano', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_B04'] = outputs['B04ProximidadAlEspacioVerdePblicoMsCercano']['OUTPUT']
 
-        # B07 Permeabilidad del suelo
-        steps = steps+1
-        feedback.setCurrentStep(steps)  
-        if feedback.isCanceled():
-            return {}            
-        alg_params = {
-            'BLOCKS': params['BLOCKS'],
-            'SOIL': params['SOIL'],
-            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_B07']
-        }
-        outputs['B07PermeabilidadDelSuelo'] = processing.run('SISURBANO:B07 Permeabilidad del suelo', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_B07'] = outputs['B07PermeabilidadDelSuelo']['OUTPUT']    
+        if isBlocks and isFieldPopulation and isLuminary and isRoads:
+            # B02 Luminación nocturna del viario público
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}        
+            alg_params = {
+                'BLOCKS': params['BLOCKS'],
+                'FIELD_POPULATION': params['FIELD_POPULATION'],
+                'LUMINARY': params['LUMINARY'],
+                'ROADS': params['ROADS'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'OUTPUT': params['OUTPUT_B02']
+            }
+            outputs['B02LuminacinNocturnaDelViarioPblico'] = processing.run('SISURBANO:B02 Luminación nocturna del viario público', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_B02'] = outputs['B02LuminacinNocturnaDelViarioPblico']['OUTPUT']        
 
-        # B08 Superficie agrícola y huertos
-        steps = steps+1
-        feedback.setCurrentStep(steps)  
-        if feedback.isCanceled():
-            return {}            
-        alg_params = {
-            'AGRICULTRURAL': params['AGRICULTRURAL'],
-            'BLOCKS': params['BLOCKS'],
-            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_B06']
-        }
-        outputs['B06SuperficieDeReaAgrcolahuertos'] = processing.run('SISURBANO:B06 Superficie agrícola y huertos', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_B06'] = outputs['B06SuperficieDeReaAgrcolahuertos']['OUTPUT']            
+
+
+
+        isNoiseDay = isValid(params['NOISE_DAY'])    
+        isNoiseNight = isValid(params['NOISE_NIGHT'])    
+
+
+        if isBlocks and isFieldPopulation and isNoiseDay and isNoiseNight:
+            # B03 Confort acústico
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}            
+            alg_params = {
+                'BLOCKS': params['BLOCKS'],
+                'FIELD_POPULATION': params['FIELD_POPULATION'],
+                'NOISE_DAY': params['NOISE_DAY'],
+                'NOISE_NIGHT': params['NOISE_NIGHT'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'OUTPUT': params['OUTPUT_B03']
+            }
+            outputs['B03ConfortAcstico'] = processing.run('SISURBANO:B03 Confort acústico', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_B03'] = outputs['B03ConfortAcstico']['OUTPUT']  
+
+
+        
+        isEquipementGreen = isValid(params['EQUIPMENT_GREEN'])    
+        isDistanceOptions = isValid(params['DISTANCE_OPTIONS'])    
+               
+        
+        if isBlocks and isEquipementGreen and isRoads and isDistanceOptions and isFieldPopulation:                   
+            # B04 Proximidad al espacio verde público más cercano
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}            
+            alg_params = {
+                'BLOCKS': params['BLOCKS'],
+                'EQUIPMENT_GREEN': params['EQUIPMENT_GREEN'],
+                'ROADS': params['ROADS'],
+                'DISTANCE_OPTIONS': params['DISTANCE_OPTIONS'],               
+                'FIELD_POPULATION': params['FIELD_POPULATION'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'OUTPUT': params['OUTPUT_B04']
+            }
+            outputs['B04ProximidadAlEspacioVerdePblicoMsCercano'] = processing.run('SISURBANO:B04 Proximidad al espacio verde público más cercano', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_B04'] = outputs['B04ProximidadAlEspacioVerdePblicoMsCercano']['OUTPUT']
+
+
+        isGreen = isValid(params['GREEN'])    
+
+        if isBlocks and isFieldPopulation and isGreen:
+            # B05 Superficie verde por habitante
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}          
+            alg_params = {
+                'BLOCKS': params['BLOCKS'],
+                'FIELD_POPULATION': params['FIELD_POPULATION'],
+                'GREEN': params['GREEN'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'OUTPUT': params['OUTPUT_B05']
+            }
+            outputs['B05SuperficieVerdePorHabitante'] = processing.run('SISURBANO:B05 Superficie verde por habitante', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_B05'] = outputs['B05SuperficieVerdePorHabitante']['OUTPUT']                   
+
+
+
+        isAgricultural = isValid(params['AGRICULTRURAL'])           
+
+        
+        if isAgricultural and isBlocks:
+            # B06 Superficie agrícola y huertos
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}            
+            alg_params = {
+                'AGRICULTRURAL': params['AGRICULTRURAL'],
+                'BLOCKS': params['BLOCKS'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'OUTPUT': params['OUTPUT_B06']
+            }
+            outputs['B06SuperficieDeReaAgrcolahuertos'] = processing.run('SISURBANO:B06 Superficie agrícola y huertos', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_B06'] = outputs['B06SuperficieDeReaAgrcolahuertos']['OUTPUT']     
+
+
+        isSoil = isValid(params['SOIL'])     
+
+        if isBlocks and isSoil:
+            # B07 Permeabilidad del suelo
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}            
+            alg_params = {
+                'BLOCKS': params['BLOCKS'],
+                'SOIL': params['SOIL'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'OUTPUT': params['OUTPUT_B07']
+            }
+            outputs['B07PermeabilidadDelSuelo'] = processing.run('SISURBANO:B07 Permeabilidad del suelo', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_B07'] = outputs['B07PermeabilidadDelSuelo']['OUTPUT']    
 
         return results
 

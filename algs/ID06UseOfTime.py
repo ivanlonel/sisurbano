@@ -97,9 +97,9 @@ class ID06UseOfTime(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFile(
                 self.ENCUESTA,
-                self.tr('Censo vivienda'),
+                self.tr('Encuesta específica de uso del tiempo'),
                 extension='csv',
-                defaultValue='/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Base EUT 2012.csv'
+                defaultValue=''
             )
         )           
 

@@ -104,7 +104,7 @@ class ID08Proximity2PublicMarket(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.ROADS,
-                self.tr('Red vial'),
+                self.tr('Red vial (obligatorio para distancia ISOCRONA)'),
                 [QgsProcessing.TypeVectorLine],
                 optional = True,
                 defaultValue = ''

@@ -205,7 +205,7 @@ class IB07SoilPermeability(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaSurfaceAgri = 'coalesce((area_soil_sum/area_grid)*100, 0)'
+      formulaSurfaceAgri = 'coalesce((area_soil_sum/area_grid)*100, "")'
       surfaceAgri = calculateField(soilArea['OUTPUT'],
                                    NAMES_INDEX['IB07'][0],
                                    formulaSurfaceAgri,

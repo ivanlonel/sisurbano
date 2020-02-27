@@ -89,7 +89,7 @@ from .algs import (
     ZN02AllocateValues,
     ZN03WrapValues,
     ZN04AllocateValuesToPoints,
-
+    ZN05AllocateValuesForArea
     )
 
 
@@ -167,6 +167,7 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(ZN02AllocateValues.ZN02AllocateValues())
         self.addAlgorithm(ZN03WrapValues.ZN03WrapValues())
         self.addAlgorithm(ZN04AllocateValuesToPoints.ZN04AllocateValuesToPoints())
+        self.addAlgorithm(ZN05AllocateValuesForArea.ZN05AllocateValuesForArea())
 
 
         # add additional algorithms here

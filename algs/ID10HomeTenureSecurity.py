@@ -92,21 +92,12 @@ class ID10HomeTenureSecurity(QgsProcessingAlgorithm):
             )
         )           
 
-        # self.addParameter(
-        #     QgsProcessingParameterFile(
-        #         self.CENSO_POBLACION,
-        #         self.tr('Censo población'),
-        #         extension='csv',
-        #         defaultValue="/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Pob_Manz.csv"
-        #     )
-        # ) 
-
         self.addParameter(
             QgsProcessingParameterFile(
                 self.CENSO_HOGAR,
                 self.tr('Censo hogar'),
                 extension='csv',
-                defaultValue="/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Hog_Manz.csv"
+                defaultValue=""
             )
         )           
 
@@ -115,7 +106,7 @@ class ID10HomeTenureSecurity(QgsProcessingAlgorithm):
                 self.CENSO_VIVIENDA,
                 self.tr('Censo vivienda'),
                 extension='csv',
-                defaultValue='/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Viv_Manz.csv'
+                defaultValue=''
             )
         )           
 

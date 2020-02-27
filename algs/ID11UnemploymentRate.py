@@ -93,9 +93,9 @@ class ID11UnemploymentRate(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFile(
                 self.ENCUESTA,
-                self.tr('Censo vivienda'),
+                self.tr('Encuesta de Empleo, Desempleo y Subempleo'),
                 extension='csv',
-                defaultValue='/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/ENEMDU_acumulada_BDDpersona2018.csv'
+                defaultValue=''
             )
         )           
 

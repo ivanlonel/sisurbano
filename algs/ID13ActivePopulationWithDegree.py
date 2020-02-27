@@ -96,27 +96,10 @@ class ID13ActivePopulationWithDegree(QgsProcessingAlgorithm):
                 self.CENSO_POBLACION,
                 self.tr('Censo población'),
                 extension='csv',
-                defaultValue="/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Pob_Manz.csv"
+                defaultValue=""
             )
         ) 
 
-        # self.addParameter(
-        #     QgsProcessingParameterFile(
-        #         self.CENSO_HOGAR,
-        #         self.tr('Censo hogar'),
-        #         extension='csv',
-        #         defaultValue="/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Hog_Manz.csv"
-        #     )
-        # )           
-
-        # self.addParameter(
-        #     QgsProcessingParameterFile(
-        #         self.CENSO_VIVIENDA,
-        #         self.tr('Censo vivienda'),
-        #         extension='csv',
-        #         defaultValue='/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Viv_Manz.csv'
-        #     )
-        # )           
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -139,14 +122,6 @@ class ID13ActivePopulationWithDegree(QgsProcessingAlgorithm):
             )          
 
 
-        # self.addParameter(
-        #     QgsProcessingParameterNumber(
-        #         self.NUMBER_HABITANTS,
-        #         self.tr('Por cada número de habitantes'),
-        #         QgsProcessingParameterNumber.Integer,
-        #         100000, False, 1, 99999999
-        #     )
-        # )   
 
         self.addParameter(
             QgsProcessingParameterFeatureSink(

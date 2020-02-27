@@ -105,7 +105,7 @@ class IC09PowerConsumption(QgsProcessingAlgorithm):
                 self.CENSO_HOGAR,
                 self.tr('Censo hogar'),
                 extension='csv',
-                defaultValue="/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Hog_Manz.csv"
+                defaultValue=""
             )
         )           
 
@@ -114,7 +114,7 @@ class IC09PowerConsumption(QgsProcessingAlgorithm):
                 self.CENSO_VIVIENDA,
                 self.tr('Censo vivienda'),
                 extension='csv',
-                defaultValue='/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/Azuay_Viv_Manz.csv'
+                defaultValue=''
             )
         )           
 

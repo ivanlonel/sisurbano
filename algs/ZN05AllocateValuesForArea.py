@@ -48,52 +48,33 @@ from .Zettings import *
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class ZN02AllocateValues(QgsProcessingAlgorithm):
+class ZN05AllocateValuesForArea(QgsProcessingAlgorithm):
     """
     Distribuye la población de las manzanas a los puntos o medidores
     más cercanos al polígono de la manzana
     """  
-    BLOCKS = 'BLOCKS'
-    POINTS = 'POINTS'
-    FIELD_POPULATION = 'FIELD_POPULATION'
-    FIELD_HOUSING = 'FIELD_HOUSING'
+    INPUT_POLYGON = 'INPUT_POLYGON'
+    FIELD_CATEGORIES = 'FIELD_CATEGORIES'
     OUTPUT = 'OUTPUT'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'
 
     def initAlgorithm(self, config):
         self.addParameter(
             QgsProcessingParameterFeatureSource(
-                self.BLOCKS,
-                self.tr('Manzanas'),
+                self.INPUT_POLYGON,
+                self.tr('Polígonos'),
                 [QgsProcessing.TypeVectorPolygon]
             )
         )
 
         self.addParameter(
             QgsProcessingParameterField(
-                self.FIELD_POPULATION,
-                self.tr('Población'),
-                'poblacion', 'BLOCKS'
+                self.FIELD_CATEGORIES,
+                self.tr('Categorías'),
+                'Tipologia', 'INPUT_POLYGON'
             )
         )        
-
-        self.addParameter(
-            QgsProcessingParameterField(
-                self.FIELD_HOUSING,
-                self.tr('Viviendas'),
-                'viviendas', 'BLOCKS'
-            )
-        )           
-
-        self.addParameter(
-            QgsProcessingParameterFeatureSource(
-                self.POINTS,
-                self.tr('Medidores'),
-                [QgsProcessing.TypeVectorPoint]
-            )
-        )
-
-
+       
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.STUDY_AREA_GRID,
@@ -113,82 +94,69 @@ class ZN02AllocateValues(QgsProcessingAlgorithm):
     def processAlgorithm(self, params, context, feedback):
         steps = 0
         totalStpes = 6
-        fieldPopulation = params['FIELD_POPULATION']
-        fieldHousing = params['FIELD_HOUSING']
-        DISCARD = True
-        UNDISCARD = False
+        fieldCategories = params['FIELD_CATEGORIES']
+
 
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)    
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksWithId = calculateField(params['BLOCKS'], 'id_block', '$id', context,
-                                      feedback, type=1)   
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['INPUT_POLYGON'],
+                                         params['STUDY_AREA_GRID'],
+                                         context, feedback)
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        pointsJoined = joinAttrByNear(params['POINTS'],
-                                      blocksWithId['OUTPUT'], [],
-                                      UNDISCARD,
-                                      'blk_',
-                                      5,
-                                      1,
-                                      context,
-                                      feedback)
-
+        gridNeto = grid
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        statistics = statisticsByCategories(pointsJoined['OUTPUT'], 
-                                            ['blk_id_block'],
-                                            None,
-                                            context,
-                                            feedback)
+        segments = intersection(params['INPUT_POLYGON'], gridNeto['OUTPUT'],
+                                [fieldCategories],
+                                ['id_grid'],
+                                context, feedback)
 
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        pointsJoinedStast = joinByAttr(pointsJoined['OUTPUT'], 
-                                       'blk_id_block',
-                                       statistics['OUTPUT'], 
-                                       'blk_id_block',
-                                       'count',
-                                       DISCARD,
-                                       'st_',
-                                       context,
-                                       feedback)   
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                     'area_seg',
+                                     context, feedback)
 
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaPopulationPerPoint = 'blk_' + fieldPopulation + ' / st_count' 
-        populationPerPoint = calculateField(pointsJoinedStast['OUTPUT'],
-                                       'population',
-                                       formulaPopulationPerPoint,
-                                       context,
-                                       feedback)    
+        segmentsSure = makeSureInside(segmentsArea['OUTPUT'],
+                                                    context,
+                                                    feedback)
 
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaHousingPerPoint = 'blk_' + fieldHousing + ' / st_count' 
-        housingPerPoint = calculateField(populationPerPoint['OUTPUT'],
-                                       'housing',
-                                       formulaHousingPerPoint,
-                                       context,
-                                       feedback)    
+        formulaMayorArea = 'case when area_seg / maximum(area_seg, group_by:=id_grid) is 1 then 1 else 0 end'
+        polygonIsAndNotArea = calculateField(segmentsSure['OUTPUT'], 'ismax',
+                                               formulaMayorArea,
+                                               context,
+                                               feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        filterOnlyMax = 'ismax is 1'
+        onlyMaxArea = filterByExpression(polygonIsAndNotArea['OUTPUT'],
+                                               filterOnlyMax,
+                                               context,
+                                               feedback)
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        result = joinByLocationNotSummary(gridNeto['OUTPUT'],
+                                         onlyMaxArea['OUTPUT'],
+                                         [fieldCategories],                                   
+                                          [CONTIENE],
+                                          UNDISCARD_NONMATCHING, 1,
+                                          context,
+                                          feedback, params['OUTPUT'])         
 
 
-        gridPopulation= joinByLocation(params['STUDY_AREA_GRID'],
-                                             housingPerPoint['OUTPUT'],
-                                             'population;housing',                                   
-                                              [CONTIENE], [SUM],
-                                              UNDISCARD_NONMATCHING,
-                                              context,
-                                              feedback,  params['OUTPUT'])   
-
-        return gridPopulation    
+        return result    
 
         # Return the results of the algorithm. In this case our only result is
         # the feature sink which contains the processed features, but some
@@ -199,7 +167,7 @@ class ZN02AllocateValues(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
                                           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'hexpo.jpg'))
+        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'manyInv.png'))
 
     def name(self):
         """
@@ -209,7 +177,7 @@ class ZN02AllocateValues(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Z02 Distribuir valores polígono a malla'
+        return 'Z05 Asignar categoría con mayor área'
 
     def displayName(self):
         """
@@ -239,5 +207,5 @@ class ZN02AllocateValues(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return ZN02AllocateValues()
+        return ZN05AllocateValuesForArea()
 

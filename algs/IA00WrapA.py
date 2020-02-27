@@ -38,6 +38,7 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingMultiStepFeedback,
                        QgsFeatureSink,
                        QgsProcessingAlgorithm,
+                       QgsProcessingParameterEnum,
                        QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterField,
                        QgsProcessingParameterNumber,
@@ -61,6 +62,10 @@ class IA00WrapA(QgsProcessingAlgorithm):
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'
 
     CADASTRE = 'CADASTRE'
+
+    EDIFICACIONES = 'EDIFICACIONES'
+    FLOORS_EDIFICACIONES = 'FLOORS_EDIFICACIONES'
+
     CONSTRUCTION_AREA = 'CONSTRUCTION_AREA'
     FLOORS = 'FLOORS'
 
@@ -74,6 +79,9 @@ class IA00WrapA(QgsProcessingAlgorithm):
 
     EMPTY_PROPERTIES = 'EMPTY_PROPERTIES'
 
+
+    DISTANCE_OPTIONS = 'DISTANCE_OPTIONS'
+    ROADS = 'ROADS'      
     EDUCATION = 'EDUCATION'
     HEALTH = 'HEALTH'
     APPROVAL = 'APPROVAL'
@@ -91,18 +99,25 @@ class IA00WrapA(QgsProcessingAlgorithm):
     TERTIARYUSES = 'TERTIARYUSES'
 
     TERTIARYUSES_ACTIVITIES = 'TERTIARYUSES_ACTIVITIES'   
-    FIELD_ACTIVITIES = 'FIELD_ACTIVITIES' 
+    FIELD_ACTIVITIES = 'FIELD_ACTIVITIES'
+
+
+    ROADS_SINTAXIS = 'ROADS_SINTAXIS'
+    FIELD_SINTAXIS = 'FIELD_SINTAXIS'     
 
     OUTPUT_A01 = 'OUTPUT_A01'
     OUTPUT_A02 = 'OUTPUT_A02'
     OUTPUT_A03 = 'OUTPUT_A03'
     OUTPUT_A04 = 'OUTPUT_A04'
     OUTPUT_A05 = 'OUTPUT_A05'
+    OUTPUT_A06 = 'OUTPUT_A06'
     OUTPUT_A07 = 'OUTPUT_A07'
     OUTPUT_A08 = 'OUTPUT_A08'
     OUTPUT_A09 = 'OUTPUT_A09'
     OUTPUT_A10 = 'OUTPUT_A10'
     OUTPUT_A11 = 'OUTPUT_A11'
+    OUTPUT_A12 = 'OUTPUT_A12'
+    OUTPUT_A13 = 'OUTPUT_A13'
 
 
     def initAlgorithm(self, config):
@@ -113,17 +128,32 @@ class IA00WrapA(QgsProcessingAlgorithm):
         FULL_PATH_A03 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA03'][1]))
         FULL_PATH_A04 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA04'][1]))
         FULL_PATH_A05 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA05'][1]))
+        FULL_PATH_A06 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA06'][1]))
         FULL_PATH_A07 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA07'][1]))
         FULL_PATH_A08 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA08'][1]))
         FULL_PATH_A09 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA09'][1]))
         FULL_PATH_A10 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA10'][1]))
         FULL_PATH_A11 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA11'][1]))
+        FULL_PATH_A12 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA12'][1]))
+        FULL_PATH_A13 = buildFullPathName(currentPath, nameWithOuputExtension(NAMES_INDEX['IA13'][1]))
+
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.STUDY_AREA_GRID,
+                self.tr(TEXT_GRID_INPUT),
+                [QgsProcessing.TypeVectorPolygon],
+                optional = OPTIONAL_GRID_INPUT,
+            )
+        )
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.BLOCKS,
                 self.tr('Manzanas'),
-                [QgsProcessing.TypeVectorPolygon]
+                [QgsProcessing.TypeVectorPolygon],
+                optional = True,
+                defaultValue=""
             )
         )
 
@@ -131,7 +161,8 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterField(
                 self.FIELD_POPULATION,
                 self.tr('Población'),
-                'poblacion', 'BLOCKS'
+                'poblacion', 'BLOCKS',
+                optional = True
             )
         )  
 
@@ -139,7 +170,8 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterField(
                 self.FIELD_HOUSING,
                 self.tr('Viviendas'),
-                'viviendas', 'BLOCKS'
+                'viviendas', 'BLOCKS',
+                optional = True
             )
         )   
 
@@ -147,23 +179,28 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.CADASTRE,
                 self.tr('Catastro'),
-                [QgsProcessing.TypeVectorPolygon]
+                [QgsProcessing.TypeVectorPolygon],
+                optional = True,
+                defaultValue=""
             )
         )
+
 
         self.addParameter(
             QgsProcessingParameterField(
                 self.CONSTRUCTION_AREA,
                 self.tr('Area de construcción'),
-                'Area Cons', 'CADASTRE'
+                'Area Cons', 'CADASTRE',
+                optional = True
             )
         )      
 
         self.addParameter(
             QgsProcessingParameterField(
                 self.FLOORS,
-                self.tr('Pisos de construcción'),
-                'Pisos cons', 'CADASTRE'
+                self.tr('Pisos de construcción catastro'),
+                'Pisos cons', 'CADASTRE',
+                optional = True
             )
         )   
 
@@ -173,7 +210,9 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.BLOCKS_LAST,
                 self.tr('Manzanas en el último año'),
-                [QgsProcessing.TypeVectorPolygon]
+                [QgsProcessing.TypeVectorPolygon],
+                optional = True,
+                defaultValue=""
             )
         )
 
@@ -181,7 +220,8 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterField(
                 self.FIELD_POPULATION_LAST,
                 self.tr('Población en el último año'),
-                'poblacion', 'BLOCKS_LAST'
+                'poblacion', 'BLOCKS_LAST',
+                optional = True
             )
         )    
 
@@ -189,7 +229,9 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.BLOCKS_BEGIN,
                 self.tr('Manzanas en el año inicial'),
-                [QgsProcessing.TypeVectorPolygon]
+                [QgsProcessing.TypeVectorPolygon],
+                optional = True,
+                defaultValue=""
             )
         )
 
@@ -197,7 +239,8 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterField(
                 self.FIELD_POPULATION_BEGIN,
                 self.tr('Población en el último año'),
-                'poblacion', 'BLOCKS_BEGIN'
+                'poblacion', 'BLOCKS_BEGIN',
+                optional = True
             )
         )              
 
@@ -206,7 +249,9 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.BUILT_LAST,
                 self.tr('Área edificada en el último año'),
-                [QgsProcessing.TypeVectorPolygon]
+                [QgsProcessing.TypeVectorPolygon],
+                optional = True,
+                defaultValue=""
             )
         )
 
@@ -214,7 +259,9 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.BUILT_BEGIN,
                 self.tr('Área edificada en el año inicial'),
-                [QgsProcessing.TypeVectorPolygon]
+                [QgsProcessing.TypeVectorPolygon],
+                optional = True,
+                defaultValue=""
             )
         )
 
@@ -232,15 +279,60 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.EMPTY_PROPERTIES,
                 self.tr('Predios vacíos'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorAnyGeometry],
+                optional = True,
+                defaultValue=""
             )
         )
+
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.EDIFICACIONES,
+                self.tr('Edificaciones'),
+                [QgsProcessing.TypeVectorPolygon],
+                optional = True,
+                defaultValue=""
+            )
+        )        
+
+
+        self.addParameter(
+            QgsProcessingParameterField(
+                self.FLOORS_EDIFICACIONES,
+                self.tr('Pisos de construcción edificaciones'),
+                'Pisos cons', 'EDIFICACIONES',
+                optional = True
+            )
+        ) 
+
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.ROADS,
+                self.tr('Red vial'),
+                [QgsProcessing.TypeVectorLine],
+                optional = True,
+                defaultValue = ''
+            )
+        )  
+
+        self.addParameter(
+          QgsProcessingParameterEnum(
+          self.DISTANCE_OPTIONS,
+          self.tr('Tipo de distancia'),
+          options=['ISOCRONA','RADIAL'], 
+          allowMultiple=False, 
+          defaultValue=1)
+        )   
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.EDUCATION,
                 self.tr('Educación'),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.TypeVectorPoint],
+                optional = True,
+                defaultValue=""
             )
         )
 
@@ -248,7 +340,9 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.HEALTH,
                 self.tr('Salud'),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.TypeVectorPoint],
+                optional = True,
+                defaultValue=""
             )
         )  
 
@@ -256,7 +350,9 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.APPROVAL,
                 self.tr('Aprovisionamiento'),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.TypeVectorPoint],
+                optional = True,
+                defaultValue=""
             )
         )    
 
@@ -264,7 +360,9 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.SPORTS,
                 self.tr('Deportivos recreativos'),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.TypeVectorPoint],
+                optional = True,
+                defaultValue=""
             )
         )           
 
@@ -273,7 +371,9 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.ADMIN_PUBLIC,
                 self.tr('Gestión Pública'),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.TypeVectorPoint],
+                optional = True,
+                defaultValue=""
             )
         ) 
 
@@ -282,7 +382,9 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.EQUIPMENT_PUBLIC_SPACE,
                 self.tr('Espacios públicos abiertos'),
-                [QgsProcessing.TypeVectorAnyGeometry]
+                [QgsProcessing.TypeVectorAnyGeometry],
+                optional = True,
+                defaultValue=""
             )
         )
 
@@ -337,7 +439,9 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.TERTIARYUSES,
                 self.tr('Uos terciarios (comercio, servicios u oficinas)'),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.TypeVectorPoint],
+                optional = True,
+                defaultValue=""
             )
         )
 
@@ -345,7 +449,9 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSource(
                 self.TERTIARYUSES_ACTIVITIES,
                 self.tr('Equipamientos de actividades'),
-                [QgsProcessing.TypeVectorPoint]
+                [QgsProcessing.TypeVectorPoint],
+                optional = True,
+                defaultValue=""
             )
         )    
 
@@ -353,19 +459,33 @@ class IA00WrapA(QgsProcessingAlgorithm):
             QgsProcessingParameterField(
                 self.FIELD_ACTIVITIES,
                 self.tr('Actividades'),
-                'categoria', 'TERTIARYUSES_ACTIVITIES'
+                'categoria', 'TERTIARYUSES_ACTIVITIES',
+                optional = True
             )
         )  
 
+
         self.addParameter(
             QgsProcessingParameterFeatureSource(
-                self.STUDY_AREA_GRID,
-                self.tr(TEXT_GRID_INPUT),
-                [QgsProcessing.TypeVectorPolygon],
-                '', OPTIONAL_GRID_INPUT
+                self.ROADS_SINTAXIS,
+                self.tr('Vías SINTAXIS ESPACIAL'),
+                [QgsProcessing.TypeVectorLine],
+                optional = True,
+                defaultValue=""                
             )
         )
 
+        self.addParameter(
+            QgsProcessingParameterField(
+                self.FIELD_SINTAXIS,
+                self.tr('Valor'),
+                'NACH_slen', 'ROADS_SINTAXIS',
+                optional = True           
+            )
+        )  
+
+
+        # ---------------------OUTPUTS---------------------------------
         self.addParameter(
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT_A01,
@@ -411,6 +531,14 @@ class IA00WrapA(QgsProcessingAlgorithm):
             )
         )         
 
+        self.addParameter(
+            QgsProcessingParameterFeatureSink(
+                self.OUTPUT_A06,
+                self.tr('A06 Proporción de la calle'),
+                QgsProcessing.TypeVectorAnyGeometry,
+                str(FULL_PATH_A06)
+            )
+        )    
 
         self.addParameter(
             QgsProcessingParameterFeatureSink(
@@ -456,180 +584,341 @@ class IA00WrapA(QgsProcessingAlgorithm):
                 QgsProcessing.TypeVectorAnyGeometry,
                 str(FULL_PATH_A11)
             )
-        )               
+        )    
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSink(
+                self.OUTPUT_A12,
+                self.tr('A12 Densidad de intersecciones peatonales'),
+                QgsProcessing.TypeVectorAnyGeometry,
+                str(FULL_PATH_A12)
+            )
+        )  
+
+        self.addParameter(
+            QgsProcessingParameterFeatureSink(
+                self.OUTPUT_A13,
+                self.tr('A13 Accesibilidad al tejido'),
+                QgsProcessing.TypeVectorAnyGeometry,
+                str(FULL_PATH_A13)
+            )
+        )                             
 
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
-        totalStpes = 12
+        totalStpes = 13
         outputs = {}
         results = {}
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-        # A01 Densidad neta de habitantes
-        steps = steps+1
-        feedback.setCurrentStep(steps)  
-        if feedback.isCanceled():
-            return {}
-        alg_params = {
-            'BLOCKS': params['BLOCKS'],
-            'FIELD_POPULATION': params['FIELD_POPULATION'],
-            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_A01']
-        }
-        outputs['A01DensidadNetaDeHabitantes'] = processing.run('SISURBANO:A01 Densidad neta de habitantes', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_A01'] = outputs['A01DensidadNetaDeHabitantes']['OUTPUT']        
- 
-        # A02 Densidad neta de viviendas
-        steps = steps+1
-        feedback.setCurrentStep(steps)  
-        if feedback.isCanceled():
-            return {}
-        alg_params = {
-            'BLOCKS': params['BLOCKS'],
-            'FIELD_HOUSING': params['FIELD_HOUSING'],
-            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_A02']
-        }
-        outputs['A02DensidadNetaDeViviendas'] = processing.run('SISURBANO:A02 Densidad neta de viviendas', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_A02'] = outputs['A02DensidadNetaDeViviendas']['OUTPUT']
 
-        # A03 Compacidad absoluta
-        steps = steps+1
-        feedback.setCurrentStep(steps)  
-        if feedback.isCanceled():
-            return {}
-        alg_params = {
-            'CADASTRE': params['CADASTRE'],
-            'CONSTRUCTION_AREA': params['CONSTRUCTION_AREA'],
-            'FLOORS': params['FLOORS'],
-            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_A03']
-        }
-        outputs['A03CompacidadAbsoluta'] = processing.run('SISURBANO:A03 Compacidad absoluta', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_A03'] = outputs['A03CompacidadAbsoluta']['OUTPUT']
+        isValid = lambda x: False if x is None else True
 
-        # A04 Eficiencia en el uso del territorio
-        steps = steps+1
-        feedback.setCurrentStep(steps)  
-        if feedback.isCanceled():
-            return {}
-        alg_params = {
-            'BLOCKS_LAST': params['BLOCKS_LAST'],
-            'BLOCKS_BEGIN': params['BLOCKS_BEGIN'],
-            'BUILT_BEGIN': params['BUILT_BEGIN'],
-            'BUILT_LAST': params['BUILT_LAST'],
-            'FIELD_POPULATION_LAST': params['FIELD_POPULATION_LAST'],
-            'FIELD_POPULATION_BEGIN': params['FIELD_POPULATION_BEGIN'],
-            'YEARS': params['YEARS'],
-            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_A04']
-        }
-        outputs['A04EficienciaEnElUsoDelTerritorio'] = processing.run('SISURBANO:A04 Eficiencia en el uso del territorio', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_A04'] = outputs['A04EficienciaEnElUsoDelTerritorio']['OUTPUT']    
+        isBlocks = isValid(params['BLOCKS'])
+        isFieldPopulation = isValid(params['FIELD_POPULATION'])
+        isFieldHousing = isValid(params['FIELD_HOUSING'])
 
-        # A05 Área de predios vacíos
-        steps = steps+1
-        feedback.setCurrentStep(steps)  
-        if feedback.isCanceled():
-            return {}
-        alg_params = {
-            'BLOCKS': params['BLOCKS'],
-            'EMPTY_PROPERTIES': params['EMPTY_PROPERTIES'],
-            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_A05']
-        }
-        outputs['A05ReaDePrediosVacos'] = processing.run('SISURBANO:A05 Área de predios vacíos', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_A05'] = outputs['A05ReaDePrediosVacos']['OUTPUT']
+        isStudyArea = isValid(params['STUDY_AREA_GRID'])
 
+        isCadastre = isValid(params['CADASTRE'])
+        isConstructionArea = isValid(params['CONSTRUCTION_AREA'])
+        isFloor = isValid(params['FLOORS'])
 
-        # A07 Proximidad a servicios urbanos básicos
-        steps = steps+1
-        feedback.setCurrentStep(steps)  
-        if feedback.isCanceled():
-            return {}        
-        alg_params = {
-            'ADMIN_PUBLIC': params['ADMIN_PUBLIC'],
-            'APPROVAL': params['APPROVAL'],
-            'BLOCKS': params['BLOCKS'],
-            'EDUCATION': params['EDUCATION'],
-            'FIELD_HOUSING': params['FIELD_HOUSING'],
-            'HEALTH': params['HEALTH'],
-            'SPORTS': params['SPORTS'],
-            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_A07']
-        }
-        outputs['A07ProximidadAServiciosUrbanosBsicos'] = processing.run('SISURBANO:A07 Proximidad a servicios urbanos básicos', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_A07'] = outputs['A07ProximidadAServiciosUrbanosBsicos']['OUTPUT']  
+        isBlockLast = isValid(params['BLOCKS_LAST'])
+        isBlockBegin = isValid(params['BLOCKS_BEGIN'])
+
+        isBuiltBegin = isValid(params['BUILT_BEGIN'])
+        isBuiltLast = isValid(params['BUILT_LAST'])
+
+        isFieldPopulationLast = isValid(params['FIELD_POPULATION_LAST'])
+        isFieldPopulationBegin = isValid(params['FIELD_POPULATION_BEGIN'])
+
+        isYears = isValid(params['YEARS'])
+
+        isEmptyProperties = isValid(params['EMPTY_PROPERTIES'])
+
+        isDistaceOptions = isValid(params['DISTANCE_OPTIONS'])
+
+        isRoads = isValid(params['ROADS'])
+
+        isEducation = isValid(params['EDUCATION'])
+
+        isHealth = isValid(params['HEALTH'])
+
+        isApproval = isValid(params['APPROVAL'])
+
+        isSports = isValid(params['SPORTS'])
+
+        isAdminPublic =  isValid(params['ADMIN_PUBLIC'])
+
+        isEquipmentPublicSpace = isValid(params['EQUIPMENT_PUBLIC_SPACE'])
+
+        isShop = isValid(params['SHOP'])
+
+        isGas = isValid(params['GAS'])
+
+        isPharmacy = isValid(params['PHARMACY'])
+
+        isBakery = isValid(params['BAKERY'])
+
+        isStationary = isValid(params['STATIONERY'])
+
+        isTertiaryuses = isValid(params['TERTIARYUSES'])
+
+        isTertiaryusesActivities = isValid(params['TERTIARYUSES_ACTIVITIES'])
+
+        isFieldActivities = isValid(params['FIELD_ACTIVITIES'])
+
+        isEdificaciones = isValid(params['EDIFICACIONES'])
+        isFloorEdificaciones = isValid(params['FLOORS_EDIFICACIONES'])
+
+        isRoadsSitanxis = isValid(params['ROADS_SINTAXIS'])
+        isFieldSitanxis = isValid(params['FIELD_SINTAXIS'])
+
+        if isBlocks and isFieldPopulation:
+            # A01 Densidad neta de habitantes
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}
+            alg_params = {
+                'BLOCKS': params['BLOCKS'],
+                'FIELD_POPULATION': params['FIELD_POPULATION'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'OUTPUT': params['OUTPUT_A01']
+            }
+            outputs['A01DensidadNetaDeHabitantes'] = processing.run('SISURBANO:A01 Densidad neta de habitantes', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_A01'] = outputs['A01DensidadNetaDeHabitantes']['OUTPUT']        
 
 
-        # A08 Proximidad al espacio público abierto
-        steps = steps+1
-        feedback.setCurrentStep(steps)  
-        if feedback.isCanceled():
-            return {}            
-        alg_params = {
-            'BLOCKS': params['BLOCKS'],
-            'EQUIPMENT_PUBLIC_SPACE': params['EQUIPMENT_PUBLIC_SPACE'],
-            'FIELD_HOUSING': params['FIELD_HOUSING'],
-            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_A08']
-        }
-        outputs['A08ProximidadAlEspacioPblicoAbierto'] = processing.run('SISURBANO:A08 Proximidad al espacio público abierto', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_A08'] = outputs['A08ProximidadAlEspacioPblicoAbierto']['OUTPUT']      
+        if isBlocks and isFieldHousing:            
+            # A02 Densidad neta de viviendas
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}
+            alg_params = {
+                'BLOCKS': params['BLOCKS'],
+                'FIELD_HOUSING': params['FIELD_HOUSING'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'OUTPUT': params['OUTPUT_A02']
+            }
+            outputs['A02DensidadNetaDeViviendas'] = processing.run('SISURBANO:A02 Densidad neta de viviendas', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_A02'] = outputs['A02DensidadNetaDeViviendas']['OUTPUT']
 
 
-        # A09 Cobertura de actividades comerciales cotinianas
-        steps = steps+1
-        feedback.setCurrentStep(steps)  
-        if feedback.isCanceled():
-            return {}            
-        alg_params = {
-            'BLOCKS': params['BLOCKS'],
-            'FIELD_POPULATE_HOUSING': params['FIELD_HOUSING'],        
-            'BAKERY': params['BAKERY'],
-            'GAS': params['GAS'],
-            'PHARMACY': params['PHARMACY'],
-            'SHOP': params['SHOP'],
-            'STATIONERY': params['STATIONERY'],
-            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'OUTPUT': params['OUTPUT_A09']
-        }
-        outputs['A09CoberturaDeActividadesComercialesCotinianas'] = processing.run('SISURBANO:A09 Cobertura de actividades comerciales cotinianas', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_A09'] = outputs['A09CoberturaDeActividadesComercialesCotinianas']['OUTPUT']   
+        if isCadastre and isConstructionArea and isFloor:
+            # A03 Compacidad absoluta
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}
+            alg_params = {
+                'CADASTRE': params['CADASTRE'],
+                'CONSTRUCTION_AREA': params['CONSTRUCTION_AREA'],
+                'FLOORS': params['FLOORS'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'OUTPUT': params['OUTPUT_A03']
+            }
+            outputs['A03CompacidadAbsoluta'] = processing.run('SISURBANO:A03 Compacidad absoluta', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_A03'] = outputs['A03CompacidadAbsoluta']['OUTPUT']
 
-        # A10 Relación entre actividad y residencia
-        steps = steps+1
-        feedback.setCurrentStep(steps)  
-        if feedback.isCanceled():
-            return {}             
-        alg_params = {
-            'BLOCKS': params['BLOCKS'],
-            'FIELD_HOUSING': params['FIELD_HOUSING'],
-            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'TERTIARYUSES': params['TERTIARYUSES'],
-            'OUTPUT': params['OUTPUT_A10']
-        }
-        outputs['A10RelacinEntreActividadYResidencia'] = processing.run('SISURBANO:A10 Relación entre actividad y residencia', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_A10'] = outputs['A10RelacinEntreActividadYResidencia']['OUTPUT']
+        if (isBlockBegin and isBlockLast and isBuiltBegin 
+        and isBuiltLast and isFieldPopulationBegin 
+        and isFieldPopulationLast and isYears):
+            # A04 Eficiencia en el uso del territorio
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}
+            alg_params = {
+                'BLOCKS_LAST': params['BLOCKS_LAST'],
+                'BLOCKS_BEGIN': params['BLOCKS_BEGIN'],
+                'BUILT_BEGIN': params['BUILT_BEGIN'],
+                'BUILT_LAST': params['BUILT_LAST'],
+                'FIELD_POPULATION_LAST': params['FIELD_POPULATION_LAST'],
+                'FIELD_POPULATION_BEGIN': params['FIELD_POPULATION_BEGIN'],
+                'YEARS': params['YEARS'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'OUTPUT': params['OUTPUT_A04']
+            }
+            outputs['A04EficienciaEnElUsoDelTerritorio'] = processing.run('SISURBANO:A04 Eficiencia en el uso del territorio', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_A04'] = outputs['A04EficienciaEnElUsoDelTerritorio']['OUTPUT']    
 
-        # A11 Complejidad urbana
-        steps = steps+1
-        feedback.setCurrentStep(steps)  
-        if feedback.isCanceled():
-            return {}            
-        alg_params = {
-            'BLOCKS': params['BLOCKS'],
-            'FIELD_ACTIVITIES': params['FIELD_ACTIVITIES'],
-            'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
-            'TERTIARYUSES_ACTIVITIES': params['TERTIARYUSES_ACTIVITIES'],
-            'OUTPUT': params['OUTPUT_A11']
-        }
-        outputs['A11ComplejidadUrbana'] = processing.run('SISURBANO:A11 Complejidad urbana', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-        results['OUTPUT_A11'] = outputs['A11ComplejidadUrbana']['OUTPUT']
 
-                             
+        if isBlocks and isEmptyProperties:
+            # A05 Área de predios vacíos
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}
+            alg_params = {
+                'BLOCKS': params['BLOCKS'],
+                'EMPTY_PROPERTIES': params['EMPTY_PROPERTIES'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'OUTPUT': params['OUTPUT_A05']
+            }
+            outputs['A05ReaDePrediosVacos'] = processing.run('SISURBANO:A05 Área de predios vacíos', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_A05'] = outputs['A05ReaDePrediosVacos']['OUTPUT']
 
+
+        if isEdificaciones and isFloorEdificaciones and isRoads:
+        # A06 Proporción de la calle
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}              
+            alg_params = {
+                'CADASTRE': params['EDIFICACIONES'],
+                'FLOORS':  params['FLOORS'],
+                'STREETS': params['ROADS'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'OUTPUT':  params['OUTPUT_A06']
+            }
+            outputs['A06ProporcinDeLaCalle'] = processing.run('SISURBANO:A06 Proporción de la calle', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+
+            results['OUTPUT_A06'] = outputs['A06ProporcinDeLaCalle']['OUTPUT']
+
+
+
+
+
+        if (isAdminPublic and isApproval and isBlocks and isEducation and isFieldHousing and
+            isHealth and isRoads and isDistaceOptions and isSports):
+            # A07 Proximidad a servicios urbanos básicos
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}        
+            alg_params = {
+                'ADMIN_PUBLIC': params['ADMIN_PUBLIC'],
+                'APPROVAL': params['APPROVAL'],
+                'BLOCKS': params['BLOCKS'],
+                'EDUCATION': params['EDUCATION'],
+                'FIELD_HOUSING': params['FIELD_HOUSING'],
+                'HEALTH': params['HEALTH'],
+                'ROADS': params['ROADS'],
+                'DISTANCE_OPTIONS': params['DISTANCE_OPTIONS'],
+                'SPORTS': params['SPORTS'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'OUTPUT': params['OUTPUT_A07']
+
+            }
+            outputs['A07ProximidadAServiciosUrbanosBsicos'] = processing.run('SISURBANO:A07 Proximidad a servicios urbanos básicos', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_A07'] = outputs['A07ProximidadAServiciosUrbanosBsicos']['OUTPUT']  
+
+
+        if (isBlocks and isEquipmentPublicSpace and isFieldHousing and
+            isRoads and isDistaceOptions):
+            # A08 Proximidad al espacio público abierto
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}            
+            alg_params = {
+                'BLOCKS': params['BLOCKS'],
+                'EQUIPMENT_PUBLIC_SPACE': params['EQUIPMENT_PUBLIC_SPACE'],
+                'FIELD_HOUSING': params['FIELD_HOUSING'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'ROADS': params['ROADS'],
+                'DISTANCE_OPTIONS': params['DISTANCE_OPTIONS'],            
+                'OUTPUT': params['OUTPUT_A08']
+            }
+            outputs['A08ProximidadAlEspacioPblicoAbierto'] = processing.run('SISURBANO:A08 Proximidad al espacio público abierto', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_A08'] = outputs['A08ProximidadAlEspacioPblicoAbierto']['OUTPUT']      
+
+
+        if (isBlocks and isFieldHousing and isBakery and isGas and isPharmacy
+            and isShop and isStationary and isRoads and isDistaceOptions):
+            # A09 Cobertura de actividades comerciales cotinianas
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}            
+            alg_params = {
+                'BLOCKS': params['BLOCKS'],
+                'FIELD_POPULATE_HOUSING': params['FIELD_HOUSING'],        
+                'BAKERY': params['BAKERY'],
+                'GAS': params['GAS'],
+                'PHARMACY': params['PHARMACY'],
+                'SHOP': params['SHOP'],
+                'STATIONERY': params['STATIONERY'],
+                'ROADS': params['ROADS'],
+                'DISTANCE_OPTIONS': params['DISTANCE_OPTIONS'],            
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'OUTPUT': params['OUTPUT_A09']
+            }
+            outputs['A09CoberturaDeActividadesComercialesCotinianas'] = processing.run('SISURBANO:A09 Cobertura de actividades comerciales cotinianas', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_A09'] = outputs['A09CoberturaDeActividadesComercialesCotinianas']['OUTPUT']   
+
+        
+        if isBlocks and isFieldHousing and isTertiaryuses:
+            # A10 Relación entre actividad y residencia
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}             
+            alg_params = {
+                'BLOCKS': params['BLOCKS'],
+                'FIELD_HOUSING': params['FIELD_HOUSING'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'TERTIARYUSES': params['TERTIARYUSES'],
+                'OUTPUT': params['OUTPUT_A10']
+            }
+            outputs['A10RelacinEntreActividadYResidencia'] = processing.run('SISURBANO:A10 Relación entre actividad y residencia', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_A10'] = outputs['A10RelacinEntreActividadYResidencia']['OUTPUT']
+
+
+        if isBlocks and isFieldActivities and isTertiaryusesActivities:
+            # A11 Complejidad urbana
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}            
+            alg_params = {
+                'BLOCKS': params['BLOCKS'],
+                'FIELD_ACTIVITIES': params['FIELD_ACTIVITIES'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'TERTIARYUSES_ACTIVITIES': params['TERTIARYUSES_ACTIVITIES'],
+                'OUTPUT': params['OUTPUT_A11']
+            }
+            outputs['A11ComplejidadUrbana'] = processing.run('SISURBANO:A11 Complejidad urbana', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_A11'] = outputs['A11ComplejidadUrbana']['OUTPUT']
+
+
+        if isRoads:
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}
+
+            # A12 Densidad de intersecciones peatonales
+            alg_params = {
+                'ROADS': params['ROADS'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'OUTPUT': params['OUTPUT_A12']
+            }
+            outputs['A12DensidadDeInterseccionesPeatonales'] = processing.run('SISURBANO:A12 Densidad de intersecciones peatonales', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_A12'] = outputs['A12DensidadDeInterseccionesPeatonales']['OUTPUT']   
+
+
+        if isRoadsSitanxis and isFieldSitanxis:
+            steps = steps+1
+            feedback.setCurrentStep(steps)  
+            if feedback.isCanceled():
+                return {}
+            # A13 Accesibilidad al tejido
+            alg_params = {
+                'FIELD_SINTAXIS': params['FIELD_SINTAXIS'],
+                'ROADS_SINTAXIS': params['ROADS_SINTAXIS'],
+                'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
+                'OUTPUT': params['OUTPUT_A13']
+            }
+            outputs['A13AccesibilidadAlTejido'] = processing.run('SISURBANO:A13 Accesibilidad al tejido', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_A13'] = outputs['A13AccesibilidadAlTejido']['OUTPUT']
+
+                        
         return results
 
 

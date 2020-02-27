@@ -92,9 +92,9 @@ class ID15PerceptionInsecurity(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFile(
                 self.ENCUESTA,
-                self.tr('Censo vivienda'),
+                self.tr('Encuesta de victimización y percepción de inseguridad'),
                 extension='csv',
-                defaultValue='/Users/terra/llactalab/data/SHAPES_PARA_INDICADORES/victimizacion_personas.csv'
+                defaultValue=''
             )
         )           
 

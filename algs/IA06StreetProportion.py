@@ -54,13 +54,9 @@ class IA06StreetProportion(QgsProcessingAlgorithm):
     para evaluar los niveles de insolación e iluminación en ella. Valoración
     entre la altura (h) de las edificaciones y la distancia (d) entre dichas edificaciones.
 
-    Para el estudio se asume una altura de 3m por piso. La altura total de la
-    edificación es (h) y, la distancia entre edificaciones es (d). Para hallar
-    d se trazará una línea perpendicular desde el eje vial cada cierta distancia
-    (a definir 5-15m) hacia las fachadas de las edificaciones. Se procede a
-    calcular h/d para una línea perpendicular por edificación. Con la longitud de
-    los frentes de cada edificación, se calcula el % del tramo que tiene una
-    relación h/d ≤ 1, entendiendo como el 100% la longitud total de la manzana.    
+    Para el estudio se asume una altura de 3m por piso. La altura total de la edificación es (h) y, 
+    la distancia entre edificaciones es (d). Con la longitud de los frentes de cada 
+    edificación, se calcula el % del tramo que tiene una relación h/d ≤ 1, entendiendo como el 100% la longitud total de la manzana. 
     Formula: (Tramos de calle en m con una relación h/d menor o igual a 1 / Longitud total de la manzana en m)*100
     """ 
     CADASTRE = 'CADASTRE'
@@ -78,7 +74,7 @@ class IA06StreetProportion(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.CADASTRE,
-                self.tr('Catastro'),
+                self.tr('Edificaciones'),
                 [QgsProcessing.TypeVectorPolygon]
             )
         )
@@ -687,6 +683,6 @@ class IA06StreetProportion(QgsProcessingAlgorithm):
         return  "<b>Descripción:</b><br/>"\
                 "<span>Mide el grado de apertura entre las edificaciones que enmarcan una calle para evaluar los niveles de insolación e iluminación en ella. Valoración entre la altura (h) de las edificaciones y la distancia (d) entre dichas edificaciones.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
-                "<span>Para el estudio se asume una altura de 3m por piso. La altura total de la edificación es (h) y, la distancia entre edificaciones es (d). Para hallar d se trazará una línea perpendicular desde el eje vial cada cierta distancia (a definir 5-15m) hacia las fachadas de las edificaciones. Se procede a calcular h/d para una línea perpendicular por edificación. Con la longitud de los frentes de cada edificación, se calcula el % del tramo que tiene una relación h/d ≤ 1, entendiendo como el 100% la longitud total de la manzana.</span>"\
+                "<span>Para el estudio se asume una altura de 3m por piso. La altura total de la edificación es (h) y, la distancia entre edificaciones es (d). Con la longitud de los frentes de cada edificación, se calcula el % del tramo que tiene una relación h/d ≤ 1, entendiendo como el 100% la longitud total de la manzana.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
                 "<span>(Tramos de calle en m con una relación h/d menor o igual a 1 / Longitud total de la manzana en m)*100</span><br/>"

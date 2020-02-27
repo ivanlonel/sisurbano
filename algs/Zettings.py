@@ -87,7 +87,7 @@ NAMES_INDEX = {
 	'ID12': ['id12','id12','D12 Mujeres en la fuerza de trabajo remunerado'],	
 	'ID13': ['id13','id13','D13 Población activa con estudios universitarios'],
 	'ID14': ['id14','id14','D14 Estabilidad de la comunidad'],	
-	'ID15': ['d15','d15','D15 Percepción de inseguridad'],	
+	'ID15': ['id15','id15','D15 Percepción de inseguridad'],	
 	'ID16': ['id16','id16','D16 Índice de envejecimiento'],
 	'ID17': ['id17','id17','D17 Segregación Espacial']
 }
