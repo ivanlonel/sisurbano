@@ -167,7 +167,7 @@ class ZN01FuzzyVectorial(QgsProcessingAlgorithm):
         attrName = getPossibleAttrName()
         min, max = getMaxMin(attrName)
 
-        FULL_PATH = buildFullPathName(currentPath, 'n_'+attrName+'.shp')
+        FULL_PATH = buildFullPathName(currentPath, 'n_'+attrName+'.gpkg')
 
         self.addParameter(
             QgsProcessingParameterField(

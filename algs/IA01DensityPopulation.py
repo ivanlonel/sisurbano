@@ -112,8 +112,9 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
             QgsProcessingParameterFeatureSink(
                 self.OUTPUT,
                 self.tr('Salida'),
-                QgsProcessing.TypeVectorAnyGeometry,
-                str(FULL_PATH)
+                type=QgsProcessing.TypeVectorAnyGeometry,
+                createByDefault=True,
+                defaultValue=str(FULL_PATH)
             )
         )
 

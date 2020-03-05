@@ -217,7 +217,7 @@ class IB02LuminaryPerRoad(QgsProcessingAlgorithm):
 
       steps = steps+1
       feedback.setCurrentStep(steps)
-      formulaLumPerRoad = 'coalesce(coalesce(idx_count,0)/LENGTH, "")'
+      formulaLumPerRoad = 'coalesce(coalesce(idx_count,0)/(LENGTH/1000), "")'
       lumPerRoad = calculateField(gridNetoAndSegmentsSumLinesLum['OUTPUT'],
                                      NAMES_INDEX['IB02'][0],
                                      formulaLumPerRoad,

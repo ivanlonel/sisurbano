@@ -7,7 +7,7 @@ name=Sisurbano
 qgisMinimumVersion=3.8
 description=Cáculo de indicadores urbanos
 version=0.1
-author=LlactaLAB
+author= @fastuller88 | LlactaLAB | Universidad de Cuenca
 email=johnatan.astudillo@ucuenca.edu.ec
 
 about=Batería de algoritmos para el cálculo de indicadores urbanos

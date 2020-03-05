@@ -151,7 +151,7 @@ class ZN03WrapValues(QgsProcessingAlgorithm):
 
         for key in NAMES_INDEX:     
           currentPath = getPath()
-          FULL_PATH = buildFullPathName(currentPath, nameWithOuputExtension(self.prefix+ NAMES_INDEX[key][1]))            
+          FULL_PATH = buildShapeFullPathName(currentPath, nameWithOuputExtension(self.prefix+ NAMES_INDEX[key][1]))            
           if not isExistFile(FULL_PATH): 
             FULL_PATH = ''
           self.addParameter(
@@ -165,8 +165,8 @@ class ZN03WrapValues(QgsProcessingAlgorithm):
 
 
         currentPath = getPath()
-        FULL_PATH = buildFullPathName(currentPath, 'sisurbano.shp')
-        FULL_PATH_DISACARD = buildFullPathName(currentPath, 'sisurbano_discarded.shp')
+        FULL_PATH = buildFullPathName(currentPath, 'sisurbano.gpkg')
+        FULL_PATH_DISACARD = buildFullPathName(currentPath, 'sisurbano_discarded.gpkg')
 
 
         self.addParameter(

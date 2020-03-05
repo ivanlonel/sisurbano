@@ -100,15 +100,29 @@ def getPath():
 # 	return folder
 
 
-def buildFullPathName(path, name):
+def buildShapeFullPathName(path, name):
 	split = path.split('SIS-OUTPUTS')
 	lenSplit = len(split)
-	# print(lenSplit)
 	if lenSplit > 2:
 		path = split[0] + "SIS-OUTPUTS"
-	# print(path)
+	# print(os.path.join(path, name))
 	return os.path.join(path, name)
-	# return os.path.join('', name)
+
+
+def buildFullPathName(path, name):
+	nameTable = name.split('.gpkg')[0]
+	split = path.split('SIS-OUTPUTS')
+	lenSplit = len(split)
+	if lenSplit > 2:
+		path = split[0] + "SIS-OUTPUTS"
+
+	path = os.path.join(path, name)
+	path = 'ogr:dbname=' + path + ' table=' + nameTable + ' (geom) sql='
+
+	print(path)
+	return path
+
+
 
 
 def getPossibleAttrName():
@@ -128,8 +142,8 @@ def exploreNames(name):
 	result = ''
 	for key in NAMES_INDEX:
 		nameIndex = NAMES_INDEX[key][0]
-		nameIndex = nameIndex.lower()
-		name = name.lower()
+		# nameIndex = nameIndex.lower()
+		# name = name.lower()
 		split = name.split(nameIndex)
 		lenSplit = len(split)
 		if lenSplit >= 2:
@@ -160,7 +174,8 @@ def getMaxMin(attr=''):
 
 
 def nameWithOuputExtension(name):
-	return name + '.shp'
+	# return name + '.shp'
+	return name + '.gpkg'
 
 
 def isExistFile(path):
