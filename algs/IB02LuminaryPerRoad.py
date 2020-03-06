@@ -55,7 +55,7 @@ class IB02LuminaryPerRoad(QgsProcessingAlgorithm):
     está asociada a la percepción de inseguridad, y por el contrario,
     áreas sobreiluminadas o con contaminación lumínica, perjudican a
     especies naturales.
-    Formula: Total de luminarias / Viario público en m2
+    Formula: Total de luminarias / Viario público en km
     """
     ROADS = 'ROADS'
     BLOCKS = 'BLOCKS'
@@ -284,5 +284,5 @@ class IB02LuminaryPerRoad(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>Total de luminarias / Viario público en m2<br/>"          
+                "<span>Total de luminarias / Viario público en km<br/>"          
 

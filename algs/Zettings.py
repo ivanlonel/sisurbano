@@ -49,7 +49,7 @@ NAMES_INDEX = {
 	'IA10': ['iA10_RelaActViv','iA10_RelaActViv','A10 Relación entre actividad y residencia'],
 	'IA11': ['iA11_CompUrba','iA11_CompUrba','A11 Complejidad urbana'],
 	'IA12': ['iA12_DenInterPea','iA12_DenInterPea','A12 Densidad de intersecciones peatonales'],
-	'IA13': ['ia13','ia13','A13 Accesibilidad al tejido'],
+	'IA13': ['iA13_Sinerg','iA13_Sinerg','A13 Sinergia'],
 	'IB01': ['iB01_CalAire','iB01_CalAire','B01 Calidad del aire'],
 	'IB02': ['iB02_IlumVia','iB02_IlumVia','B02 Luminación nocturna del viario público'],
 	'IB03': ['iB03_ContAcus','iB03_ContAcus','B03 Confort acústico'],

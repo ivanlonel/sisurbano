@@ -86,7 +86,7 @@ def calculateLineal(x, a, b, c, d):
 
 
 def linearIncrease(x, a, b):
-    x = "(coalesce("+x+",0))"
+    # x = "(coalesce("+x+",0))"
     a = str(a)
     b = str(b)
     result = "CASE WHEN " + x + " < " + a + " THEN 0 " + \
@@ -97,7 +97,7 @@ def linearIncrease(x, a, b):
 
 
 def linearDecrease(x, c, d):
-    x = "(coalesce("+x+",0))"
+    # x = "(coalesce("+x+",0))"
     c = str(c)
     d = str(d)
     result = "CASE WHEN " + x + " > " + d + " THEN 0 " + \
@@ -108,7 +108,7 @@ def linearDecrease(x, c, d):
  
 
 def linearIncreaseAndDecrease(x, a, b, c, d):
-    x = "(coalesce("+x+",0))"
+    # x = "(coalesce("+x+",0))"
     a = str(a)
     b = str(b)
     c = str(c)
@@ -123,7 +123,7 @@ def linearIncreaseAndDecrease(x, a, b, c, d):
 
 
 def linearTriangularIncreaseAndDecrease(x, a, b, c, d):
-    x = "(coalesce("+x+",0))"
+    # x = "(coalesce("+x+",0))"
     a = str(a)
     b = str(b)
     c = str(c)

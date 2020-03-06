@@ -1,7 +1,7 @@
 ![Logo](/logoHex.png)
 
-# SISURBANO - Plugin para el cálculo de indicadores urbanos
-Herramienta de Sistemas de Información Geográfica para QGIS para el cálculo de indicadores urbanos en ciudades intermedias.
+# SISURBANO - Plugin para el cálculo de indicadores de sustetabilidad urbana
+Herramienta de Sistemas de Información Geográfica para QGIS para el cálculo de indicadores de sustentabildiad urbana en ciudades intermedias.
 
 ## Requisitos 
 - QGIS 3.10.2 o superior
@@ -26,7 +26,7 @@ Descargue o clone el repositorio, luego comprima la carpeta y agregue a sus comp
     + A10 Relación entre actividad y residencia
     + A11 Complejidad urbana
     + A12 Densidad de intersecciones peatonales
-    + A13 Accesibilidad al tejido
+    + A13 Sinergia
 - Ambiente biofísico
     + B01 Calidad del aire
     + B02 Luminación nocturna del viario público

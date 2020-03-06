@@ -50,9 +50,8 @@ pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IA13TissueAccessibility(QgsProcessingAlgorithm):
     """
-    Mide que tan conectadas o aisladas se encuentran las
-    calles de un tejido con el resto de la ciudad a través
-    análisis de integración en sintaxis espacial.
+    Mide el grado en que la estructura interna de un área se
+    relaciona con el sistema a mayor escala en el que se encuentra.
     """
 
     ROADS_SINTAXIS = 'ROADS_SINTAXIS'
@@ -203,8 +202,8 @@ class IA13TissueAccessibility(QgsProcessingAlgorithm):
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Mide que tan conectadas o aisladas se encuentran las calles de un tejido con el resto de la ciudad a través análisis de integración en sintaxis espacial.</span>"\
+                "<span>Mide el grado en que la estructura interna de un área se relaciona con el sistema a mayor escala en el que se encuentra.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
-                "<span>Integración global media de sintáxis espacial.</span>"\
+                "<span>Relación entre radio 3 / radio n. Como radio local se utiliza 1200m (caminata de 15min).</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span></span><br/>"
+                "<span>Preproceso de sintaxis espacial</span><br/>"
