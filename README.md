@@ -1,5 +1,16 @@
 ![Logo](/hex.png)
 
-# SISURBANO - Sitema de Indicadores Urbanos
-Este repositorio contiene información y materiales para el "Curso QGIS Básico". Algunos contenidos se obteniedo y adaptado de la [documentación oficial])(https://docs.qgis.org/3.4/es/docs/) de QGIS.
+# SISURBANO - Sistema de Indicadores Urbanos
+
+Complemento para QGIS 3.10 para el cálculo de indicadores urbanos.
+
+## Lista de indicadores
+- Ambiente construido
+    + A01 Densidad neta de habitantes
+    + A02 Densidad neta de viviendas
+    + A03 Compacidad absoluta
+    + A04 Eficiencia en el uso del territorio
+
+
+
 
