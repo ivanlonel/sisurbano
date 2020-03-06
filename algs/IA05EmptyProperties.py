@@ -74,7 +74,7 @@ class IA05EmptyProperties(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 self.BLOCKS,
-                self.tr('Manzanas'),
+                self.tr('Predios'),
                 [QgsProcessing.TypeVectorPolygon]
             )
         )
