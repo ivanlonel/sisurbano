@@ -9,7 +9,7 @@ Herramienta de Sistemas de Información Geográfica para QGIS para el cálculo d
 ## Instalación
 Descargue o clone el repositorio, luego comprima la carpeta y agregue a sus complementos de QGIS. El complemento se agregará a la "Caja de herramientas de procesos"
 
-![Plugin](/plugin.png)
+![Plugin](/pluginSisurbano.png)
 
 ## Lista de indicadores
 - Ambiente construido
