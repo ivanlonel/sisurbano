@@ -1,4 +1,4 @@
-![Logo](/hex.png)
+![Logo](/logoHex.png)
 
 # SISURBANO - Sistema de Indicadores Urbanos
 
