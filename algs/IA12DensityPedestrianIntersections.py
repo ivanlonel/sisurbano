@@ -283,7 +283,7 @@ class IA12DensityPedestrianIntersections(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = 'idx_count_count / (area_grid / 1000)'
+        formulaDummy = 'idx_count_count / (area_grid / 1000000)'
         result = calculateField(result['OUTPUT'],
                                    NAMES_INDEX['IA12'][0],
                                    formulaDummy,

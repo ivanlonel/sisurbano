@@ -50,7 +50,7 @@ from .algs import (
     IA10RelationshipActivityResidence,
     IA11UrbanComplexity,
     IA12DensityPedestrianIntersections,
-    IA13TissueAccessibility,
+    IA13Sinergia,
     IB00WrapB,
     IB01AirQuality,
     IB02LuminaryPerRoad,
@@ -128,7 +128,7 @@ class SisurbanoProvider(QgsProcessingProvider):
         self.addAlgorithm(IA10RelationshipActivityResidence.IA10RelationshipActivityResidence())
         self.addAlgorithm(IA11UrbanComplexity.IA11UrbanComplexity())
         self.addAlgorithm(IA12DensityPedestrianIntersections.IA12DensityPedestrianIntersections())
-        self.addAlgorithm(IA13TissueAccessibility.IA13TissueAccessibility())
+        self.addAlgorithm(IA13Sinergia.IA13Sinergia())
         self.addAlgorithm(IB00WrapB.IB00WrapB())
         self.addAlgorithm(IB01AirQuality.IB01AirQuality())
         self.addAlgorithm(IB02LuminaryPerRoad.IB02LuminaryPerRoad())

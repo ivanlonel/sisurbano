@@ -48,14 +48,14 @@ from .ZHelpers import *
 
 pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
-class IA13TissueAccessibility(QgsProcessingAlgorithm):
+class IA13Sinergia(QgsProcessingAlgorithm):
     """
     Mide el grado en que la estructura interna de un área se
     relaciona con el sistema a mayor escala en el que se encuentra.
     """
 
     ROADS_SINTAXIS = 'ROADS_SINTAXIS'
-    FIELD_SINTAXIS = 'FIELD_SINTAXIS'
+    # FIELD_SINTAXIS = 'FIELD_SINTAXIS'
     CELL_SIZE = 'CELL_SIZE'
     OUTPUT = 'OUTPUT'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'
@@ -73,14 +73,7 @@ class IA13TissueAccessibility(QgsProcessingAlgorithm):
                 [QgsProcessing.TypeVectorLine]
             )
         )
-
-        self.addParameter(
-            QgsProcessingParameterField(
-                self.FIELD_SINTAXIS,
-                self.tr('Valor'),
-                'NACH_slen', 'ROADS_SINTAXIS'
-            )
-        )        
+               
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -114,7 +107,7 @@ class IA13TissueAccessibility(QgsProcessingAlgorithm):
     def processAlgorithm(self, params, context, feedback):
         steps = 0
         totalStpes = 11
-        fieldSintaxis = params['FIELD_SINTAXIS']
+        # fieldSintaxis = params['FIELD_SINTAXIS']
 
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
@@ -134,24 +127,32 @@ class IA13TissueAccessibility(QgsProcessingAlgorithm):
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        result = joinByLocation(gridNeto['OUTPUT'],
-                                             centroides['OUTPUT'],
-                                             [fieldSintaxis],                                   
-                                              [CONTIENE], [MEDIA],
-                                              UNDISCARD_NONMATCHING,
-                                              context,
-                                              feedback)   
+        formulaDummy = 'INTr800m / INT'
+        result = calculateField(centroides['OUTPUT'],
+                                'sinergia',
+                                   formulaDummy,
+                                   context,
+                                   feedback)
+
 
         steps = steps+1
         feedback.setCurrentStep(steps)
-        formulaDummy = fieldSintaxis+'_mean * 1.00'
+        result = joinByLocation(gridNeto['OUTPUT'],
+                                 result['OUTPUT'],
+                                 ['sinergia'],                                   
+                                  [CONTIENE], [MEDIA],
+                                  UNDISCARD_NONMATCHING,
+                                  context,
+                                  feedback)   
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        formulaDummy = 'sinergia_mean * 1.00'
         result = calculateField(result['OUTPUT'],
                                    NAMES_INDEX['IA13'][0],
                                    formulaDummy,
                                    context,
                                    feedback, params['OUTPUT'])
-
-
 
         return result
 
@@ -168,7 +169,7 @@ class IA13TissueAccessibility(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'A13 Accesibilidad al tejido'
+        return 'A13 Sinergia'
 
     def displayName(self):
         """
@@ -198,7 +199,7 @@ class IA13TissueAccessibility(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return IA13TissueAccessibility()
+        return IA13Sinergia()
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
