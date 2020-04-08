@@ -163,6 +163,15 @@ class ZN03WrapValues(QgsProcessingAlgorithm):
               )
           )
 
+          self.addParameter(
+              QgsProcessingParameterField(
+                  'FIELD_'+NAMES_INDEX[key][1],
+                  self.tr(NAMES_INDEX[key][1]),
+                  NAMES_INDEX[key][1], NAMES_INDEX[key][0],
+                  optional = True
+              )
+          )     
+
 
         currentPath = getPath()
         FULL_PATH = buildFullPathName(currentPath, 'sisurbano.gpkg')
@@ -204,13 +213,18 @@ class ZN03WrapValues(QgsProcessingAlgorithm):
 
       for key in NAMES_INDEX:        
         if params[NAMES_INDEX['IA01'][0]] != '':
-          allInputs.update({key : [params[NAMES_INDEX[key][0]], NAMES_INDEX_N[key]]})
+          allInputs.update({key : [params[NAMES_INDEX[key][0]], params['FIELD_'+NAMES_INDEX[key][1]]]})
+
+
+      print (allInputs)
       
       for k,v in allInputs.items():
         val = allInputs[k]
-        if val[0] != None:
+        if val[0] != None and val[1] != None:
           validInputs.update({k : val})
 
+
+      print(validInputs)
 
       totalValidInputs = len(validInputs)
       totalStpes = totalValidInputs

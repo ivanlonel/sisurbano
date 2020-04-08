@@ -64,6 +64,7 @@ class IA06StreetProportion(QgsProcessingAlgorithm):
     STREETS = 'STREETS'
     CELL_SIZE = 'CELL_SIZE'
     OUTPUT = 'OUTPUT'
+    # OUTPUT2 = 'OUTPUT2'
     STUDY_AREA_GRID = 'STUDY_AREA_GRID'
  
 
@@ -122,6 +123,15 @@ class IA06StreetProportion(QgsProcessingAlgorithm):
                 str(FULL_PATH)                
             )
         )
+
+        # self.addParameter(
+        #     QgsProcessingParameterFeatureSink(
+        #         self.OUTPUT2,
+        #         self.tr('Salida2'),
+        #         QgsProcessing.TypeVectorAnyGeometry,
+        #         str(FULL_PATH)                
+        #     )
+        # )        
 
     def processAlgorithm(self, params, context, feedback):
         steps = 0
@@ -372,6 +382,7 @@ class IA06StreetProportion(QgsProcessingAlgorithm):
             'MITER_LIMIT': 2,
             'SEGMENTS': 5,
             'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+            # 'OUTPUT': params['OUTPUT']
         }
         outputs['Buffer'] = processing.run('native:buffer', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
@@ -438,6 +449,7 @@ class IA06StreetProportion(QgsProcessingAlgorithm):
         alg_params = {
             'INPUT': outputs['Diferencia']['OUTPUT'],
             'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+            # 'OUTPUT': params['OUTPUT2']
         }
         outputs['ExplotarLineasDife'] = processing.run('native:explodelines', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
@@ -631,8 +643,6 @@ class IA06StreetProportion(QgsProcessingAlgorithm):
         results['R_grid_final'] = outputs['CalculadoraDeCampos']['OUTPUT']
         
         return results
-
-
 
         #return {self.OUTPUT: dest_id}
 

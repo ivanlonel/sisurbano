@@ -475,14 +475,14 @@ class IA00WrapA(QgsProcessingAlgorithm):
             )
         )
 
-        self.addParameter(
-            QgsProcessingParameterField(
-                self.FIELD_SINTAXIS,
-                self.tr('Valor'),
-                'NACH_slen', 'ROADS_SINTAXIS',
-                optional = True           
-            )
-        )  
+        # self.addParameter(
+        #     QgsProcessingParameterField(
+        #         self.FIELD_SINTAXIS,
+        #         self.tr('Valor'),
+        #         'NACH_slen', 'ROADS_SINTAXIS',
+        #         optional = True           
+        #     )
+        # )  
 
 
         # ---------------------OUTPUTS---------------------------------
@@ -674,7 +674,7 @@ class IA00WrapA(QgsProcessingAlgorithm):
         isFloorEdificaciones = isValid(params['FLOORS_EDIFICACIONES'])
 
         isRoadsSitanxis = isValid(params['ROADS_SINTAXIS'])
-        isFieldSitanxis = isValid(params['FIELD_SINTAXIS'])
+        # isFieldSitanxis = isValid(params['FIELD_SINTAXIS'])
 
         if isBlocks and isFieldPopulation:
             # A01 Densidad neta de habitantes
@@ -903,20 +903,20 @@ class IA00WrapA(QgsProcessingAlgorithm):
             results['OUTPUT_A12'] = outputs['A12DensidadDeInterseccionesPeatonales']['OUTPUT']   
 
 
-        if isRoadsSitanxis and isFieldSitanxis:
+        if isRoadsSitanxis:
             steps = steps+1
             feedback.setCurrentStep(steps)  
             if feedback.isCanceled():
                 return {}
             # A13 Accesibilidad al tejido
             alg_params = {
-                'FIELD_SINTAXIS': params['FIELD_SINTAXIS'],
+                # 'FIELD_SINTAXIS': params['FIELD_SINTAXIS'],
                 'ROADS_SINTAXIS': params['ROADS_SINTAXIS'],
                 'STUDY_AREA_GRID': params['STUDY_AREA_GRID'],
                 'OUTPUT': params['OUTPUT_A13']
             }
-            outputs['A13AccesibilidadAlTejido'] = processing.run('SISURBANO:A13 Accesibilidad al tejido', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-            results['OUTPUT_A13'] = outputs['A13AccesibilidadAlTejido']['OUTPUT']
+            outputs['A13Sinergia'] = processing.run('SISURBANO:A13 Sinergia', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+            results['OUTPUT_A13'] = outputs['A13Sinergia']['OUTPUT']
 
                         
         return results
