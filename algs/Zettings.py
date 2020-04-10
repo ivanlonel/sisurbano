@@ -89,7 +89,9 @@ NAMES_INDEX = {
 	'ID14': ['iD14_EstabComu','iD14_EstabComu','D14 Estabilidad de la comunidad'],	
 	'ID15': ['iD15_PercInseg','iD15_PercInseg','D15 Percepción de inseguridad'],	
 	'ID16': ['iD16_IndiEnvej','iD16_IndiEnvej','D16 Índice de envejecimiento'],
-	'ID17': ['iD17_SegrEspa','iD17_SegrEspa','D17 Segregación Espacial']
+	'ID17': ['iD17_SegrEspa','iD17_SegrEspa','D17 Segregación Espacial'],
+	'X01': ['iD17_SegrEspaMan','iD17_SegrEspaMan','D17 Segregación Espacial'],
+	'X02': ['iD17_SegrEspaMalla','iD17_SegrEspaMalla','D17 Segregación Espacial']
 }
 
 TEXT_GRID_INPUT = 'Malla (Si ya tienes una malla de estudio)'
