@@ -106,6 +106,7 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
                 self.CENSO_POBLACION,
                 self.tr('Censo población'),
                 extension='csv',
+                # defaultValue="/Users/terra/llactalab/data/mali/Cotopaxi_CSV_Poblac.csv"
                 defaultValue=""
             )
         ) 
@@ -115,6 +116,7 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
                 self.CENSO_HOGAR,
                 self.tr('Censo hogar'),
                 extension='csv',
+                # defaultValue="/Users/terra/llactalab/data/mali/Cotopaxi_CSV_Hogar.csv"
                 defaultValue=""
             )
         )           
@@ -124,6 +126,7 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
                 self.CENSO_VIVIENDA,
                 self.tr('Censo vivienda'),
                 extension='csv',
+                # defaultValue='/Users/terra/llactalab/data/mali/Cotopaxi_CSV_Vivienda.csv'
                 defaultValue=''
             )
         )           
@@ -229,6 +232,7 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
         #1. CALCULO DEL INDICADOR DE SEGURIDAD SOCIAL (SALUD).
         #1.1 Diferenciar quiénes están afiliados a cualquier seguro social (IESS, ISSFA, ISSPOL).
         df['seguridad_social'] = None
+        df['P35'] = df['P35'].astype(str)
         df.loc[df['P35'] == '7', 'seguridad_social'] = 0
         df.loc[df['P35'] == '9', 'seguridad_social'] = 0
         df.loc[(df['P35'] >= '1') & (df['P35'] <= '6'), 'seguridad_social'] = 1
@@ -311,8 +315,7 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
         fileV = pathCsvVivienda
         colsV = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 
                  'I10', 'V01', 'V03', 'V05', 'V08', 'V09', 'V10', 
-                 'V13', 'V14', 'TOTPER', 'id_man', 'id_viv', 'id_provin',
-                 'id_can', 'id_parr', 'id_viv', 'id_man'
+                 'V13', 'V14', 'TOTPER'
                 ]
         dfV = pd.read_csv(fileV, usecols=colsV)
 
@@ -359,6 +362,7 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
         colsH = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 'H01', 'H02', 'H03', 'H05', 'H07','H08', 'H09', 'H11','TP1']
         df = pd.read_csv(fileH, usecols=colsH)
 
+
         # fix codes 
         df['I01'] = df['I01'].astype(str)
         df['I02'] = df['I02'].astype(str)
@@ -382,21 +386,25 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
         # *1. CÁLCULO DEL INDICADOR INTEGRADO DE COMUNICACIÓN.
         # *1.1 Calcular la disponibilidad de telefonía fija en el hogar.
         df['telefono'] = None
+        df['H07'] = df['H07'].astype(str)
         df.loc[df['H07'] == '1', 'telefono'] = 1
         df.loc[df['H07'] == '2', 'telefono'] = 0
 
         # *1.2 Calcular la disponibilidad de celular en el hogar.
         df['celular'] = None
+        df['H08'] = df['H08'].astype(str)
         df.loc[df['H08'] == '1', 'celular'] = 1
         df.loc[df['H08'] == '2', 'celular'] = 0
 
         # *1.4 Calcular la disponibilidad de internet en el hogar.
         df['internet'] = None
+        df['H09'] = df['H09'].astype(str)
         df.loc[df['H09'] == '1', 'internet'] = 1
         df.loc[df['H09'] == '2', 'internet'] = 0
 
         # *1.5 Calcular la disponibilidad de Tv Cable.
         df['tvcable'] = None
+        df['H11'] = df['H11'].astype(str)
         df.loc[df['H11'] == '1', 'tvcable'] = 2
         df.loc[df['H11'] == '2', 'tvcable'] = 1
 
@@ -418,6 +426,7 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
         # *2. CÁLCULO DEL INDICADOR INTEGRADO DE ENERGÍA.
         # *En esta base se calcula una parte, y en la base de datos de vivienda, se completa el cálculo.
         df['combu'] = None
+        df['H05'] = df['H05'].astype(str)
         df.loc[df['H05'] == '7', 'combu'] = 1
         df.loc[(df['H05'] >= '4') & (df['H05'] <= '6'), 'combu'] = 0
         df.loc[(df['H05'] >= '1') & (df['H05'] <= '3'), 'combu'] = 1
@@ -432,11 +441,13 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
         # *3. CÁLCULO DEL HACINAMIENTO: DORMITORIOS.
         # *3.1 Considerar a los hogares unipersonales.
         df['hacina'] = 0.0
+        df['TP1'] = df['TP1'].astype(str)
         df.loc[df['TP1'] == '1', 'hacina'] = 1
 
         # *3.2 Calcular el número de dormitorios por persona.
         df['TP1'] = df['TP1'].astype(float)
-        df.loc[df['H01'] == ' ', 'H01'] = None
+        df['H01'] = df['H01'].astype(str)
+        df.loc[(df['H01'] == ' ') | (df['H01'] == '  ') | (df['H01'] == '   ') | (df['H01'] == '    '), 'H01'] = None
         df['H01'] = df['H01'].astype(float)
         df['dormitorio'] = df['H01'] / df['TP1']
 
@@ -458,11 +469,13 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
         # *4. OTRAS VARIABLES PARA EL CÁLCULO DE HACINAMIENTO.
         # *4.1 Calcular la existencia de cocina exclusiva para el hogar.
         df['cocina'] = None
+        df['H02'] = df['H02'].astype(str)
         df.loc[df['H02'] == '1', 'cocina'] = 1
         df.loc[df['H02'] == '2', 'cocina'] = 0
 
         # *4.2 Calcular la existencia de baño exclusivo.
         df['bano'] = None
+        df['H03'] = df['H03'].astype(str)
         df.loc[df['H03'] == '1', 'bano'] = 1
         df.loc[(df['H03'] >= '2') & (df['H03'] <= '3'), 'bano'] = 0
 
@@ -481,8 +494,22 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
         merge = pd.merge(df, dfVCuartos,  how='left', on='codv')
         df = merge
 
-        df.loc[df['V14'] == ' ', 'V14'] = None
+        # df.replace(r'^\s*$', np.nan, regex=True)
+        # df = df.replace(r'^\s*$', None, regex=True)
+
+
+
+        df.loc[(df['V14'] == ' ') |
+               (df['V14'] == '  ') |
+               (df['V14'] == '   ') |
+               (df['V14'] == '    ') 
+               , 'V14' ] = None
+        df.loc[(df['DORM_X_VIVIENDA'] == ' ')  |
+               (df['DORM_X_VIVIENDA'] == '  ') | 
+               (df['DORM_X_VIVIENDA'] == '   ') | 
+               (df['DORM_X_VIVIENDA'] == '    '), 'DORM_X_VIVIENDA' ] = None
         df['CUARTOS_EXTRA'] = df['V14'].astype(float) - df['DORM_X_VIVIENDA'].astype(float)
+
 
         df['CUARTO_EXTRA1_0'] = None
         df.loc[df['CUARTOS_EXTRA'] >= 1, 'CUARTO_EXTRA1_0'] = 1
@@ -514,6 +541,7 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
         # *1.1.1 Calidad del Techo.
         df = dfV
         df['TECHO'] = None
+        df['V01'] = df['V01'].astype(str)
         df.loc[df['V01'] == '1', 'TECHO'] = 2
         df.loc[df['V01'] == '4', 'TECHO'] = 2
         df.loc[(df['V01'] >= '2') & (df['V01'] <= '3'), 'TECHO'] = 2
@@ -521,6 +549,7 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
 
         # *1.1.2 Calidad de Paredes.
         df['PAREDES'] = None
+        df['V03'] = df['V03'].astype(str)
         df.loc[df['V03'] == '5', 'PAREDES'] = 1
         df.loc[(df['V03'] >= '6') & (df['V03'] <= '7'), 'PAREDES'] = 0
         df.loc[(df['V03'] >= '3') & (df['V03'] <= '4'), 'PAREDES'] = 2
@@ -528,6 +557,7 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
 
         # *1.1.3 Calidad de Pisos.
         df['PISOS'] = None
+        df['V05'] = df['V05'].astype(str)
         df.loc[df['V05'] == '4', 'PISOS'] = 1
         df.loc[df['V05'] == '1', 'PISOS'] = 2
         df.loc[df['V05'] == '3', 'PISOS'] = 2
@@ -552,6 +582,7 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
         # *2. DISPONIBILIDAD DE SERVICIOS BÁSICOS EN LA VIVIENDA.
         # *2.1 Agua y saneamiento para la vivienda. 'Disponibilidad de agua'.
         df['AGUA'] = None
+        df['V08'] = df['V08'].astype(str)
         df.loc[df['V08'] == '1', 'AGUA'] = 3
         df.loc[df['V08'] == '2', 'AGUA'] = 2
         df.loc[df['V08'] == '3', 'AGUA'] = 1
@@ -562,6 +593,7 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
 
         #*2.1.3 Drenaje. 'Calidad de Drenaje'.
         df['DRENAJE'] = None
+        df['V09'] = df['V09'].astype(str)
         df.loc[df['V09'] == '1', 'DRENAJE'] = 2
         df.loc[df['V09'] == '2', 'DRENAJE'] = 1
         df.loc[(df['V09'] >= '3') & (df['V09'] <= '6'), 'DRENAJE'] = 0
@@ -571,6 +603,7 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
 
         # *2.1.5 Desechos. 'Eliminación de desechos'.
         df['DESECHOS'] = None
+        df['V13'] = df['V13'].astype(str)
         df.loc[df['V13'] == '1', 'DESECHOS'] = 1
         df.loc[(df['V13'] >= '2') & (df['V13'] <= '6'), 'DESECHOS'] = 0
 
@@ -581,6 +614,7 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
         # *2.2  Adecuación energética de la vivienda.
         # *2.2.2 Electricidad 0-1.Disponibilidad electricidad'.
         df['ELECTRICIDAD'] = None
+        df['V10'] = df['V10'].astype(str)
         df.loc[df['V10'] == '5', 'ELECTRICIDAD'] = 0
         df.loc[(df['V10'] >= '1') & (df['V10'] <= '4'), 'ELECTRICIDAD'] = 1
 
@@ -593,7 +627,7 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
         # *Primero es necesario pegar la variable de comunicación de la base de hogar.'Media de Servicios por Vivienda'.
 
         df['SERVICIOS'] = None
-        df['SERVICIOS'] = df['AGUA_SANEAMIENTO'].astype(float) * 0.5 + df['ELECTRICIDAD'].astype(float) * 0.25 \
+        df['SERVICIOS'] = df['AGUA_SANEAMIENTO']     * 0.5 + df['ELECTRICIDAD'].astype(float) * 0.25 \
                          +  df['MEDIA_COMUNICACION'].astype(float) * 0.25
 
         # *3. Educación en la vivienda.
@@ -690,18 +724,46 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
                          'Carencia_educacion', 'Carencia_segsocial', 'Carencia_servicios',
                         'Carentes', 'TOTPER', 'VIVIENDA', 'SERVICIOS', 'EDUCACION',
                         'SEGURIDAD_SOCIAL', 'CONDICIONES_VIDA', 'Viv_car', 'Edu_car',
-                        'SS_car', 'Serv_car','id_man', 'id_viv', 'id_provin',
-                        'id_can', 'id_parr','q1','q2','q3','q4','popQ1','popQ2','popQ3','popQ4','is_vivienda']
+                        'SS_car', 'Serv_car',
+                        'q1','q2','q3','q4','popQ1','popQ2','popQ3','popQ4','is_vivienda']
 
         importantColsForSec = ['codsec', 'codv', 'vivienda_carente', 'Carencias', 'Carencia_vivienda', 
                          'Carencia_educacion', 'Carencia_segsocial', 'Carencia_servicios',
                         'Carentes', 'TOTPER', 'VIVIENDA', 'SERVICIOS', 'EDUCACION',
                         'SEGURIDAD_SOCIAL', 'CONDICIONES_VIDA', 'Viv_car', 'Edu_car',
-                        'SS_car', 'Serv_car', 'id_man', 'id_viv', 'id_provin',
-                         'id_can', 'id_parr','q1','q2','q3','q4','popQ1','popQ2','popQ3','popQ4','is_vivienda']
+                        'SS_car', 'Serv_car', 
+                        'q1','q2','q3','q4','popQ1','popQ2','popQ3','popQ4','is_vivienda']
 
         dfManzanas = pd.DataFrame(df, columns=importantColsForMan)
         # dfSectores = pd.DataFrame(df, columns=importantColsForSec)
+
+
+        dfManzanas['vivienda_carente'] = dfManzanas['vivienda_carente'].astype(float)
+        dfManzanas['Carencias'] = dfManzanas['Carencias'].astype(float)
+        dfManzanas['Carencia_vivienda'] = dfManzanas['Carencia_vivienda'].astype(float)
+        dfManzanas['Carencia_educacion'] = dfManzanas['Carencia_educacion'].astype(float)
+        dfManzanas['Carencia_segsocial'] = dfManzanas['Carencia_segsocial'].astype(float)
+        dfManzanas['Carencia_servicios'].astype(float)
+        dfManzanas['Carentes'] = dfManzanas['Carentes'].astype(float)
+        dfManzanas['TOTPER'] = dfManzanas['TOTPER'].astype(float)
+        dfManzanas['VIVIENDA'] = dfManzanas['VIVIENDA'].astype(float)
+        dfManzanas['SERVICIOS'] = dfManzanas['SERVICIOS'].astype(float)
+        dfManzanas['EDUCACION'] = dfManzanas['EDUCACION'].astype(float)
+        dfManzanas['SEGURIDAD_SOCIAL'] = dfManzanas['SEGURIDAD_SOCIAL'].astype(float)
+        dfManzanas['CONDICIONES_VIDA'] = dfManzanas['CONDICIONES_VIDA'].astype(float)
+        dfManzanas['Viv_car'] = dfManzanas['Viv_car'].astype(float)
+        dfManzanas['Edu_car'] = dfManzanas['Edu_car'].astype(float)
+        dfManzanas['SS_car'] = dfManzanas['SS_car'].astype(float)
+        dfManzanas['Serv_car'] = dfManzanas['Serv_car'].astype(float)
+        dfManzanas['q1'] = dfManzanas['q1'].astype(float)
+        dfManzanas['q2'] = dfManzanas['q2'].astype(float)
+        dfManzanas['q3'] = dfManzanas['q3'].astype(float)
+        dfManzanas['q4'] = dfManzanas['q4'].astype(float)
+        dfManzanas['popQ1'] = dfManzanas['popQ1'].astype(float)
+        dfManzanas['popQ2'] = dfManzanas['popQ2'].astype(float)
+        dfManzanas['popQ3'] = dfManzanas['popQ3'].astype(float)
+        dfManzanas['popQ4'] = dfManzanas['popQ4'].astype(float)
+        dfManzanas['is_vivienda'] = dfManzanas['is_vivienda'].astype(float)
 
         aggOptions = {'codv' : 'count',
                       'vivienda_carente':'sum', 
@@ -733,6 +795,9 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
                       'is_vivienda' : 'sum'                                            
                      } 
 
+
+        print(dfManzanas)                     
+
         resManzanas = dfManzanas.groupby('codman').agg(aggOptions)    
         resManzanas.rename(columns={'is_vivienda':'viv_tot'}, inplace=True)
         resManzanas.rename(columns={'CONDICIONES_VIDA':'icv'}, inplace=True)        
@@ -761,9 +826,6 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
         # fields = layer.dataProvider().fields()
         field_names = [field.name() for field in CSV.fields()]       
         print(field_names)            
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
 
         steps = steps+1
         feedback.setCurrentStep(steps)
@@ -950,214 +1012,202 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
                                  feedback)                                                                                                          
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)        
-        blocks = calculateArea(result['OUTPUT'], 'area_bloc', context,
-                               feedback)        
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)        
+        # blocks = calculateArea(result['OUTPUT'], 'area_bloc', context,
+        #                        feedback)        
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                                ['area_bloc','pob_tot','Pc','Po','viv_tot','Vc','Vo','icv_n', 
-                                 'VQ1','VQ2','VQ3','VQ4', 'VQt',
-                                 'PQ1','PQ2','PQ3','PQ4', 'PQt'
-                                 ],
-                                 'id_grid;area_grid',
-                                context, feedback)
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+        #                         ['area_bloc','pob_tot','Pc','Po','viv_tot','Vc','Vo','icv_n', 
+        #                          'VQ1','VQ2','VQ3','VQ4', 'VQt',
+        #                          'PQ1','PQ2','PQ3','PQ4', 'PQt'
+        #                          ],
+        #                          'id_grid;area_grid',
+        #                         context, feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        segmentsArea = calculateArea(segments['OUTPUT'],
-                                     'area_seg',
-                                     context, feedback)
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # segmentsArea = calculateArea(segments['OUTPUT'],
+        #                              'area_seg',
+        #                              context, feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * pob_tot' 
-        resultForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_tot_seg',
-                                               formulaDummy,
-                                               context,
-                                               feedback)
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # formulaDummy = '(area_seg/area_bloc) * pob_tot' 
+        # resultForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_tot_seg',
+        #                                        formulaDummy,
+        #                                        context,
+        #                                        feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * Pc' 
-        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'Pc_seg',
-                                               formulaDummy,
-                                               context,
-                                               feedback)   
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # formulaDummy = '(area_seg/area_bloc) * Pc' 
+        # resultForSegments = calculateField(resultForSegments['OUTPUT'], 'Pc_seg',
+        #                                        formulaDummy,
+        #                                        context,
+        #                                        feedback)   
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * Po' 
-        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'Po_seg',
-                                               formulaDummy,
-                                               context,
-                                               feedback)   
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # formulaDummy = '(area_seg/area_bloc) * Po' 
+        # resultForSegments = calculateField(resultForSegments['OUTPUT'], 'Po_seg',
+        #                                        formulaDummy,
+        #                                        context,
+        #                                        feedback)   
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * viv_tot' 
-        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'viv_tot_seg',
-                                               formulaDummy,
-                                               context,
-                                               feedback)
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # formulaDummy = '(area_seg/area_bloc) * viv_tot' 
+        # resultForSegments = calculateField(resultForSegments['OUTPUT'], 'viv_tot_seg',
+        #                                        formulaDummy,
+        #                                        context,
+        #                                        feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * Vc' 
-        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'Vc_seg',
-                                               formulaDummy,
-                                               context,
-                                               feedback)
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # formulaDummy = '(area_seg/area_bloc) * Vc' 
+        # resultForSegments = calculateField(resultForSegments['OUTPUT'], 'Vc_seg',
+        #                                        formulaDummy,
+        #                                        context,
+        #                                        feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * Vo' 
-        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'Vo_seg',
-                                               formulaDummy,
-                                               context,
-                                               feedback) 
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # formulaDummy = '(area_seg/area_bloc) * Vo' 
+        # resultForSegments = calculateField(resultForSegments['OUTPUT'], 'Vo_seg',
+        #                                        formulaDummy,
+        #                                        context,
+        #                                        feedback) 
 
         #----------------------cuartiles ICV de pop--------------------------------
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * PQ1' 
-        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'pq1_seg',
-                                               formulaDummy,
-                                               context,
-                                               feedback)
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # formulaDummy = '(area_seg/area_bloc) * PQ1' 
+        # resultForSegments = calculateField(resultForSegments['OUTPUT'], 'pq1_seg',
+        #                                        formulaDummy,
+        #                                        context,
+        #                                        feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * PQ2' 
-        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'pq2_seg',
-                                               formulaDummy,
-                                               context,
-                                               feedback)
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # formulaDummy = '(area_seg/area_bloc) * PQ2' 
+        # resultForSegments = calculateField(resultForSegments['OUTPUT'], 'pq2_seg',
+        #                                        formulaDummy,
+        #                                        context,
+        #                                        feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * PQ3' 
-        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'pq3_seg',
-                                               formulaDummy,
-                                               context,
-                                               feedback)        
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # formulaDummy = '(area_seg/area_bloc) * PQ3' 
+        # resultForSegments = calculateField(resultForSegments['OUTPUT'], 'pq3_seg',
+        #                                        formulaDummy,
+        #                                        context,
+        #                                        feedback)        
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * PQ4' 
-        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'pq4_seg',
-                                               formulaDummy,
-                                               context,
-                                               feedback)
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # formulaDummy = '(area_seg/area_bloc) * PQ4' 
+        # resultForSegments = calculateField(resultForSegments['OUTPUT'], 'pq4_seg',
+        #                                        formulaDummy,
+        #                                        context,
+        #                                        feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * PQt' 
-        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'pqt_seg',
-                                               formulaDummy,
-                                               context,
-                                               feedback)        
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # formulaDummy = '(area_seg/area_bloc) * PQt' 
+        # resultForSegments = calculateField(resultForSegments['OUTPUT'], 'pqt_seg',
+        #                                        formulaDummy,
+        #                                        context,
+        #                                        feedback)        
 
         #----------------------cuartiles ICV de viv--------------------------------    
         
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * VQ1' 
-        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'vq1_seg',
-                                               formulaDummy,
-                                               context,
-                                               feedback)   
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # formulaDummy = '(area_seg/area_bloc) * VQ1' 
+        # resultForSegments = calculateField(resultForSegments['OUTPUT'], 'vq1_seg',
+        #                                        formulaDummy,
+        #                                        context,
+        #                                        feedback)   
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * VQ2' 
-        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'vq2_seg',
-                                               formulaDummy,
-                                               context,
-                                               feedback)                                                            
-
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * VQ3' 
-        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'vq3_seg',
-                                               formulaDummy,
-                                               context,
-                                               feedback)   
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # formulaDummy = '(area_seg/area_bloc) * VQ2' 
+        # resultForSegments = calculateField(resultForSegments['OUTPUT'], 'vq2_seg',
+        #                                        formulaDummy,
+        #                                        context,
+        #                                        feedback)                                                            
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * VQ4' 
-        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'vq4_seg',
-                                               formulaDummy,
-                                               context,
-                                               feedback)   
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # formulaDummy = '(area_seg/area_bloc) * VQ3' 
+        # resultForSegments = calculateField(resultForSegments['OUTPUT'], 'vq3_seg',
+        #                                        formulaDummy,
+        #                                        context,
+        #                                        feedback)   
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * VQt' 
-        resultForSegments = calculateField(resultForSegments['OUTPUT'], 'vqt_seg',
-                                               formulaDummy,
-                                               context,
-                                               feedback)   
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # formulaDummy = '(area_seg/area_bloc) * VQ4' 
+        # resultForSegments = calculateField(resultForSegments['OUTPUT'], 'vq4_seg',
+        #                                        formulaDummy,
+        #                                        context,
+        #                                        feedback)   
+
+
+        # steps = steps+1
+        # feedback.setCurrentStep(steps)
+        # formulaDummy = '(area_seg/area_bloc) * VQt' 
+        # resultForSegments = calculateField(resultForSegments['OUTPUT'], 'vqt_seg',
+        #                                        formulaDummy,
+        #                                        context,
+        #                                        feedback)   
 
 
         fieldsMapping = [
-            {'expression': '"pop_tot_seg"', 'length': 20, 'name': 'Pt', 'precision': 6, 'type': 6}, 
-            {'expression': '"Pc_seg"', 'length': 20, 'name': 'Pc', 'precision': 6, 'type': 6}, 
-            {'expression': '"Po_seg"', 'length': 20, 'name': 'Po', 'precision': 6, 'type': 6}, 
-            {'expression': '"viv_tot_seg"', 'length': 20, 'name': 'Vt', 'precision': 6, 'type': 6}, 
-            {'expression': '"Vc_seg"', 'length': 20, 'name': 'Vc', 'precision': 6, 'type': 6}, 
-            {'expression': '"Vo_seg"', 'length': 20, 'name': 'Vo', 'precision': 6, 'type': 6},
+            {'expression': '"codman"', 'length': 20, 'name': 'dpa_man', 'precision': 0, 'type': 10}, 
+            {'expression': '"pob_tot"', 'length': 20, 'name': 'Pt', 'precision': 6, 'type': 6}, 
+            {'expression': '"Pc"', 'length': 20, 'name': 'Pc', 'precision': 6, 'type': 6}, 
+            {'expression': '"Po"', 'length': 20, 'name': 'Po', 'precision': 6, 'type': 6}, 
+            {'expression': '"viv_tot"', 'length': 20, 'name': 'Vt', 'precision': 6, 'type': 6}, 
+            {'expression': '"Vc"', 'length': 20, 'name': 'Vc', 'precision': 6, 'type': 6}, 
+            {'expression': '"Vo"', 'length': 20, 'name': 'Vo', 'precision': 6, 'type': 6},
+            {'expression': '"popQ1"', 'length': 20, 'name': 'PQ1', 'precision': 6, 'type': 6}, 
+            {'expression': '"popQ2"', 'length': 20, 'name': 'PQ2', 'precision': 6, 'type': 6}, 
+            {'expression': '"popQ3"', 'length': 20, 'name': 'PQ3', 'precision': 6, 'type': 6}, 
+            {'expression': '"popQ4"', 'length': 20, 'name': 'PQ4', 'precision': 6, 'type': 6}, 
+            {'expression': '"popQt"', 'length': 20, 'name': 'PQt', 'precision': 6, 'type': 6}, 
 
-            {'expression': '"pq1_seg"', 'length': 20, 'name': 'PQ1', 'precision': 6, 'type': 6}, 
-            {'expression': '"pq2_seg"', 'length': 20, 'name': 'PQ2', 'precision': 6, 'type': 6}, 
-            {'expression': '"pq3_seg"', 'length': 20, 'name': 'PQ3', 'precision': 6, 'type': 6}, 
-            {'expression': '"pq4_seg"', 'length': 20, 'name': 'PQ4', 'precision': 6, 'type': 6}, 
-            {'expression': '"pqt_seg"', 'length': 20, 'name': 'PQt', 'precision': 6, 'type': 6}, 
-
-            {'expression': '"vq1_seg"', 'length': 20, 'name': 'VQ1', 'precision': 6, 'type': 6}, 
-            {'expression': '"vq2_seg"', 'length': 20, 'name': 'VQ2', 'precision': 6, 'type': 6}, 
-            {'expression': '"vq3_seg"', 'length': 20, 'name': 'VQ3', 'precision': 6, 'type': 6}, 
-            {'expression': '"vq4_seg"', 'length': 20, 'name': 'VQ4', 'precision': 6, 'type': 6}, 
-            {'expression': '"vqt_seg"', 'length': 20, 'name': 'VQt', 'precision': 6, 'type': 6},             
-            {'expression': '"icv_n"', 'length': 20, 'name': NAMES_INDEX['ID07'][0], 'precision': 6, 'type': 6}
+            {'expression': '"vq1"', 'length': 20, 'name': 'VQ1', 'precision': 6, 'type': 6}, 
+            {'expression': '"vq2"', 'length': 20, 'name': 'VQ2', 'precision': 6, 'type': 6}, 
+            {'expression': '"vq3"', 'length': 20, 'name': 'VQ3', 'precision': 6, 'type': 6}, 
+            {'expression': '"vq4"', 'length': 20, 'name': 'VQ4', 'precision': 6, 'type': 6}, 
+            {'expression': '"vqt"', 'length': 20, 'name': 'VQt', 'precision': 6, 'type': 6},             
+            {'expression': '"icv_n"', 'length': 20, 'name': 'ICV', 'precision': 6, 'type': 6}
         ]  
 
 
-
-
         steps = steps+1
         feedback.setCurrentStep(steps)
-        resultForBlocks = refactorFields(fieldsMapping, resultForSegments['OUTPUT'], 
+        resultForBlocks = refactorFields(fieldsMapping, result['OUTPUT'], 
                                 context,
                                 feedback, params['OUTPUT'])   
-
-
-
-        # Haciendo el buffer inverso aseguramos que los segmentos
-        # quden dentro de la malla
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        resultForSegmentsFixed = makeSureInside(resultForSegments['OUTPUT'],
-                                                    context,
-                                                    feedback)        
 
         steps = steps+1
         feedback.setCurrentStep(steps)
         gridNeto = joinByLocation(gridNeto['OUTPUT'],
-                             resultForSegmentsFixed['OUTPUT'],
-                             ['pop_tot_seg','Pc_seg','Po_seg','viv_tot_seg','Vc_seg','Vo_seg',
-                              'pq1_seg','pq2_seg','pq3_seg','pq4_seg','pqt_seg',
-                              'vq1_seg','vq2_seg','vq3_seg','vq4_seg','vqt_seg'
+                             resultForBlocks['OUTPUT'],
+                             ['Pt','Pc','Po','Vt','Vc','Vo',
+                              'PQ1','PQ2','PQ3','PQ4','PQt',
+                              'VQ1','VQ2','VQ3','VQ4','VQt'
                               ],                                   
-                              [CONTIENE], [SUM],
+                              [INTERSECTA], [SUM],
                               UNDISCARD_NONMATCHING,
                               context,
                               feedback)         
@@ -1165,49 +1215,48 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
         steps = steps+1
         feedback.setCurrentStep(steps)
         gridNeto = joinByLocation(gridNeto['OUTPUT'],
-                             resultForSegmentsFixed['OUTPUT'],
-                             ['icv_n'],                                   
+                             resultForBlocks['OUTPUT'],
+                             ['ICV'],                                   
                               [CONTIENE], [MEDIA],
-                              UNDISCARD_NONMATCHING,
+                              DISCARD_NONMATCHING,
                               context,
                               feedback)  
 
-
-
         fieldsMapping = [
-            {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
-            {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
-            {'expression': '"pop_tot_seg_sum"', 'length': 20, 'name': 'Pt', 'precision': 6, 'type': 6}, 
-            {'expression': '"Pc_seg_sum"', 'length': 20, 'name': 'Pc', 'precision': 6, 'type': 6}, 
-            {'expression': '"Po_seg_sum"', 'length': 20, 'name': 'Po', 'precision': 6, 'type': 6}, 
-            {'expression': '"viv_tot_seg_sum"', 'length': 20, 'name': 'Vt', 'precision': 6, 'type': 6}, 
-            {'expression': '"Vc_seg_sum"', 'length': 20, 'name': 'Vc', 'precision': 6, 'type': 6}, 
-            {'expression': '"Vo_seg_sum"', 'length': 20, 'name': 'Vo', 'precision': 6, 'type': 6},
-
-            {'expression': '"pq1_seg_sum"', 'length': 20, 'name': 'PQ1', 'precision': 6, 'type': 6}, 
-            {'expression': '"pq2_seg_sum"', 'length': 20, 'name': 'PQ2', 'precision': 6, 'type': 6}, 
-            {'expression': '"pq3_seg_sum"', 'length': 20, 'name': 'PQ3', 'precision': 6, 'type': 6}, 
-            {'expression': '"pq4_seg_sum"', 'length': 20, 'name': 'PQ4', 'precision': 6, 'type': 6}, 
-            {'expression': '"pqt_seg_sum"', 'length': 20, 'name': 'PQt', 'precision': 6, 'type': 6}, 
-
-            {'expression': '"vq1_seg_sum"', 'length': 20, 'name': 'VQ1', 'precision': 6, 'type': 6}, 
-            {'expression': '"vq2_seg_sum"', 'length': 20, 'name': 'VQ2', 'precision': 6, 'type': 6}, 
-            {'expression': '"vq3_seg_sum"', 'length': 20, 'name': 'VQ3', 'precision': 6, 'type': 6}, 
-            {'expression': '"vq4_seg_sum"', 'length': 20, 'name': 'VQ4', 'precision': 6, 'type': 6}, 
-            {'expression': '"vqt_seg_sum"', 'length': 20, 'name': 'VQt', 'precision': 6, 'type': 6},             
-            
-            {'expression': '"icv_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID07'][0], 'precision': 6, 'type': 6}
+            {'expression': '"Pt_sum"', 'length': 20, 'name': 'Pt', 'precision': 6, 'type': 6}, 
+            {'expression': '"Pc_sum"', 'length': 20, 'name': 'Pc', 'precision': 6, 'type': 6}, 
+            {'expression': '"Po_sum"', 'length': 20, 'name': 'Po', 'precision': 6, 'type': 6}, 
+            {'expression': '"Vt_sum"', 'length': 20, 'name': 'Vt', 'precision': 6, 'type': 6}, 
+            {'expression': '"Vc_sum"', 'length': 20, 'name': 'Vc', 'precision': 6, 'type': 6}, 
+            {'expression': '"Vo_sum"', 'length': 20, 'name': 'Vo', 'precision': 6, 'type': 6},
+            {'expression': '"PQ1_sum"', 'length': 20, 'name': 'PQ1', 'precision': 6, 'type': 6}, 
+            {'expression': '"PQ2_sum"', 'length': 20, 'name': 'PQ2', 'precision': 6, 'type': 6}, 
+            {'expression': '"PQ3_sum"', 'length': 20, 'name': 'PQ3', 'precision': 6, 'type': 6}, 
+            {'expression': '"PQ4_sum"', 'length': 20, 'name': 'PQ4', 'precision': 6, 'type': 6}, 
+            {'expression': '"PQt_sum"', 'length': 20, 'name': 'PQt', 'precision': 6, 'type': 6}, 
+            {'expression': '"VQ1_sum"', 'length': 20, 'name': 'VQ1', 'precision': 6, 'type': 6}, 
+            {'expression': '"VQ2_sum"', 'length': 20, 'name': 'VQ2', 'precision': 6, 'type': 6}, 
+            {'expression': '"VQ3_sum"', 'length': 20, 'name': 'VQ3', 'precision': 6, 'type': 6}, 
+            {'expression': '"VQ4_sum"', 'length': 20, 'name': 'VQ4', 'precision': 6, 'type': 6}, 
+            {'expression': '"VQt_sum"', 'length': 20, 'name': 'VQt', 'precision': 6, 'type': 6},             
+            {'expression': '"ICV_mean"', 'length': 20, 'name': 'ICV', 'precision': 6, 'type': 6}
         ]  
-
-
-
-    
         
         steps = steps+1
         feedback.setCurrentStep(steps)
         result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 
                                 context,
-                                feedback, params['OUTPUT2'])                                                                
+                                feedback)                                                                
+
+        steps = steps+1
+        feedback.setCurrentStep(steps)
+        result = intersection(params['STUDY_AREA_GRID'],
+                             result['OUTPUT'],
+                             [], [],
+                              context,
+                              feedback, params['OUTPUT2'])  
+
+
 
         return result
           
