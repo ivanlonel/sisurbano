@@ -447,7 +447,7 @@ class ID07QualityLifeIndexForBlocks(QgsProcessingAlgorithm):
         # *3.2 Calcular el número de dormitorios por persona.
         df['TP1'] = df['TP1'].astype(float)
         df['H01'] = df['H01'].astype(str)
-        df.loc[(df['H01'] == ' ') | (df['H01'] == '  ') | (df['H01'] == '   ') | (df['H01'] == '    '), 'H01'] = None
+        df = blanks2None(df, 'H01')
         df['H01'] = df['H01'].astype(float)
         df['dormitorio'] = df['H01'] / df['TP1']
 

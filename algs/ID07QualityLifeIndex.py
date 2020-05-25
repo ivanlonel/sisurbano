@@ -438,6 +438,7 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
         # *2. CÁLCULO DEL INDICADOR INTEGRADO DE ENERGÍA.
         # *En esta base se calcula una parte, y en la base de datos de vivienda, se completa el cálculo.
         df['combu'] = None
+        df['H05'] = df['H05'].astype(str)
         df.loc[df['H05'] == '7', 'combu'] = 1
         df.loc[(df['H05'] >= '4') & (df['H05'] <= '6'), 'combu'] = 0
         df.loc[(df['H05'] >= '1') & (df['H05'] <= '3'), 'combu'] = 1
@@ -456,7 +457,8 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
 
         # *3.2 Calcular el número de dormitorios por persona.
         df['TP1'] = df['TP1'].astype(float)
-        df = trimSpaces(df, 'H01')
+        df['H01'] = df['H01'].astype(str)
+        df = blanks2None(df, 'H01')
         df['H01'] = df['H01'].astype(float)
         df['dormitorio'] = df['H01'] / df['TP1']
 
@@ -483,6 +485,7 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
 
         # *4.2 Calcular la existencia de baño exclusivo.
         df['bano'] = None
+        df['H03'] = df['H03'].astype(str)
         df.loc[df['H03'] == '1', 'bano'] = 1
         df.loc[(df['H03'] >= '2') & (df['H03'] <= '3'), 'bano'] = 0
 
@@ -501,7 +504,8 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
         merge = pd.merge(df, dfVCuartos,  how='left', on='codv')
         df = merge
 
-        df.loc[df['V14'] == ' ', 'V14'] = None
+        df = blanks2None(df, 'V14')
+        df = blanks2None(df, 'DORM_X_VIVIENDA')
         df['CUARTOS_EXTRA'] = df['V14'].astype(float) - df['DORM_X_VIVIENDA'].astype(float)
 
         df['CUARTO_EXTRA1_0'] = None

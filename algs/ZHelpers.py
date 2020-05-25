@@ -39,15 +39,15 @@ from qgis.core import QgsVectorLayer
 # 			os.makedirs(folder)
 # 	return folder
 
-def trimSpaces(df, col):
-    df = df.loc[(df[col] == ' ') |
-           (df[col] == '  ') |
-           (df[col] == '   ') |
-           (df[col] == '    ') |
-           (df[col] == '     ') |
-           (df[col] == '      ') 
-           , col ] = None
-    return df
+def blanks2None(df, col):
+	df.loc[(df[col] == ' ') | 
+			(df[col] == '  ') | 
+			(df[col] == '   ') | 
+			(df[col] == '    ') | 
+			(df[col] == '     ') | 
+			(df[col] == '      '), 
+			col] = None	
+	return df
 
 
 def getCurrentPath(self, createFolder = True):
