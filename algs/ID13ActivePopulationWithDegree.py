@@ -154,7 +154,7 @@ class ID13ActivePopulationWithDegree(QgsProcessingAlgorithm):
         pathCsvPoblacion = params['CENSO_POBLACION']
 
         file = pathCsvPoblacion
-        cols = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 'I10', 'P01', 'P23', 'GEDAD']
+        cols = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 'I10', 'P01', 'P23','P03']
         df = pd.read_csv(file, usecols=cols)
 
         # fix codes 
@@ -180,11 +180,16 @@ class ID13ActivePopulationWithDegree(QgsProcessingAlgorithm):
         df.loc[df['I10'].str.len() < 2, 'I10'] = "0" + df['I10']
 
 
+        df['GREDAD'] = None
+        df.loc[(df['P03'] >= 15), 'GREDAD'] = 5
+        df.loc[(df['P03'] < 15), 'GREDAD'] = 4
+
+
         df['pobactive'] = 0.0
-        df.loc[(df['GEDAD'] >= 5) & ((df['P23'] == '9')), 'pobactive'] = 1.0
+        df.loc[(df['GREDAD'] >= 5) & ((df['P23'] == '9') | (df['P23'] == '09')), 'pobactive'] = 1.0
 
         df['poblacion'] = 0.0
-        df.loc[(df['GEDAD'] >0), 'poblacion'] = 1.0
+        df.loc[(df['GREDAD'] >0), 'poblacion'] = 1.0
 
 
         # df[0:50]

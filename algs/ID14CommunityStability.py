@@ -154,7 +154,7 @@ class ID14CommunityStability(QgsProcessingAlgorithm):
         pathCsvPoblacion = params['CENSO_POBLACION']
 
         file = pathCsvPoblacion
-        cols = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 'I10', 'P01', 'P23', 'GEDAD', 'P13']
+        cols = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 'I10', 'P01', 'P23', 'P13']
         df = pd.read_csv(file, usecols=cols)
 
         # fix codes 
