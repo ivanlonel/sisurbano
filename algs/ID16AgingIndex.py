@@ -153,7 +153,7 @@ class ID16AgingIndex(QgsProcessingAlgorithm):
         pathCsvPoblacion = params['CENSO_POBLACION']
 
         file = pathCsvPoblacion
-        cols = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 'I10', 'GRAESC', 'GEDAD']
+        cols = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 'I10', 'GRAESC', 'P03']
         df = pd.read_csv(file, usecols=cols)
 
         # fix codes 
@@ -165,6 +165,7 @@ class ID16AgingIndex(QgsProcessingAlgorithm):
         df['I06'] = df['I06'].astype(str)
         df['I09'] = df['I09'].astype(str)
         df['I10'] = df['I10'].astype(str)
+        df['P03'] = df['P03'].astype(str)
 
         df.loc[df['I01'].str.len() < 2, 'I01'] = "0" + df['I01']
         df.loc[df['I02'].str.len() < 2, 'I02'] = "0" + df['I02']
@@ -183,8 +184,12 @@ class ID16AgingIndex(QgsProcessingAlgorithm):
         df['mayor'] = None
         df['infantil'] = None
 
-        df.loc[(df['GEDAD'] >= 15) & (df['GEDAD'] <= 22), 'mayor'] = 1.0
-        df.loc[(df['GEDAD'] >= 1) & (df['GEDAD'] <= 4), 'infantil'] = 1.0
+        df['GREDAD'] = None
+        df.loc[df['P03'] >= '65', 'GREDAD'] = 15
+        df.loc[df['P03'] < '15', 'GREDAD'] = 1        
+
+        df.loc[(df['GREDAD'] >= 15) & (df['GREDAD'] <= 22), 'mayor'] = 1.0
+        df.loc[(df['GREDAD'] >= 1) & (df['GREDAD'] <= 4), 'infantil'] = 1.0
 
         df['codman'] = df['I01'].astype(str) + df['I02'].astype(str) + df['I03'].astype(str) \
                   + df['I04'].astype(str) + df['I05'].astype(str) + df['I06'].astype(str)

@@ -173,7 +173,7 @@ class ZN04AllocateValuesToPoints(QgsProcessingAlgorithm):
         lowercase alphanumeric characters only and no spaces or other
         formatting characters.
         """
-        return 'Z02 Distribuir valores polígono a puntos'
+        return 'Z04 Distribuir valores polígono a puntos'
 
     def displayName(self):
         """
@@ -204,4 +204,8 @@ class ZN04AllocateValuesToPoints(QgsProcessingAlgorithm):
 
     def createInstance(self):
         return ZN04AllocateValuesToPoints()
+
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Distribuye proporcionalemente el valor del polígono a los puntos que intersecten o esten cerca con este.</span>"\
 

@@ -209,3 +209,7 @@ class ZN05AllocateValuesForArea(QgsProcessingAlgorithm):
     def createInstance(self):
         return ZN05AllocateValuesForArea()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Asigna a la malla la categoría con mayor área intersectada entre la capa malla y la capa de polígonos que cotiene las categorías.</span>"\
+

@@ -169,3 +169,6 @@ class ZN00CreateGrid(QgsProcessingAlgorithm):
     def createInstance(self):
         return ZN00CreateGrid()
 
+    def shortHelpString(self):
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Crea una malla hexagonal en base a la extensión del área de estudio.</span>"
