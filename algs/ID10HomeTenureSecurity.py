@@ -214,6 +214,7 @@ class ID10HomeTenureSecurity(QgsProcessingAlgorithm):
         # 7 Anticresis
 
         df['tenencia'] = None
+        df['H15'] = df['H15'].astype(str)
         df.loc[(df['H15'] >= '1') & (df['H15'] <= '3'), 'tenencia'] = 1
         df.loc[(df['H15'] >= '4') & (df['H15'] < '6'), 'tenencia'] = 0
         df.loc[df['H15'] == '6', 'tenencia'] = 1
@@ -226,8 +227,7 @@ class ID10HomeTenureSecurity(QgsProcessingAlgorithm):
 
         fileV = pathCsvVivienda
         colsV = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 
-                 'I10', 'V16', 'TOTPER', 'id_man', 'id_viv', 'id_provin',
-                 'id_can', 'id_parr', 'id_viv', 'id_man'
+                 'I10', 'V16', 'TOTPER'
                 ]
         dfV = pd.read_csv(fileV, usecols=colsV)
 

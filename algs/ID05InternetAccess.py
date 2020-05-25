@@ -218,8 +218,7 @@ class ID05InternetAccess(QgsProcessingAlgorithm):
         fileV = pathCsvVivienda
         colsV = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 
                  'I10', 
-                 'V16', 'TOTPER', 'id_man', 'id_viv', 'id_provin',
-                 'id_can', 'id_parr', 'id_viv', 'id_man'
+                 'V16', 'TOTPER'
                 ]
         dfV = pd.read_csv(fileV, usecols=colsV)
 

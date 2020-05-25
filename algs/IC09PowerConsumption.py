@@ -217,7 +217,7 @@ class IC09PowerConsumption(QgsProcessingAlgorithm):
                   + df['I10'].astype(str)
 
         df = df[(df['H12'] != '9999')]
-        df.loc[df['H12'] == ' ', 'H12'] = None
+        df = blanks2None(df, 'H12')
         df['H12'] = df['H12'].astype(float)
 
 

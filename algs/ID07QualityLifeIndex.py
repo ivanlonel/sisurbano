@@ -99,32 +99,32 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
             )
         )           
 
-        # self.addParameter(
-        #     QgsProcessingParameterFile(
-        #         self.CENSO_POBLACION,
-        #         self.tr('Censo población'),
-        #         extension='csv',
-        #         defaultValue=""
-        #     )
-        # ) 
+        self.addParameter(
+            QgsProcessingParameterFile(
+                self.CENSO_POBLACION,
+                self.tr('Censo población'),
+                extension='csv',
+                defaultValue=""
+            )
+        ) 
 
-        # self.addParameter(
-        #     QgsProcessingParameterFile(
-        #         self.CENSO_HOGAR,
-        #         self.tr('Censo hogar'),
-        #         extension='csv',
-        #         defaultValue=""
-        #     )
-        # )           
+        self.addParameter(
+            QgsProcessingParameterFile(
+                self.CENSO_HOGAR,
+                self.tr('Censo hogar'),
+                extension='csv',
+                defaultValue=""
+            )
+        )           
 
-        # self.addParameter(
-        #     QgsProcessingParameterFile(
-        #         self.CENSO_VIVIENDA,
-        #         self.tr('Censo vivienda'),
-        #         extension='csv',
-        #         defaultValue=''
-        #     )
-        # )           
+        self.addParameter(
+            QgsProcessingParameterFile(
+                self.CENSO_VIVIENDA,
+                self.tr('Censo vivienda'),
+                extension='csv',
+                defaultValue=''
+            )
+        )           
 
 
 
@@ -138,34 +138,34 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
             )
         ) 
 
-        self.addParameter(
-            QgsProcessingParameterFile(
-                self.CENSO_HOGAR,
-                self.tr('Censo hogar'),
-                extension='csv',
-                defaultValue="/Users/terra/llactalab/data/mali/Cotopaxi_CSV_Hogar.csv"
-                # defaultValue=""
-            )
-        )           
+        # self.addParameter(
+        #     QgsProcessingParameterFile(
+        #         self.CENSO_HOGAR,
+        #         self.tr('Censo hogar'),
+        #         extension='csv',
+        #         defaultValue="/Users/terra/llactalab/data/mali/Cotopaxi_CSV_Hogar.csv"
+        #         # defaultValue=""
+        #     )
+        # )           
 
-        self.addParameter(
-            QgsProcessingParameterFile(
-                self.CENSO_VIVIENDA,
-                self.tr('Censo vivienda'),
-                extension='csv',
-                defaultValue='/Users/terra/llactalab/data/mali/Cotopaxi_CSV_Vivienda.csv'
-                # defaultValue=''
-            )
-        )    
+        # self.addParameter(
+        #     QgsProcessingParameterFile(
+        #         self.CENSO_VIVIENDA,
+        #         self.tr('Censo vivienda'),
+        #         extension='csv',
+        #         defaultValue='/Users/terra/llactalab/data/mali/Cotopaxi_CSV_Vivienda.csv'
+        #         # defaultValue=''
+        #     )
+        # )    
 
-        self.addParameter(
-            QgsProcessingParameterFeatureSource(
-                self.STUDY_AREA_GRID,
-                self.tr(TEXT_GRID_INPUT),
-                [QgsProcessing.TypeVectorPolygon],
-                '', OPTIONAL_GRID_INPUT
-            )
-        )
+        # self.addParameter(
+        #     QgsProcessingParameterFeatureSource(
+        #         self.STUDY_AREA_GRID,
+        #         self.tr(TEXT_GRID_INPUT),
+        #         [QgsProcessing.TypeVectorPolygon],
+        #         '', OPTIONAL_GRID_INPUT
+        #     )
+        # )
 
 
         if OPTIONAL_GRID_INPUT:
@@ -538,6 +538,7 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
         # *1.1.1 Calidad del Techo.
         df = dfV
         df['TECHO'] = None
+        df['V01'] = df['V01'].astype(str)
         df.loc[df['V01'] == '1', 'TECHO'] = 2
         df.loc[df['V01'] == '4', 'TECHO'] = 2
         df.loc[(df['V01'] >= '2') & (df['V01'] <= '3'), 'TECHO'] = 2
@@ -545,6 +546,7 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
 
         # *1.1.2 Calidad de Paredes.
         df['PAREDES'] = None
+        df['V03'] = df['V03'].astype(str)
         df.loc[df['V03'] == '5', 'PAREDES'] = 1
         df.loc[(df['V03'] >= '6') & (df['V03'] <= '7'), 'PAREDES'] = 0
         df.loc[(df['V03'] >= '3') & (df['V03'] <= '4'), 'PAREDES'] = 2
@@ -552,6 +554,7 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
 
         # *1.1.3 Calidad de Pisos.
         df['PISOS'] = None
+        df['V05'] = df['V05'].astype(str)
         df.loc[df['V05'] == '4', 'PISOS'] = 1
         df.loc[df['V05'] == '1', 'PISOS'] = 2
         df.loc[df['V05'] == '3', 'PISOS'] = 2
@@ -576,6 +579,7 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
         # *2. DISPONIBILIDAD DE SERVICIOS BÁSICOS EN LA VIVIENDA.
         # *2.1 Agua y saneamiento para la vivienda. 'Disponibilidad de agua'.
         df['AGUA'] = None
+        df['V08'] = df['V08'].astype(str)
         df.loc[df['V08'] == '1', 'AGUA'] = 3
         df.loc[df['V08'] == '2', 'AGUA'] = 2
         df.loc[df['V08'] == '3', 'AGUA'] = 1
@@ -586,6 +590,7 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
 
         #*2.1.3 Drenaje. 'Calidad de Drenaje'.
         df['DRENAJE'] = None
+        df['V09'] = df['V09'].astype(str)
         df.loc[df['V09'] == '1', 'DRENAJE'] = 2
         df.loc[df['V09'] == '2', 'DRENAJE'] = 1
         df.loc[(df['V09'] >= '3') & (df['V09'] <= '6'), 'DRENAJE'] = 0
@@ -595,6 +600,7 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
 
         # *2.1.5 Desechos. 'Eliminación de desechos'.
         df['DESECHOS'] = None
+        df['V13'] = df['V13'].astype(str)
         df.loc[df['V13'] == '1', 'DESECHOS'] = 1
         df.loc[(df['V13'] >= '2') & (df['V13'] <= '6'), 'DESECHOS'] = 0
 
@@ -605,6 +611,7 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
         # *2.2  Adecuación energética de la vivienda.
         # *2.2.2 Electricidad 0-1.Disponibilidad electricidad'.
         df['ELECTRICIDAD'] = None
+        df['V10'] = df['V10'].astype(str)
         df.loc[df['V10'] == '5', 'ELECTRICIDAD'] = 0
         df.loc[(df['V10'] >= '1') & (df['V10'] <= '4'), 'ELECTRICIDAD'] = 1
 
