@@ -21,7 +21,6 @@ from qgis.core import QgsProcessing
 import processing      
 from .Zettings import *
 from .ZProcesses import *
-
 from qgis.core import QgsVectorLayer
 
 
@@ -39,6 +38,16 @@ from qgis.core import QgsVectorLayer
 # 		if not folderExists:
 # 			os.makedirs(folder)
 # 	return folder
+
+def trimSpaces(df, col):
+    df = df.loc[(df[col] == ' ') |
+           (df[col] == '  ') |
+           (df[col] == '   ') |
+           (df[col] == '    ') |
+           (df[col] == '     ') |
+           (df[col] == '      ') 
+           , col ] = None
+    return df
 
 
 def getCurrentPath(self, createFolder = True):

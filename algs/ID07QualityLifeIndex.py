@@ -99,12 +99,42 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
             )
         )           
 
+        # self.addParameter(
+        #     QgsProcessingParameterFile(
+        #         self.CENSO_POBLACION,
+        #         self.tr('Censo población'),
+        #         extension='csv',
+        #         defaultValue=""
+        #     )
+        # ) 
+
+        # self.addParameter(
+        #     QgsProcessingParameterFile(
+        #         self.CENSO_HOGAR,
+        #         self.tr('Censo hogar'),
+        #         extension='csv',
+        #         defaultValue=""
+        #     )
+        # )           
+
+        # self.addParameter(
+        #     QgsProcessingParameterFile(
+        #         self.CENSO_VIVIENDA,
+        #         self.tr('Censo vivienda'),
+        #         extension='csv',
+        #         defaultValue=''
+        #     )
+        # )           
+
+
+
         self.addParameter(
             QgsProcessingParameterFile(
                 self.CENSO_POBLACION,
                 self.tr('Censo población'),
                 extension='csv',
-                defaultValue=""
+                defaultValue="/Users/terra/llactalab/data/mali/Cotopaxi_CSV_Poblac.csv"
+                # defaultValue=""
             )
         ) 
 
@@ -113,7 +143,8 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
                 self.CENSO_HOGAR,
                 self.tr('Censo hogar'),
                 extension='csv',
-                defaultValue=""
+                defaultValue="/Users/terra/llactalab/data/mali/Cotopaxi_CSV_Hogar.csv"
+                # defaultValue=""
             )
         )           
 
@@ -122,9 +153,10 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
                 self.CENSO_VIVIENDA,
                 self.tr('Censo vivienda'),
                 extension='csv',
-                defaultValue=''
+                defaultValue='/Users/terra/llactalab/data/mali/Cotopaxi_CSV_Vivienda.csv'
+                # defaultValue=''
             )
-        )           
+        )    
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -300,8 +332,7 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
         fileV = pathCsvVivienda
         colsV = ['I01', 'I02', 'I03', 'I04', 'I05', 'I06', 'I09', 
                  'I10', 'V01', 'V03', 'V05', 'V08', 'V09', 'V10', 
-                 'V13', 'V14', 'TOTPER', 'id_man', 'id_viv', 'id_provin',
-                 'id_can', 'id_parr', 'id_viv', 'id_man'
+                 'V13', 'V14', 'TOTPER',
                 ]
         dfV = pd.read_csv(fileV, usecols=colsV)
 
@@ -425,7 +456,7 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
 
         # *3.2 Calcular el número de dormitorios por persona.
         df['TP1'] = df['TP1'].astype(float)
-        df.loc[df['H01'] == ' ', 'H01'] = None
+        df = trimSpaces(df, 'H01')
         df['H01'] = df['H01'].astype(float)
         df['dormitorio'] = df['H01'] / df['TP1']
 
