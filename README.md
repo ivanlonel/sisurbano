@@ -13,7 +13,7 @@ Descargue o clone el repositorio, luego comprima la carpeta y agregue a sus comp
 
 Existe una diferencia importante entre QGIS en Windows y QGIS en Linux o Mac. Mientras que la versión de Windows instala su propio intérprete de Python, los de Linux y Mac dependen del Python del sistema operativo.
 
-El plugin de SISUrbano utiliza una librería externa llamada Pandas, en caso de que exista un error en la instalación debido a estas librería, Pandas se deberá instalar manualmente.
+El plugin de SISUrbano utiliza una librería externa llamada ```pandas```, en caso de que exista un error en la instalación debido a esta librería, ```pandas``` se deberá instalar manualmente.
 
 ### Windows 
 <!-- - pip install pandas. [Más información de como instalar pandas en Windows](https://stackoverflow.com/questions/42907331/how-to-install-pandas-from-pip-on-windows-cmd) -->
