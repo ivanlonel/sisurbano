@@ -308,4 +308,4 @@ class ZN03WrapValues(QgsProcessingAlgorithm):
         return  "<b>Descripción:</b><br>"\
                 "<span>Une el valor de las celdas de todos los indicadores. Requerido para usar la herramienta MESUE.</span>"\
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
-                "<span>Se une en un solo layer todos los valores de los indicadores para cada celda. Las celdas que contengan algún valor nulo en uno de sus indicadores serán descartados.</span>"\
+                "<span>Se une en un solo layer todos los valores de los indicadores para cada celda. Las celdas que contengan algún valor nulo en uno de sus indicadores serán descartados.</span>"

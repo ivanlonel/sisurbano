@@ -432,5 +432,4 @@ class ID16AgingIndex(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span>CPV 2010: GEDAD. 22 grupos. Mayores de 65 años son grupos 15 al 22. Niños de hasta 15 años son grupos del 1-4.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Población mayor / Población infantil)*100</span><br/>"         
-
+                "<span>(Población mayor / Población infantil)*100</span><br/>"

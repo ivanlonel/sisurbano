@@ -495,5 +495,4 @@ class ID10HomeTenureSecurity(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Hogares con vivienda propia o arrendada / Hogares totales)*100</span><br/>"         
-
+                "<span>(Hogares con vivienda propia o arrendada / Hogares totales)*100</span><br/>"

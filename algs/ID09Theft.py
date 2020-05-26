@@ -296,5 +296,4 @@ class ID09Theft(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span>Para el cálculo se utiliza información del CSC que comprende los robos denunciados.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Delitos anuales en el área de estudio / Total de delitos anuales en la ciudad)*100<br/>"         
-
+                "<span>(Delitos anuales en el área de estudio / Total de delitos anuales en la ciudad)*100<br/>"

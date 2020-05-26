@@ -256,5 +256,4 @@ class ID04OpenPublicSpacesNeedImprovement(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span>Se consideran los lotes de espacio público, en base al registro más reciente del estado actual. </span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Superficie de espacios públicos abiertos que necesitan mejoras en m2 / Superficie total de espacios públicos abiertos en m2)*100<br/>"         
-
+                "<span>(Superficie de espacios públicos abiertos que necesitan mejoras en m2 / Superficie total de espacios públicos abiertos en m2)*100<br/>"

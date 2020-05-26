@@ -272,5 +272,4 @@ class IB07SoilPermeability(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span>Este no utiliza factor de permeabilidad, simplemente es una comparación entre permeable e impermeable</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Superficie permeable en m2 / Superficie total del área de estudio en m2)*100<br/>"          
-
+                "<span>(Superficie permeable en m2 / Superficie total del área de estudio en m2)*100<br/>"

@@ -333,4 +333,4 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span>Se utilizan los datos disponibles por las empresas suministradoras de servicios privadas o municipales.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(No. viviendas con todos los servicios / No. total de viviendas)*100<br/>" 
+                "<span>(No. viviendas con todos los servicios / No. total de viviendas)*100<br/>"

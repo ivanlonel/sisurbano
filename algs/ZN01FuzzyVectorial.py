@@ -314,7 +314,7 @@ class ZN01FuzzyVectorial(QgsProcessingAlgorithm):
                 "<img  height='150' src='"+image1+"' /><br/><br/>"\
                 "<b>Normalización por interpolación lineal: nominal es mejor.</b><br/>"\
                 "<ul><li>A &lt; B &lt; C &lt; D</li></ul><br/>"\
-                "<img  height='150' src='"+image3+"' /><br/>"\
+                "<img  height='150' src='"+image3+"' /><br/>"
                 # "Normalización por interpolación lineal: nominal es mejor</b>.<br>"\
                 # "<b>Parameters (required):</b><br>"\
                 # "Los siguientes parametros son necesarios para el algortimo:"\

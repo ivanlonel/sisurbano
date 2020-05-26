@@ -390,5 +390,4 @@ class ID11UnemploymentRate(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span>Encuesta de Empleo, Desempleo y Subempleo, tabla acumulada de enero a diciembre de 2018: categoría DESEMPLEO.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(PEA desempleada / PEA total)*100</span><br/>"         
-
+                "<span>(PEA desempleada / PEA total)*100</span><br/>"

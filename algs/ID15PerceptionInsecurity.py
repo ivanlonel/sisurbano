@@ -396,5 +396,4 @@ class ID15PerceptionInsecurity(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span>Encuesta de Victimización y Percepción de Inseguridad, 2011. I52, categorías 1 y 2 (muy inseguro e inseguro)</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Población que se siente insegura / Población total)*100</span><br/>"         
-
+                "<span>(Población que se siente insegura / Población total)*100</span><br/>"

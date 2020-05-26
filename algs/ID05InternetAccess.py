@@ -487,5 +487,4 @@ class ID05InternetAccess(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Número de hogares con conexión a internet / Total de hogares)*100</span><br/>"         
-
+                "<span>(Número de hogares con conexión a internet / Total de hogares)*100</span><br/>"

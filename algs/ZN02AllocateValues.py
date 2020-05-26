@@ -243,4 +243,4 @@ class ZN02AllocateValues(QgsProcessingAlgorithm):
 
     def shortHelpString(self):
         return  "<b>Descripción:</b><br/>"\
-                "<span>Distribuye proporcionalemente el valor del polígono a los puntos que intersecten o esten cerca con este y se agrega a la malla.</span>"\
+                "<span>Distribuye proporcionalemente el valor del polígono a los puntos que intersecten o esten cerca con este y se agrega a la malla.</span>"

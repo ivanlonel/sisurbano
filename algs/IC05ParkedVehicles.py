@@ -254,5 +254,4 @@ class IC05ParkedVehicles(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Superficie de parqueadero en m2 / Superficie total del tramo de calle en m2)*100<br/>"         
-
+                "<span>(Superficie de parqueadero en m2 / Superficie total del tramo de calle en m2)*100<br/>"

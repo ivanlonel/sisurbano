@@ -730,5 +730,4 @@ class IC04Proximity2AlternativeTransport(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span>Proximidad se define como viviendas ubicadas a: 300m o menos de una parada de bus urbano, 500m o menos de una parada de tranvía, 300m o menos de una estación de bici pública, 300m o menos de una ciclovía, 300m o menos de senderos peatonales</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Población cubierta por al menos 3 redes de transporte alternativo / Población total)*100<br/>"         
-
+                "<span>(Población cubierta por al menos 3 redes de transporte alternativo / Población total)*100<br/>"

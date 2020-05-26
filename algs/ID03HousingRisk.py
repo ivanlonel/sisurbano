@@ -324,5 +324,4 @@ class ID03HousingRisk(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Viviendas emplazadas en zonas de riesgo / Total de viviendas)*100<br/>"         
-
+                "<span>(Viviendas emplazadas en zonas de riesgo / Total de viviendas)*100<br/>"

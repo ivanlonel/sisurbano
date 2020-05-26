@@ -267,4 +267,4 @@ class ID02HomesConstructiveDeficiencies(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span>La cantidad de unidades de vivienda en el área urbana del municipio que no cumplen con los estándares de habitabilidad definidos por el país dividido para el total de unidades de vivienda en el área urbana a evaluar.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(N° de viviendas con carencias / total de viviendas)*100<br/>" 
+                "<span>(N° de viviendas con carencias / total de viviendas)*100<br/>"

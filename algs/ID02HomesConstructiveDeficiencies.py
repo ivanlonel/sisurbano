@@ -443,4 +443,4 @@ class ID02HomesConstructiveDeficiencies(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span>Para el cálculo se utilizan los datos de las cubiertas, pareds y pisos en estado MALO según el Censo de pobalción y vivienda 2010. CPV 2010: V02: categoría 3 (techo). V04: categoría 3 (paredes). V06: categoría 3 (piso).</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Viviendas con carencias / Total de viviendas)*100<br/>" 
+                "<span>(Viviendas con carencias / Total de viviendas)*100<br/>"

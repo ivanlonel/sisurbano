@@ -272,5 +272,4 @@ class IC03RoadsPerHabitant(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>Total de carriles de vías en m / Total habitantes<br/>"         
-
+                "<span>Total de carriles de vías en m / Total habitantes<br/>"

@@ -427,5 +427,4 @@ class ID12WomenPaidWorkforce(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Población femenina empleada en el sector no-agrícola / Población total empleada en el sector no-agrícola)*100</span><br/>"         
-
+                "<span>(Población femenina empleada en el sector no-agrícola / Población total empleada en el sector no-agrícola)*100</span><br/>"

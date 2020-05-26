@@ -341,5 +341,4 @@ class ID06UseOfTime(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>Promedio del tiempo semanal en horas que los miembros del hogar de 12 años o más utilizaron para actividades personales.</span><br/>"         
-
+                "<span>Promedio del tiempo semanal en horas que los miembros del hogar de 12 años o más utilizaron para actividades personales.</span><br/>"

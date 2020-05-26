@@ -412,5 +412,4 @@ class ID14CommunityStability(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span></span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Población que vive en el mismo lugar / Población total)*100</span><br/>"         
-
+                "<span>(Población que vive en el mismo lugar / Población total)*100</span><br/>"

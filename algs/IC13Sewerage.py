@@ -298,5 +298,4 @@ class IC13Sewerage(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span>En CPV 2010: Alcantarillado V09: categoría 1.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>(Viviendas con conexión a alcantarillado / Total de viviendas)*100<br/>"         
-
+                "<span>(Viviendas con conexión a alcantarillado / Total de viviendas)*100<br/>"

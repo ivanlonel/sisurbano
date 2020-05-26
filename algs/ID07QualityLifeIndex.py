@@ -1253,5 +1253,4 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
                 "<br/><br/><b>Justificación y metodología:</b><br/>"\
                 "<span>Se utiliza la metodología desarrollada por Osorio y Orellana (2014) para la ciudad de Cuenca.</span>"\
                 "<br/><br/><b>Formula:</b><br/>"\
-                "<span>Para estandarizar los valores se utiliza la fórmula: Vi=Xi/Ui, Vi= valor estandarizado, Xi= puntaje de la variable, Ui= umbral previamente definido. Para las variables Dormitorios y Años de escolaridad se pueden obtener valores mayores a 2, reescalando los valores mayores a 1: Vi= 1 + ((Vi-1)/(maxV-1)). Finalmente se realiza una suma ponderada de los valores obtenidos para cada variable.</span><br/>"         
-
+                "<span>Para estandarizar los valores se utiliza la fórmula: Vi=Xi/Ui, Vi= valor estandarizado, Xi= puntaje de la variable, Ui= umbral previamente definido. Para las variables Dormitorios y Años de escolaridad se pueden obtener valores mayores a 2, reescalando los valores mayores a 1: Vi= 1 + ((Vi-1)/(maxV-1)). Finalmente se realiza una suma ponderada de los valores obtenidos para cada variable.</span><br/>"
