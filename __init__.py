@@ -27,13 +27,22 @@ __date__ = '2019-09-16'
 __copyright__ = '(C) 2019 by LlactaLAB'
 
 
+# import sys, os
+# import subprocess
+
+
 # noinspection PyPep8Naming
 def classFactory(iface):  # pylint: disable=invalid-name
     """Load Sisurbano class from file Sisurbano.
-
     :param iface: A QGIS interface instance.
     :type iface: QgsInterface
     """
     #
     from .sisurbano import SisurbanoPlugin
+    # print("Agregando pandas")
+    # dir = str(os.path.join(os.path.dirname(os.path.realpath(__file__)), ''))
+    # dir = str(os.path.join(dir, 'libs'))
+    # dir = str(os.path.join(dir, 'pandas'))
+    # print(dir)
+    # sys.path.insert(0, dir)
     return SisurbanoPlugin()

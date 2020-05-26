@@ -4,10 +4,17 @@
 Herramienta de Sistemas de Información Geográfica para QGIS para el cálculo de indicadores de sustentabildiad urbana en ciudades intermedias.
 
 ## Requisitos 
-- QGIS 3.10.2 o superior
+- QGIS 3.10.2 o superior. [Sitio para descargar])(https://www.qgis.org/es/site/forusers/download.html)
 
 ## Instalación
-Descargue o clone el repositorio, luego comprima la carpeta y agregue a sus complementos de QGIS. El complemento se agregará a la "Caja de herramientas de procesos"
+Descargue o clone el repositorio, luego comprima la carpeta y agregue a sus complementos de QGIS. El complemento se agregará a la "Caja de herramientas de procesos". En las versiones de QIGS para Windows y Linux, la librería pandas debe ser instalada manualmente. Luego de instalar QGIS debemos instalar las dependencias:
+
+### Windows
+- pip install pandas. [Más información de como instalar pandas en Windows](https://stackoverflow.com/questions/42907331/how-to-install-pandas-from-pip-on-windows-cmd)
+
+### Ubuntu 
+- pip install pandas. `
+
 
 ![Plugin](/pluginSisurbano.png)
 
