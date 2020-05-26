@@ -571,5 +571,5 @@ class IB00WrapB(QgsProcessingAlgorithm):
         return IB00WrapB()
 
     def shortHelpString(self):
-        return  "<b>Descripción:</b><br>"\
-                "<span>Calcula todos los indicadores de Ambiente biofísico</span><br>"\
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Calcula todos los indicadores de Ambiente biofísico</span><br/>"

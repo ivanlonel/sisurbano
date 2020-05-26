@@ -553,5 +553,5 @@ class IC00WrapC(QgsProcessingAlgorithm):
         return IC00WrapC()
 
     def shortHelpString(self):
-        return  "<b>Descripción:</b><br>"\
-                "<span>Calcula todos los indicadores de Moviidad urbana</span><br>"\
+        return  "<b>Descripción:</b><br/>"\
+                "<span>Calcula todos los indicadores de Moviidad urbana</span><br/>"

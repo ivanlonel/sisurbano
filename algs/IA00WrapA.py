@@ -966,5 +966,5 @@ class IA00WrapA(QgsProcessingAlgorithm):
         return IA00WrapA()
 
     def shortHelpString(self):
-        return  "<b>Descripción:</b><br>"\
-                "<span>Calcula todos los indicadores de Ambiente construido</span><br>"\
+        return  "<b>Descripción:</b><br/>"\
+        "<span>Calcula todos los indicadores de Ambiente construido</span><br/>"
