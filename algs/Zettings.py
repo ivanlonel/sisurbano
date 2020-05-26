@@ -94,7 +94,7 @@ NAMES_INDEX = {
 	'X02': ['iD17_SegrEspaMalla','iD17_SegrEspaMalla','D17 Segregación Espacial']
 }
 
-TEXT_GRID_INPUT = 'Malla (Si ya tienes una malla de estudio)'
+TEXT_GRID_INPUT = 'Malla hexagonal del área de estudio'
 OPTIONAL_GRID_INPUT = False
 
 TIME_TRAVEL_COST = 300 #segundos (5min)

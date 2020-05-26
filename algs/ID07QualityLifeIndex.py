@@ -128,15 +128,15 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
 
 
 
-        self.addParameter(
-            QgsProcessingParameterFile(
-                self.CENSO_POBLACION,
-                self.tr('Censo población'),
-                extension='csv',
-                defaultValue="/Users/terra/llactalab/data/mali/Cotopaxi_CSV_Poblac.csv"
-                # defaultValue=""
-            )
-        ) 
+        # self.addParameter(
+        #     QgsProcessingParameterFile(
+        #         self.CENSO_POBLACION,
+        #         self.tr('Censo población'),
+        #         extension='csv',
+        #         defaultValue="/Users/terra/llactalab/data/mali/Cotopaxi_CSV_Poblac.csv"
+        #         # defaultValue=""
+        #     )
+        # ) 
 
         # self.addParameter(
         #     QgsProcessingParameterFile(
@@ -158,14 +158,14 @@ class ID07QualityLifeIndex(QgsProcessingAlgorithm):
         #     )
         # )    
 
-        # self.addParameter(
-        #     QgsProcessingParameterFeatureSource(
-        #         self.STUDY_AREA_GRID,
-        #         self.tr(TEXT_GRID_INPUT),
-        #         [QgsProcessing.TypeVectorPolygon],
-        #         '', OPTIONAL_GRID_INPUT
-        #     )
-        # )
+        self.addParameter(
+            QgsProcessingParameterFeatureSource(
+                self.STUDY_AREA_GRID,
+                self.tr(TEXT_GRID_INPUT),
+                [QgsProcessing.TypeVectorPolygon],
+                '', OPTIONAL_GRID_INPUT
+            )
+        )
 
 
         if OPTIONAL_GRID_INPUT:
