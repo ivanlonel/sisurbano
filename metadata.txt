@@ -3,7 +3,7 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=SISURBANO
+name=sisurbano
 qgisMinimumVersion=3.10
 description=Esta herramienta basada en sistemas de información geográfica permite integrar datos urbanos desagregados en un sistema de indicadores para evaluar diferentes componentes de la sustentabilidad. La herramienta es open-source y puede ser utilizada de forma libre por investigadores, técnicos, estudiantes, planificadores y ciudadanía en general.
 version=0.1
