@@ -74,5 +74,10 @@ El plugin de SISUrbano utiliza una librería externa llamada ```pandas```, en ca
     + D16 Índice de envejecimiento
     + D17 Segregación Espacial
 
+## Contactos
+
+LlactaLAB – Ciudades Sustentables es un Grupo de Investigación de la Universidad de Cuenca, parte del Departamento Interdisciplinario de Espacio y Población.
+
+llactalab@ucuenca.edu.ec
 
 
