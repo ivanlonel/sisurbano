@@ -3,17 +3,17 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=Sisurbano
-qgisMinimumVersion=3.8
-description=Cáculo de indicadores urbanos
+name=SISURBANO
+qgisMinimumVersion=3.10
+description=Esta herramienta basada en sistemas de información geográfica permite integrar datos urbanos desagregados en un sistema de indicadores para evaluar diferentes componentes de la sustentabilidad. La herramienta es open-source y puede ser utilizada de forma libre por investigadores, técnicos, estudiantes, planificadores y ciudadanía en general.
 version=0.1
-author= @fastuller88 | LlactaLAB | Universidad de Cuenca
-email=johnatan.astudillo@ucuenca.edu.ec
+author= @fastuller88 | llactalab@ucuenca.edu.ec | Universidad de Cuenca
+email=llactalab@ucuenca.edu.ec
 
-about=Batería de algoritmos para el cálculo de indicadores urbanos
+about=SISURBANO parte de la necesidad de conocer la forma urbana y su relación con la sustentabilidad como clave para comprender los retos actuales de nuestras ciudades. Así, luego del desarrollo de una batería de indicadores de sustentabilidad urbana, adaptada a la localidad de una ciudad andina intermedia, como es el caso de Cuenca, la investigación se enfoca en la creación y aplicación de una herramienta informática automatizada que permita medir los diferentes indicadores de sustentabilidad en los tejidos urbanos de Cuenca. Seguido, el proyecto explora la variabilidad de los valores de estos indicadores entre las diferentes tipologías de tejidos, con el fin de mostrar evidencia cuantitativa de la correlación entre sustentabilidad y morfología urbana. Los resultados permiten además una evaluación diferenciada de las condiciones de sustentabilidad presentes en cada tejido. Esto último posibilita la discusión de políticas públicas que mejoren la calidad de vida de los sectores menos beneficiados (sustentables).
 
-tracker=http://bugs
-repository=http://repo
+tracker=https://github.com/fastuller88/sisurbano/issues
+repository=https://github.com/llactalab/sisurbano
 # End of mandatory metadata
 
 # Recommended items:
@@ -23,9 +23,9 @@ hasProcessingProvider=yes
 # changelog=
 
 # Tags are comma separated with spaces allowed
-tags=python
+tags=sutentabilidad urbano indicadores
 
-homepage=http://homepage
+homepage=https://llactalab.ucuenca.edu.ec/sisurbano/
 category=Analysis
 icon=icon_sisurbano.svg
 # experimental flag
