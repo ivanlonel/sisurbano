@@ -54,7 +54,7 @@ import tempfile
 import subprocess
 import inspect
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID17SpatialSegregation(QgsProcessingAlgorithm):
     """
@@ -170,7 +170,7 @@ class ID17SpatialSegregation(QgsProcessingAlgorithm):
        
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'segregacion.jpg'))
+        return QIcon(os.path.join(pluginPath, 'segregacion.jpg'))
 
     def name(self):
         """

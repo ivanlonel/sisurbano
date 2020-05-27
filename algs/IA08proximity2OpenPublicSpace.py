@@ -47,7 +47,7 @@ from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
     """
@@ -379,7 +379,7 @@ class IA08proximity2OpenPublicSpace(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'openspace.jpeg'))
+        return QIcon(os.path.join(pluginPath, 'openspace.jpeg'))
 
     def name(self):
         """

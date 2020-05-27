@@ -94,7 +94,10 @@ from .algs import (
     )
 
 
-pluginPath = os.path.split(os.path.dirname(__file__))[0]
+# pluginPath = os.path.split(os.path.dirname(__file__))[0]
+
+pluginPath = str(os.path.abspath(os.path.join(os.path.dirname(__file__),"")))
+# pluginPath = os.path.join(pluginPath, 'icons')
 
 class SisurbanoProvider(QgsProcessingProvider):
 
@@ -193,7 +196,7 @@ class SisurbanoProvider(QgsProcessingProvider):
         return self.tr('SISURBANO')
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icon_sisurbano.svg'))
+        return QIcon(os.path.join(pluginPath, 'icon_sisurbano.svg'))
 
     def svgIconPath(self):
         return os.path.join(pluginPath, 'sisurbano', 'icon_sisurbano.svg')        

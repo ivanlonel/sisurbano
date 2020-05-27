@@ -51,7 +51,7 @@ import pandas as pd
 import tempfile
 import subprocess
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID02HomesConstructiveDeficiencies(QgsProcessingAlgorithm):
     """
@@ -395,7 +395,7 @@ class ID02HomesConstructiveDeficiencies(QgsProcessingAlgorithm):
         return result
           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'housebroken.png'))
+        return QIcon(os.path.join(pluginPath, 'housebroken.png'))
 
     def name(self):
         """

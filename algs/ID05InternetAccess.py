@@ -51,7 +51,7 @@ import pandas as pd
 import tempfile
 import subprocess
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID05InternetAccess(QgsProcessingAlgorithm):
     """
@@ -439,7 +439,7 @@ class ID05InternetAccess(QgsProcessingAlgorithm):
         return result
           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'wifi.png'))
+        return QIcon(os.path.join(pluginPath, 'wifi.png'))
 
     def name(self):
         """

@@ -47,7 +47,7 @@ from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IB03AcousticComfort(QgsProcessingAlgorithm):
     """
@@ -272,7 +272,7 @@ class IB03AcousticComfort(QgsProcessingAlgorithm):
 
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'noise3.png'))
+        return QIcon(os.path.join(pluginPath, 'noise3.png'))
 
     def name(self):
         """

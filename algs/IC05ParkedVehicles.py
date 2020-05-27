@@ -46,7 +46,7 @@ from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IC05ParkedVehicles(QgsProcessingAlgorithm):
     """
@@ -206,7 +206,7 @@ class IC05ParkedVehicles(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'parking.jpeg'))
+        return QIcon(os.path.join(pluginPath, 'parking.jpeg'))
 
     def name(self):
         """

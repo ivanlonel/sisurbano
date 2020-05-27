@@ -1,3 +1,8 @@
+import os
+
+pluginPath = str(os.path.abspath(os.path.join(os.path.dirname(__file__),"..")))
+pluginPath = os.path.join(pluginPath, 'icons')
+
 INTERSECTA = 0
 CONTIENE = 1
 IGUALA = 2

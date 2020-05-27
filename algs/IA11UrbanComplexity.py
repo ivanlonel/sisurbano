@@ -49,7 +49,7 @@ import numpy as np
 import pandas as pd
 import tempfile
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IA11UrbanComplexity(QgsProcessingAlgorithm):
     """
@@ -322,7 +322,7 @@ class IA11UrbanComplexity(QgsProcessingAlgorithm):
 
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'complex.png'))
+        return QIcon(os.path.join(pluginPath, 'complex.png'))
 
     def name(self):
         """

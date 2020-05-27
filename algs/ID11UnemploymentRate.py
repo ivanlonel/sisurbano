@@ -51,7 +51,7 @@ import pandas as pd
 import tempfile
 import subprocess
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID11UnemploymentRate(QgsProcessingAlgorithm):
     """
@@ -342,7 +342,7 @@ class ID11UnemploymentRate(QgsProcessingAlgorithm):
         return result
           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'unemployment.png'))
+        return QIcon(os.path.join(pluginPath, 'unemployment.png'))
 
     def name(self):
         """

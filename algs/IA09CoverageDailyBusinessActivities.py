@@ -47,7 +47,7 @@ from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
     """
@@ -662,7 +662,7 @@ class IA09CoverageDailyBusinessActivities(QgsProcessingAlgorithm):
 
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'proximityshops.png'))
+        return QIcon(os.path.join(pluginPath, 'proximityshops.png'))
 
     def name(self):
         """
