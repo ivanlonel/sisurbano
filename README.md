@@ -7,7 +7,7 @@ Herramienta de Sistemas de Información Geográfica para QGIS para el cálculo d
 - QGIS 3.10.2 o superior. [Sitio para descargar](https://www.qgis.org/es/site/forusers/download.html)
 
 ## Instalación
-Descargue haciendo click [aquí](https://github.com/llactalab/sisurbano/raw/master/sisurbano.zip), luego agregue a sus complementos de QGIS. El complemento se agregará a la "Caja de herramientas de procesos". 
+Descargue el complemento SISURBANO haciendo click [aquí](https://github.com/llactalab/sisurbano/raw/master/sisurbano.zip), luego agregue a sus complementos de QGIS. El complemento se agregará a la "Caja de herramientas de procesos". 
 
 ![Plugin](/pluginSisurbano.png)
 
