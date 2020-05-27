@@ -199,7 +199,7 @@ class SisurbanoProvider(QgsProcessingProvider):
         return QIcon(os.path.join(pluginPath, 'icon_sisurbano.svg'))
 
     def svgIconPath(self):
-        return os.path.join(pluginPath, 'sisurbano', 'icon_sisurbano.svg')        
+        return QIcon(os.path.join(pluginPath, 'icon_sisurbano.svg'))
 
     def longName(self):
         """
