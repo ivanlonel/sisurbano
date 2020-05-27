@@ -23,7 +23,7 @@ hasProcessingProvider=yes
 # changelog=
 
 # Tags are comma separated with spaces allowed
-tags=sutentabilidad urbano indicadores
+tags=Sutentabilidad, Urbano, Indicadores, Vectorial
 
 homepage=https://llactalab.ucuenca.edu.ec/sisurbano/
 category=Analysis
