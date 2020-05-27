@@ -52,7 +52,7 @@ import tempfile
 import subprocess
 import datetime
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID06UseOfTime(QgsProcessingAlgorithm):
     """
@@ -293,7 +293,7 @@ class ID06UseOfTime(QgsProcessingAlgorithm):
         return result
           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'timer3.png'))
+        return QIcon(os.path.join(pluginPath, 'timer3.png'))
 
     def name(self):
         """

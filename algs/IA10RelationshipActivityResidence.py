@@ -46,7 +46,7 @@ from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
     """
@@ -227,7 +227,7 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'activity.png'))
+        return QIcon(os.path.join(pluginPath, 'activity.png'))
 
     def name(self):
         """

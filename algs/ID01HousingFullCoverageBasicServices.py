@@ -51,7 +51,7 @@ import pandas as pd
 import tempfile
 import subprocess
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
     """
@@ -395,7 +395,7 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
         return result
           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'fullservices.jpg'))
+        return QIcon(os.path.join(pluginPath, 'fullservices.jpg'))
 
     def name(self):
         """

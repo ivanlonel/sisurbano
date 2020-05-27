@@ -47,7 +47,7 @@ from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
     """
@@ -591,7 +591,7 @@ class IA07proximity2BasicUrbanServices(QgsProcessingAlgorithm):
 
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'icon_servicearea_contour_multiple.svg'))
+        return QIcon(os.path.join(pluginPath, 'icon_servicearea_contour_multiple.svg'))
 
     def name(self):
         """

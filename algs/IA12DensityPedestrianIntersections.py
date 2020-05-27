@@ -46,7 +46,7 @@ from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IA12DensityPedestrianIntersections(QgsProcessingAlgorithm):
     """
@@ -297,7 +297,7 @@ class IA12DensityPedestrianIntersections(QgsProcessingAlgorithm):
 
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'densidadinter.png'))
+        return QIcon(os.path.join(pluginPath, 'densidadinter.png'))
 
     def name(self):
         """

@@ -46,7 +46,7 @@ from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IC01PublicPedestrianRoadDistribution(QgsProcessingAlgorithm):
     """
@@ -205,7 +205,7 @@ class IC01PublicPedestrianRoadDistribution(QgsProcessingAlgorithm):
 
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'walkroad.jpeg'))
+        return QIcon(os.path.join(pluginPath, 'walkroad.jpeg'))
 
     def name(self):
         """

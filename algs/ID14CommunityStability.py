@@ -51,7 +51,7 @@ import pandas as pd
 import tempfile
 import subprocess
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID14CommunityStability(QgsProcessingAlgorithm):
     """
@@ -364,7 +364,7 @@ class ID14CommunityStability(QgsProcessingAlgorithm):
         return result
           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'community2.png'))
+        return QIcon(os.path.join(pluginPath, 'community2.png'))
 
     def name(self):
         """

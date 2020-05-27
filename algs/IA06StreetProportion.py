@@ -46,7 +46,7 @@ from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IA06StreetProportion(QgsProcessingAlgorithm):
     """
@@ -647,7 +647,7 @@ class IA06StreetProportion(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'road2.png'))
+        return QIcon(os.path.join(pluginPath, 'road2.png'))
 
     def name(self):
         """

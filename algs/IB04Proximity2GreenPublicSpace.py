@@ -47,7 +47,7 @@ from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IB04Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
     """
@@ -374,7 +374,7 @@ class IB04Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'green_grid_3.png'))
+        return QIcon(os.path.join(pluginPath, 'green_grid_3.png'))
 
     def name(self):
         """

@@ -46,7 +46,7 @@ from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IB05GreenPerHabitant(QgsProcessingAlgorithm):
     """
@@ -249,7 +249,7 @@ class IB05GreenPerHabitant(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'green_grid_2.svg'))
+        return QIcon(os.path.join(pluginPath, 'green_grid_2.svg'))
 
     def name(self):
         """

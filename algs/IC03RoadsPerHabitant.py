@@ -46,7 +46,7 @@ from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IC03RoadsPerHabitant(QgsProcessingAlgorithm):
     """
@@ -224,7 +224,7 @@ class IC03RoadsPerHabitant(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'road.png'))
+        return QIcon(os.path.join(pluginPath, 'road.png'))
 
     def name(self):
         """

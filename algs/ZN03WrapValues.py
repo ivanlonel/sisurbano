@@ -50,7 +50,7 @@ from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 def joinAll(validInputs, params, context, feedback):
   outp = QgsProcessing.TEMPORARY_OUTPUT
@@ -263,7 +263,7 @@ class ZN03WrapValues(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
                                           
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'joinlayers.png'))
+        return QIcon(os.path.join(pluginPath, 'joinlayers.png'))
 
     def name(self):
         """

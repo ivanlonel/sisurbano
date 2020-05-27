@@ -46,7 +46,7 @@ from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID09Theft(QgsProcessingAlgorithm):
     """
@@ -248,7 +248,7 @@ class ID09Theft(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'thief.png'))
+        return QIcon(os.path.join(pluginPath, 'thief.png'))
 
     def name(self):
         """

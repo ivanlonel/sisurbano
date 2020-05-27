@@ -48,7 +48,7 @@ from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IB00WrapB(QgsProcessingAlgorithm):
     """
@@ -528,7 +528,7 @@ class IB00WrapB(QgsProcessingAlgorithm):
 
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'make-hexa_logo.png'))
+        return QIcon(os.path.join(pluginPath, 'make-hexa_logo.png'))
 
     def name(self):
         """

@@ -46,7 +46,7 @@ from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IB07SoilPermeability(QgsProcessingAlgorithm):
     """
@@ -224,7 +224,7 @@ class IB07SoilPermeability(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'green2.jpeg'))
+        return QIcon(os.path.join(pluginPath, 'green2.jpeg'))
 
     def name(self):
         """

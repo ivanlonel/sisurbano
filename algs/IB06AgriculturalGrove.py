@@ -46,7 +46,7 @@ from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class IB06AgriculturalGrove(QgsProcessingAlgorithm):
     """
@@ -241,7 +241,7 @@ class IB06AgriculturalGrove(QgsProcessingAlgorithm):
         #return {self.OUTPUT: dest_id}
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'grass.png'))
+        return QIcon(os.path.join(pluginPath, 'grass.png'))
 
     def name(self):
         """

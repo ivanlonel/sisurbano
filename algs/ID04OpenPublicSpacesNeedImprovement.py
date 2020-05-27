@@ -46,7 +46,7 @@ from .ZProcesses import *
 from .Zettings import *
 from .ZHelpers import *
 
-pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+#pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 class ID04OpenPublicSpacesNeedImprovement(QgsProcessingAlgorithm):
     """
@@ -208,7 +208,7 @@ class ID04OpenPublicSpacesNeedImprovement(QgsProcessingAlgorithm):
 
 
     def icon(self):
-        return QIcon(os.path.join(pluginPath, 'sisurbano', 'icons', 'warninghouse.jpeg'))
+        return QIcon(os.path.join(pluginPath, 'warninghouse.jpeg'))
 
     def name(self):
         """
