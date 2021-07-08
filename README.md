@@ -1,15 +1,41 @@
 ![Logo](/logoHex.png)
 
+<p align="center">
+<img src="https://img.shields.io/github/issues/llactalab/sisurbano" alt="Issues"></img>
+<img src="https://img.shields.io/github/forks/llactalab/sisurbano" alt="Forks"></img>
+<img src="https://img.shields.io/github/stars/llactalab/sisurbano" alt="Stars"></img>
+<img src="https://img.shields.io/github/license/llactalab/sisurbano" alt="Licence"></img>
+</p>
+
+<br>
+<img src="https://github.com/anahicalderon/sisurbano/blob/fbfdcdd48d0519ea9f562d8652eb8d0f24ecaa25/img_uso1.PNG?raw=true" alt="img_uso1" width=50%></img>
+<img src="https://github.com/anahicalderon/sisurbano/blob/master/img_uso2.PNG?raw=true" alt="img_uso2" width=50%></img>
+
+<br>
+<br>
+<br>
+
+* [SISURBANO](#sisurbano)
+* [Requisitos](#requisitos)
+* [Instalación](#instalación)
+* [Lista de indicadores](#lista-de-indicadores)
+* [Contribuyendo](#🤝-contribuyendo)
+* [Contactos](#contactos)
+<br>
+<br>
+<br>
+
+
 # SISURBANO - Evaluación de sustentabilidad en tejidos urbanos: Sistema de indicadores y herramienta de análisis espacial.
 
 Esta herramienta basada en sistemas de información geográfica permite integrar datos urbanos desagregados en un sistema de indicadores para evaluar diferentes componentes de la sustentabilidad. La herramienta es open-source y puede ser utilizada de forma libre por investigadores, técnicos, estudiantes, planificadores y ciudadanía en general.
 
 SISURBANO parte de la necesidad de conocer la forma urbana y su relación con la sustentabilidad como clave para comprender los retos actuales de nuestras ciudades. Así, luego del desarrollo de una batería de indicadores de sustentabilidad urbana, adaptada a la localidad de una ciudad andina intermedia, como es el caso de Cuenca, la investigación se enfoca en la creación y aplicación de una herramienta informática automatizada que permita medir los diferentes indicadores de sustentabilidad en los tejidos urbanos de Cuenca. Seguido, el proyecto explora la variabilidad de los valores de estos indicadores entre las diferentes tipologías de tejidos, con el fin de mostrar evidencia cuantitativa de la correlación entre sustentabilidad y morfología urbana. Los resultados permiten además una evaluación diferenciada de las condiciones de sustentabilidad presentes en cada tejido. Esto último posibilita la discusión de políticas públicas que mejoren la calidad de vida de los sectores menos beneficiados (sustentables).
 
-## Requisitos 
+# Requisitos 
 - QGIS 3.10.2 o superior. [Sitio para descargar](https://www.qgis.org/es/site/forusers/download.html)
 
-## Instalación
+# Instalación
 Descargue el complemento SISURBANO haciendo click [aquí](https://github.com/llactalab/sisurbano/raw/master/sisurbano.zip), luego agregue a sus complementos de QGIS. El complemento se agregará a la "Caja de herramientas de procesos". 
 
 ![Plugin](/pluginSisurbano.png)
@@ -27,7 +53,7 @@ El plugin de SISUrbano utiliza una librería externa llamada ```pandas```, en ca
 ### Ubuntu 
 - Abra la consola de comandos y escriba ```pip install pandas```.
 
-## Lista de indicadores
+# Lista de indicadores
 - Ambiente construido
     + A01 Densidad neta de habitantes
     + A02 Densidad neta de viviendas
@@ -77,7 +103,15 @@ El plugin de SISUrbano utiliza una librería externa llamada ```pandas```, en ca
     + D16 Índice de envejecimiento
     + D17 Segregación Espacial
 
-## Contactos
+
+# 🤝 Contribuyendo
+
+Como la mayoría de los proyectos que trabajan con datos abiertos y software libre, la retroalimentación de los usuarios es una herramienta fundamental para la mejora de los datos y su tratamiento, por lo que agradecemos e incentivamos la recepción de ideas, sugerencias o correcciones. Puedes escribirnos a llactalab@ucuenca.edu.ec en caso que te interese colaborar de otra forma.
+
+<br>
+
+
+# Contactos
 
 LlactaLAB – Ciudades Sustentables es un Grupo de Investigación de la Universidad de Cuenca, parte del Departamento Interdisciplinario de Espacio y Población.
 
