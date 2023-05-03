@@ -148,102 +148,106 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-      steps = 0
-      totalStpes = 13
-      fieldHousing = params['FIELD_HOUSING']
-      fieldConstructionArea = params['CONSTRUCTION_AREA']
+        totalStpes = 13
+        fieldHousing = params['FIELD_HOUSING']
+        fieldConstructionArea = params['CONSTRUCTION_AREA']
 
-      feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
+        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
-                             feedback)
+        blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                               feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-                                         params['STUDY_AREA_GRID'],
-                                         context, feedback)
-      gridNeto = grid  
+        steps = 0 + 1
+        feedback.setCurrentStep(steps)
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
+        gridNeto = grid  
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                              'area_bloc;' + fieldHousing,
-                              'id_grid',
-                              context, feedback)
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsArea = calculateArea(segments['OUTPUT'],
-                                   'area_seg',
-                                   context, feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segments = intersection(
+            blocks['OUTPUT'],
+            gridNeto['OUTPUT'],
+            f'area_bloc;{fieldHousing}',
+            'id_grid',
+            context,
+            feedback,
+        )
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
-      housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
-                                          formulaHousingSegments,
-                                          context,
-                                          feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                     'area_seg',
+                                     context, feedback)
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaHousingSegments = f'(area_seg/area_bloc) * {fieldHousing}'
+        housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
+                                            formulaHousingSegments,
+                                            context,
+                                            feedback)
 
 
 
-      # Haciendo el buffer inverso aseguramos que los segmentos
-      # quden dentro de la malla
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsFixed = makeSureInside(housingForSegments['OUTPUT'],
-                                              context,
-                                              feedback)
+          # Haciendo el buffer inverso aseguramos que los segmentos
+          # quden dentro de la malla
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsFixed = makeSureInside(housingForSegments['OUTPUT'],
+                                                context,
+                                                feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                           segmentsFixed['OUTPUT'],
-                                           'hou_seg',
-                                           [CONTIENE], [SUM],    
-                                           UNDISCARD_NONMATCHING,                               
-                                           context,
-                                           feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
+                                             segmentsFixed['OUTPUT'],
+                                             'hou_seg',
+                                             [CONTIENE], [SUM],    
+                                             UNDISCARD_NONMATCHING,                               
+                                             context,
+                                             feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      tertiaryPerBlocks = intersection(params['TERTIARYUSES'], gridNeto['OUTPUT'],
-                                    [],
-                                    [],
-                                    context, feedback)   
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      tertiaryAreaFixed = makeSureInside(tertiaryPerBlocks['OUTPUT'],
-                                      context,
-                                      feedback)    
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      tertiaryAreaAndPopulation = joinByLocation(gridNetoAndSegments['OUTPUT'],
-                                              tertiaryAreaFixed['OUTPUT'],
-                                              [fieldConstructionArea],
-                                              [CONTIENE], [SUM],
-                                              UNDISCARD_NONMATCHING,                              
-                                              context,
-                                              feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        tertiaryPerBlocks = intersection(params['TERTIARYUSES'], gridNeto['OUTPUT'],
+                                      [],
+                                      [],
+                                      context, feedback)   
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaRelationship = 'coalesce('+fieldConstructionArea+'_sum/hou_seg_sum, 0)'
-      relationship = calculateField(tertiaryAreaAndPopulation['OUTPUT'],
-                                     NAMES_INDEX['IA10'][0],
-                                     formulaRelationship,
-                                     context,
-                                     feedback, params['OUTPUT'])
+        steps += 1
+        feedback.setCurrentStep(steps)
+        tertiaryAreaFixed = makeSureInside(tertiaryPerBlocks['OUTPUT'],
+                                        context,
+                                        feedback)    
 
-      return relationship
+        steps += 1
+        feedback.setCurrentStep(steps)
+        tertiaryAreaAndPopulation = joinByLocation(gridNetoAndSegments['OUTPUT'],
+                                                tertiaryAreaFixed['OUTPUT'],
+                                                [fieldConstructionArea],
+                                                [CONTIENE], [SUM],
+                                                UNDISCARD_NONMATCHING,                              
+                                                context,
+                                                feedback)
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaRelationship = f'coalesce({fieldConstructionArea}_sum/hou_seg_sum, 0)'
+        return calculateField(
+            tertiaryAreaAndPopulation['OUTPUT'],
+            NAMES_INDEX['IA10'][0],
+            formulaRelationship,
+            context,
+            feedback,
+            params['OUTPUT'],
+        )
 
 
         # Return the results of the algorithm. In this case our only result is

@@ -105,14 +105,13 @@ class IA13Sinergia(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-        steps = 0
         totalStpes = 11
         # fieldSintaxis = params['FIELD_SINTAXIS']
 
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
 
-        steps = steps+1
+        steps = 0 + 1
         feedback.setCurrentStep(steps)
         if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
         grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['ROADS_SINTAXIS'],
@@ -120,12 +119,12 @@ class IA13Sinergia(QgsProcessingAlgorithm):
                                            context, feedback)
         gridNeto = grid
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         centroides = createCentroids(params['ROADS_SINTAXIS'], context, feedback)
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         formulaDummy = 'INTr800m / INT'
         result = calculateField(centroides['OUTPUT'],
@@ -135,7 +134,7 @@ class IA13Sinergia(QgsProcessingAlgorithm):
                                    feedback)
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         result = joinByLocation(gridNeto['OUTPUT'],
                                  result['OUTPUT'],
@@ -145,7 +144,7 @@ class IA13Sinergia(QgsProcessingAlgorithm):
                                   context,
                                   feedback)   
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         formulaDummy = 'sinergia_mean * 1.00'
         result = calculateField(result['OUTPUT'],

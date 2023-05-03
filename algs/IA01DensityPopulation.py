@@ -119,7 +119,6 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-        steps = 0
         totalStpes = 11
         fieldPopulation = params['FIELD_POPULATION']
 
@@ -129,7 +128,7 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
                                feedback)
 
 
-        steps = steps+1
+        steps = 0 + 1
         feedback.setCurrentStep(steps)
         if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
         grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
@@ -139,22 +138,26 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
 
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
-        segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                                'area_bloc;' + fieldPopulation,
-                                'id_grid;area_grid',
-                                context, feedback)
+        segments = intersection(
+            blocks['OUTPUT'],
+            gridNeto['OUTPUT'],
+            f'area_bloc;{fieldPopulation}',
+            'id_grid;area_grid',
+            context,
+            feedback,
+        )
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsArea = calculateArea(segments['OUTPUT'],
                                      'area_seg',
                                      context, feedback)
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
-        formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
+        formulaPopulationSegments = f'(area_seg/area_bloc) * {fieldPopulation}'
         populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
                                                formulaPopulationSegments,
                                                context,
@@ -162,13 +165,13 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
 
         # Haciendo el buffer inverso aseguramos que los segmentos
         # quden dentro de la malla
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         populationForSegmentsFixed = makeSureInside(populationForSegments['OUTPUT'],
                                                     context,
                                                     feedback)
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                              populationForSegmentsFixed['OUTPUT'],
@@ -179,28 +182,17 @@ class IA01DensityPopulation(QgsProcessingAlgorithm):
                                               feedback)   
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         formulaNetDensityPopulationPerHa = 'coalesce((pop_seg_sum/area_seg_sum)*10000, 0)'
-        densities = calculateField(gridNetoAndSegments['OUTPUT'],
-                                   NAMES_INDEX['IA01'][0],
-                                   formulaNetDensityPopulationPerHa,
-                                   context,
-                                   feedback, params['OUTPUT'])
-
-
-        # steps = steps+1
-        # feedback.setCurrentStep(steps)
-        # formulaGrossDensityPopulationPerHa = 'coalesce((pop_seg_sum/area_grid)*10000, 0)'
-        # densities = calculateField(densities['OUTPUT'],
-        #                            'i_gdp',
-        #                            formulaGrossDensityPopulationPerHa,
-        #                            context,
-        #                            feedback, params['OUTPUT'])
-
-
-
-        return densities
+        return calculateField(
+            gridNetoAndSegments['OUTPUT'],
+            NAMES_INDEX['IA01'][0],
+            formulaNetDensityPopulationPerHa,
+            context,
+            feedback,
+            params['OUTPUT'],
+        )
 
         # Return the results of the algorithm. In this case our only result is
         # the feature sink which contains the processed features, but some

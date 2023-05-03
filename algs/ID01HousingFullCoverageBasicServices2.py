@@ -132,7 +132,6 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-        steps = 0
         totalStpes = 24
         fieldPopulationLast = params['FIELD_POPULATION']
         fieldVarSectores = params['FIELD_VAR_SECTORES']
@@ -141,7 +140,7 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
 
         varSectores = params['VAR_SECTORES']
 
-        steps = steps+1
+        steps = 0 + 1
         feedback.setCurrentStep(steps)
         if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
         grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
@@ -149,24 +148,24 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
                                            context, feedback)
         gridNeto = grid
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
-        formula = fieldVarSectores+'* 1'
+        formula = f'{fieldVarSectores}* 1'
         varSectores = calculateField(varSectores, 'var_sector',
                                         formula,
                                         context,
                                         feedback)   
-      
+
         varSectores =  varSectores['OUTPUT']    
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)        
+        steps += 1
+        feedback.setCurrentStep(steps)
         varSectores = calculateArea(varSectores, 'area_bloc', context,
                              feedback)
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsVarSectores = intersection(varSectores['OUTPUT'], gridNeto['OUTPUT'],
                                 ['var_sector','area_bloc'],
@@ -174,14 +173,14 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
                                 context, feedback) 
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsVarSectoresArea = calculateArea(segmentsVarSectores['OUTPUT'],
                                    'area_seg',
                                    context, feedback)
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         formulaLastPopulationSegments = '(area_seg/area_bloc) * var_sector'
         beginHousingForSegments = calculateField(segmentsVarSectoresArea['OUTPUT'], 'seg_var_sector',
@@ -190,42 +189,42 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
                                           feedback)        
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsVarSectoresFixed = makeSureInside(beginHousingForSegments['OUTPUT'],
                                                     context,
-                                                    feedback)                                     
+                                                    feedback)
         blocks = params['BLOCKS']
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
-        formula = fieldPopulationLast+'* 1'
+        formula = f'{fieldPopulationLast}* 1'
         blocks = calculateField(blocks, 'hou',
                                         formula,
                                         context,
-                                        feedback)   
+                                        feedback)
         blocks =  blocks['OUTPUT'] 
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)        
+        steps += 1
+        feedback.setCurrentStep(steps)
         blocks = calculateArea(blocks, 'area_bloc', context,
                              feedback)
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segments = intersection(blocks['OUTPUT'] , gridNeto['OUTPUT'],
                                 ['area_bloc','hou'],
                                 'id_grid',
                                 context, feedback)     
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsArea = calculateArea(segments['OUTPUT'],
                                    'area_seg',
                                    context, feedback)    
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         formulaLastPopulationSegments = '(area_seg/area_bloc) * hou'
         housingForSegments = calculateField(segmentsArea['OUTPUT'], 'seg_hou',
@@ -234,14 +233,14 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
                                           feedback)                                                                  
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsFixed = makeSureInside(housingForSegments['OUTPUT'],
                                                     context,
                                                     feedback)
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                              segmentsFixed['OUTPUT'],
@@ -251,9 +250,9 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
                                               context,
                                               feedback)    
 
-      
 
-        steps = steps+1
+
+        steps += 1
         feedback.setCurrentStep(steps)
         populations = joinByLocation(gridNetoAndSegments['OUTPUT'],
                                      segmentsVarSectoresFixed['OUTPUT'],
@@ -265,16 +264,16 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
 
 
         formulaProximity = 'coalesce((coalesce(seg_var_sector_sum,0) /  coalesce(seg_hou_sum,""))*100, "")'
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
-        result = calculateField(populations['OUTPUT'], NAMES_INDEX['ID01'][0],
-                                        formulaProximity,
-                                        context,
-                                        feedback,  params['OUTPUT'])        
-
-
-
-        return result
+        return calculateField(
+            populations['OUTPUT'],
+            NAMES_INDEX['ID01'][0],
+            formulaProximity,
+            context,
+            feedback,
+            params['OUTPUT'],
+        )
 
         # Return the results of the algorithm. In this case our only result is
         # the feature sink which contains the processed features, but some

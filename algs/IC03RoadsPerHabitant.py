@@ -131,88 +131,92 @@ class IC03RoadsPerHabitant(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-      steps = 0
-      totalStpes = 13
-      fieldPopulation = params['FIELD_POPULATION']
+        totalStpes = 13
+        fieldPopulation = params['FIELD_POPULATION']
 
-      feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
+        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
-                             feedback)
+        blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                               feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-                                         params['STUDY_AREA_GRID'],
-                                         context, feedback)
-      gridNeto = grid  
+        steps = 0 + 1
+        feedback.setCurrentStep(steps)
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
+        gridNeto = grid  
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                              'area_bloc;' + fieldPopulation,
-                              'id_grid;area_grid',
-                              context, feedback)
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsArea = calculateArea(segments['OUTPUT'],
-                                   'area_seg',
-                                   context, feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
-      populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
-                                          formulaPopulationSegments,
-                                          context,
-                                          feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segments = intersection(
+            blocks['OUTPUT'],
+            gridNeto['OUTPUT'],
+            f'area_bloc;{fieldPopulation}',
+            'id_grid;area_grid',
+            context,
+            feedback,
+        )
 
 
-      # Haciendo el buffer inverso aseguramos que los segmentos
-      # quden dentro de la malla
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsFixed = makeSureInside(populationForSegments['OUTPUT'],
-                                              context,
-                                              feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                     'area_seg',
+                                     context, feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                           segmentsFixed['OUTPUT'],
-                                           'pop_seg',
-                                           [CONTIENE], [SUM],    
-                                           UNDISCARD_NONMATCHING,                               
-                                           context,
-                                           feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaPopulationSegments = f'(area_seg/area_bloc) * {fieldPopulation}'
+        populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
+                                            formulaPopulationSegments,
+                                            context,
+                                            feedback)
 
 
+          # Haciendo el buffer inverso aseguramos que los segmentos
+          # quden dentro de la malla
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsFixed = makeSureInside(populationForSegments['OUTPUT'],
+                                                context,
+                                                feedback)
 
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegmentsSumLines = sumLineLen(params['ROADS_LINES'],
-                                           gridNetoAndSegments['OUTPUT'],
-                                           'COUNT',
-                                           'LENGTH',                             
-                                           context,
-                                           feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
+                                             segmentsFixed['OUTPUT'],
+                                             'pop_seg',
+                                             [CONTIENE], [SUM],    
+                                             UNDISCARD_NONMATCHING,                               
+                                             context,
+                                             feedback)
 
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaLenPerHab = 'coalesce(coalesce(LENGTH, 0)/pop_seg_sum, "")'
-      lenPerHab = calculateField(gridNetoAndSegmentsSumLines['OUTPUT'],
-                                     NAMES_INDEX['IC03'][0],
-                                     formulaLenPerHab,
-                                     context,
-                                     feedback, params['OUTPUT'])
 
-      return lenPerHab
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegmentsSumLines = sumLineLen(params['ROADS_LINES'],
+                                             gridNetoAndSegments['OUTPUT'],
+                                             'COUNT',
+                                             'LENGTH',                             
+                                             context,
+                                             feedback)
+
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaLenPerHab = 'coalesce(coalesce(LENGTH, 0)/pop_seg_sum, "")'
+        return calculateField(
+            gridNetoAndSegmentsSumLines['OUTPUT'],
+            NAMES_INDEX['IC03'][0],
+            formulaLenPerHab,
+            context,
+            feedback,
+            params['OUTPUT'],
+        )
 
 
         # Return the results of the algorithm. In this case our only result is

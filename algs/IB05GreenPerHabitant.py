@@ -129,115 +129,118 @@ class IB05GreenPerHabitant(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-      steps = 0
-      totalStpes = 13
-      fieldPopulation = params['FIELD_POPULATION']
+        totalStpes = 13
+        fieldPopulation = params['FIELD_POPULATION']
 
-      feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
+        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
-                             feedback)
+        blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                               feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-                                         params['STUDY_AREA_GRID'],
-                                         context, feedback)
-      gridNeto = grid   
+        steps = 0 + 1
+        feedback.setCurrentStep(steps)
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
+        gridNeto = grid   
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                              'area_bloc;' + fieldPopulation,
-                              'id_grid;area_grid',
-                              context, feedback)
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsArea = calculateArea(segments['OUTPUT'],
-                                   'area_seg',
-                                   context, feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segments = intersection(
+            blocks['OUTPUT'],
+            gridNeto['OUTPUT'],
+            f'area_bloc;{fieldPopulation}',
+            'id_grid;area_grid',
+            context,
+            feedback,
+        )
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
-      populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
-                                          formulaPopulationSegments,
-                                          context,
-                                          feedback)      
-
-      # Haciendo el buffer inverso aseguramos que los segmentos
-      # quden dentro de la malla
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsFixed = makeSureInside(populationForSegments['OUTPUT'],
-                                              context,
-                                              feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                           segmentsFixed['OUTPUT'],
-                                           'pop_seg',
-                                           [CONTIENE], [SUM],    
-                                           UNDISCARD_NONMATCHING,                               
-                                           context,
-                                           feedback)
-      # CALCULAR AREA VERDE
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      greenPerBlocks = intersection(params['GREEN'], gridNeto['OUTPUT'],
-                                    [],
-                                    [],
-                                    context, feedback)    
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                     'area_seg',
+                                     context, feedback)
 
 
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaPopulationSegments = f'(area_seg/area_bloc) * {fieldPopulation}'
+        populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
+                                            formulaPopulationSegments,
+                                            context,
+                                            feedback)      
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      greenArea = calculateArea(greenPerBlocks['OUTPUT'],
-                                'area_green',
-                                context, feedback)
+          # Haciendo el buffer inverso aseguramos que los segmentos
+          # quden dentro de la malla
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsFixed = makeSureInside(populationForSegments['OUTPUT'],
+                                                context,
+                                                feedback)
 
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      greenAreaFixed = makeSureInside(greenArea['OUTPUT'],
-                                      context,
-                                      feedback)    
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      greenAreaAndPopulation = joinByLocation(gridNetoAndSegments['OUTPUT'],
-                                              greenAreaFixed['OUTPUT'],
-                                              'area_green',
-                                              [CONTIENE], [SUM],
-                                              UNDISCARD_NONMATCHING,                              
-                                              context,
-                                              feedback)
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      # formulaSurfacePerHab = 'coalesce(area_green_sum/' + fieldPopulation + '_sum,  0)'
-
-      formulaSurfacePerHab = 'CASE WHEN pop_seg_sum = 0 THEN "" ' + \
-                            'ELSE coalesce(area_green_sum/pop_seg_sum, 0) END'
-
-      print(formulaSurfacePerHab)
-
-
-      surfacePerHab = calculateField(greenAreaAndPopulation['OUTPUT'],
-                                     NAMES_INDEX['IB05'][0],
-                                     formulaSurfacePerHab,
-                                     context,
-                                     feedback, params['OUTPUT'])
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
+                                             segmentsFixed['OUTPUT'],
+                                             'pop_seg',
+                                             [CONTIENE], [SUM],    
+                                             UNDISCARD_NONMATCHING,                               
+                                             context,
+                                             feedback)
+          # CALCULAR AREA VERDE
+        steps += 1
+        feedback.setCurrentStep(steps)
+        greenPerBlocks = intersection(params['GREEN'], gridNeto['OUTPUT'],
+                                      [],
+                                      [],
+                                      context, feedback)    
 
 
-      return surfacePerHab
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        greenArea = calculateArea(greenPerBlocks['OUTPUT'],
+                                  'area_green',
+                                  context, feedback)
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        greenAreaFixed = makeSureInside(greenArea['OUTPUT'],
+                                        context,
+                                        feedback)    
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        greenAreaAndPopulation = joinByLocation(gridNetoAndSegments['OUTPUT'],
+                                                greenAreaFixed['OUTPUT'],
+                                                'area_green',
+                                                [CONTIENE], [SUM],
+                                                UNDISCARD_NONMATCHING,                              
+                                                context,
+                                                feedback)
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        # formulaSurfacePerHab = 'coalesce(area_green_sum/' + fieldPopulation + '_sum,  0)'
+
+        formulaSurfacePerHab = 'CASE WHEN pop_seg_sum = 0 THEN "" ' + \
+                                  'ELSE coalesce(area_green_sum/pop_seg_sum, 0) END'
+
+        print(formulaSurfacePerHab)
+
+
+        return calculateField(
+            greenAreaAndPopulation['OUTPUT'],
+            NAMES_INDEX['IB05'][0],
+            formulaSurfacePerHab,
+            context,
+            feedback,
+            params['OUTPUT'],
+        )
 
 
         # Return the results of the algorithm. In this case our only result is

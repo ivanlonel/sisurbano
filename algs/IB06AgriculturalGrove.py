@@ -128,108 +128,111 @@ class IB06AgriculturalGrove(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-      steps = 0
-      totalStpes = 13
-      fieldPopulation = params['FIELD_POPULATION']
+        totalStpes = 13
+        fieldPopulation = params['FIELD_POPULATION']
 
-      feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
+        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
-                             feedback)
+        blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                               feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-                                         params['STUDY_AREA_GRID'],
-                                         context, feedback)
-      gridNeto = grid  
+        steps = 0 + 1
+        feedback.setCurrentStep(steps)
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
+        gridNeto = grid  
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                              'area_bloc;' + fieldPopulation,
-                              'id_grid;area_grid',
-                              context, feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segments = intersection(
+            blocks['OUTPUT'],
+            gridNeto['OUTPUT'],
+            f'area_bloc;{fieldPopulation}',
+            'id_grid;area_grid',
+            context,
+            feedback,
+        )
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsArea = calculateArea(segments['OUTPUT'],
-                                   'area_seg',
-                                   context, feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                     'area_seg',
+                                     context, feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
-      populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
-                                             formulaPopulationSegments,
-                                             context,
-                                             feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaPopulationSegments = f'(area_seg/area_bloc) * {fieldPopulation}'
+        populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
+                                               formulaPopulationSegments,
+                                               context,
+                                               feedback)
 
-      # Haciendo el buffer inverso aseguramos que los segmentos
-      # quden dentro de la malla
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      populationForSegmentsFixed = makeSureInside(populationForSegments['OUTPUT'],
-                                                  context,
-                                                  feedback)
+          # Haciendo el buffer inverso aseguramos que los segmentos
+          # quden dentro de la malla
+        steps += 1
+        feedback.setCurrentStep(steps)
+        populationForSegmentsFixed = makeSureInside(populationForSegments['OUTPUT'],
+                                                    context,
+                                                    feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                           populationForSegmentsFixed['OUTPUT'],
-                                           'pop_seg',                                   
-                                            [CONTIENE], [SUM],
-                                            UNDISCARD_NONMATCHING,
-                                            context,
-                                            feedback)  
-
-
-      # CALCULAR AREA AGRICULTURA
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      agriPerBlocks = intersection(params['AGRICULTRURAL'], gridNeto['OUTPUT'],
-                                    [],
-                                    [],
-                                    context, feedback)    
-
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      agriArea = calculateArea(agriPerBlocks['OUTPUT'],
-                                'area_agri',
-                                context, feedback)
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      agriAreaFixed = makeSureInside(agriArea['OUTPUT'],
-                                      context,
-                                      feedback)    
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      agriAreaAndPopulation = joinByLocation(gridNetoAndSegments['OUTPUT'],
-                                              agriAreaFixed['OUTPUT'],
-                                              ['area_agri','pop_seg'],
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
+                                             populationForSegmentsFixed['OUTPUT'],
+                                             'pop_seg',                                   
                                               [CONTIENE], [SUM],
-                                              UNDISCARD_NONMATCHING,                              
+                                              UNDISCARD_NONMATCHING,
                                               context,
-                                              feedback)
+                                              feedback)  
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaSurfacePerHab = 'coalesce(area_agri_sum/pop_seg_sum, 0)'
-      # formulaSurfaceAgri = 'coalesce((area_agri_sum/area_grid)*100, 0)'
-      surfaceAgri = calculateField(agriAreaAndPopulation['OUTPUT'],
-                                     NAMES_INDEX['IB06'][0],
-                                     formulaSurfacePerHab,
-                                     context,
-                                     feedback, params['OUTPUT'])
+          # CALCULAR AREA AGRICULTURA
+        steps += 1
+        feedback.setCurrentStep(steps)
+        agriPerBlocks = intersection(params['AGRICULTRURAL'], gridNeto['OUTPUT'],
+                                      [],
+                                      [],
+                                      context, feedback)    
 
-      return surfaceAgri
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        agriArea = calculateArea(agriPerBlocks['OUTPUT'],
+                                  'area_agri',
+                                  context, feedback)
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        agriAreaFixed = makeSureInside(agriArea['OUTPUT'],
+                                        context,
+                                        feedback)    
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        agriAreaAndPopulation = joinByLocation(gridNetoAndSegments['OUTPUT'],
+                                                agriAreaFixed['OUTPUT'],
+                                                ['area_agri','pop_seg'],
+                                                [CONTIENE], [SUM],
+                                                UNDISCARD_NONMATCHING,                              
+                                                context,
+                                                feedback)
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaSurfacePerHab = 'coalesce(area_agri_sum/pop_seg_sum, 0)'
+        return calculateField(
+            agriAreaAndPopulation['OUTPUT'],
+            NAMES_INDEX['IB06'][0],
+            formulaSurfacePerHab,
+            context,
+            feedback,
+            params['OUTPUT'],
+        )
 
 
         # Return the results of the algorithm. In this case our only result is

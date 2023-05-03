@@ -365,22 +365,22 @@ class IC00WrapC(QgsProcessingAlgorithm):
         results = {}
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-        isValid = lambda x: False if x is None else True
+        isValid = lambda x: x is not None
 
-        isBlocks = isValid(params['BLOCKS'])        
+        isBlocks = isValid(params['BLOCKS'])
         isFieldPopulation = isValid(params['FIELD_POPULATION'])
         isFieldHousing = isValid(params['FIELD_HOUSING'])
         isStudyArea = isValid(params['STUDY_AREA_GRID']) 
 
-        isRoads = isValid(params['ROADS'])        
+        isRoads = isValid(params['ROADS'])
         isWalkRoad = isValid(params['WALK_ROAD'])        
 
 
 
         if isRoads and isWalkRoad:
             # C01 Reparto del viario público peatonal
-            steps = steps+1
-            feedback.setCurrentStep(steps)  
+            steps += 1
+            feedback.setCurrentStep(steps)
             if feedback.isCanceled():
                 return {}
             alg_params = {
@@ -397,10 +397,10 @@ class IC00WrapC(QgsProcessingAlgorithm):
 
         if isBlocks and isFieldPopulation and isRoadsLines:
             # C03 Vías públicas por habitante
-            steps = steps+1
-            feedback.setCurrentStep(steps)  
+            steps += 1
+            feedback.setCurrentStep(steps)
             if feedback.isCanceled():
-                return {}       
+                return {}
             alg_params = {
                 'BLOCKS': params['BLOCKS'],
                 'FIELD_POPULATION': params['FIELD_POPULATION'],
@@ -422,10 +422,10 @@ class IC00WrapC(QgsProcessingAlgorithm):
         if (isBikeStop and isBikeWay and isBlocks and isBusStop and isCrossWalk and isRoads
             and isDistanceOptions and isFieldPopulation and isTramStop):
             # C04 Proximidad a redes de transporte alternativo
-            steps = steps+1
-            feedback.setCurrentStep(steps)  
+            steps += 1
+            feedback.setCurrentStep(steps)
             if feedback.isCanceled():
-                return {}           
+                return {}
             alg_params = {
                 'BIKESTOP': params['BIKESTOP'],
                 'BIKEWAY': params['BIKEWAY'],
@@ -441,17 +441,17 @@ class IC00WrapC(QgsProcessingAlgorithm):
             }
             outputs['C04ProximidadARedesDeTransporteAlternativo'] = processing.run('SISURBANO:C04 Proximidad a redes de transporte alternativo', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
             results['OUTPUT_C04'] = outputs['C04ProximidadARedesDeTransporteAlternativo']['OUTPUT']                    
-                          
+
 
         isAreaPerParking = isValid(params['AREA_PER_PARKING'])
         isParking = isValid(params['PARKING'])
 
         if isAreaPerParking and isParking and isRoads:
             # C05 Espacio público ocupado por vehículos parqueados
-            steps = steps+1
-            feedback.setCurrentStep(steps)  
+            steps += 1
+            feedback.setCurrentStep(steps)
             if feedback.isCanceled():
-                return {}          
+                return {}
             alg_params = {
                 'AREA_PER_PARKING': params['AREA_PER_PARKING'],
                 'PARKING': params['PARKING'],
@@ -462,7 +462,7 @@ class IC00WrapC(QgsProcessingAlgorithm):
             outputs['C05EspacioPblicoOcupadoPorVehculosParqueados'] = processing.run('SISURBANO:C05 Espacio público ocupado por vehículos parqueados', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
             results['OUTPUT_C05'] = outputs['C05EspacioPblicoOcupadoPorVehculosParqueados']['OUTPUT']
 
-        
+
 
 
         isCensoVivienda = isValid(params['CENSO_VIVIENDA'])
@@ -471,10 +471,10 @@ class IC00WrapC(QgsProcessingAlgorithm):
 
         if isCensoHogar and isCensoVivienda and isDpaMan:
             # C09 Consumo de energía eléctrica en la vivienda
-            steps = steps+1
-            feedback.setCurrentStep(steps)  
+            steps += 1
+            feedback.setCurrentStep(steps)
             if feedback.isCanceled():
-                return {}               
+                return {}
             alg_params = {
                 'BLOCKS': params['BLOCKS'],
                 'CENSO_HOGAR': params['CENSO_HOGAR'],
@@ -491,10 +491,10 @@ class IC00WrapC(QgsProcessingAlgorithm):
 
         if isBlocks and isFieldHousing and isSewerage:
             # C13 Cobertura del servicio de alcantarillado
-            steps = steps+1
-            feedback.setCurrentStep(steps)  
+            steps += 1
+            feedback.setCurrentStep(steps)
             if feedback.isCanceled():
-                return {}          
+                return {}
             alg_params = {
                 'BLOCKS': params['BLOCKS'],
                 'FIELD_HOUSING': params['FIELD_HOUSING'],

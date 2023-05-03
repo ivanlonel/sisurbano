@@ -128,91 +128,91 @@ class IB07SoilPermeability(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-      steps = 0
-      totalStpes = 13
-      # fieldPopulation = params['FIELD_POPULATION']
+        totalStpes = 13
+        # fieldPopulation = params['FIELD_POPULATION']
 
-      feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
+        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
-                             feedback)
+        blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                               feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-                                         params['STUDY_AREA_GRID'],
-                                         context, feedback)
-      gridNeto = grid  
+        steps = 0 + 1
+        feedback.setCurrentStep(steps)
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
+        gridNeto = grid  
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                              'area_bloc;',
-                              'id_grid;area_grid',
-                              context, feedback)
-
-      # Haciendo el buffer inverso aseguramos que los segmentos
-      # quden dentro de la malla
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsFixed = makeSureInside(segments['OUTPUT'],
-                                              context,
-                                              feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                           segmentsFixed['OUTPUT'],
-                                           [],
-                                           [CONTIENE], [SUM],    
-                                           UNDISCARD_NONMATCHING,                               
-                                           context,
-                                           feedback)
-      # CALCULAR AREA AGRICULTURA
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      soilPerBlocks = intersection(params['SOIL'], gridNeto['OUTPUT'],
-                                    [],
-                                    [],
-                                    context, feedback)    
-
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      soilArea = calculateArea(soilPerBlocks['OUTPUT'],
-                                'area_soil',
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                                'area_bloc;',
+                                'id_grid;area_grid',
                                 context, feedback)
 
+          # Haciendo el buffer inverso aseguramos que los segmentos
+          # quden dentro de la malla
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsFixed = makeSureInside(segments['OUTPUT'],
+                                                context,
+                                                feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      soilAreaFixed = makeSureInside(soilArea['OUTPUT'],
-                                      context,
-                                      feedback)    
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
+                                             segmentsFixed['OUTPUT'],
+                                             [],
+                                             [CONTIENE], [SUM],    
+                                             UNDISCARD_NONMATCHING,                               
+                                             context,
+                                             feedback)
+          # CALCULAR AREA AGRICULTURA
+        steps += 1
+        feedback.setCurrentStep(steps)
+        soilPerBlocks = intersection(params['SOIL'], gridNeto['OUTPUT'],
+                                      [],
+                                      [],
+                                      context, feedback)    
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      soilArea = joinByLocation(gridNetoAndSegments['OUTPUT'],
-                                              soilAreaFixed['OUTPUT'],
-                                              'area_soil',
-                                              [CONTIENE], [SUM],
-                                              UNDISCARD_NONMATCHING,                              
-                                              context,
-                                              feedback)
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaSurfaceAgri = 'coalesce((area_soil_sum/area_grid)*100, "")'
-      surfaceAgri = calculateField(soilArea['OUTPUT'],
-                                   NAMES_INDEX['IB07'][0],
-                                   formulaSurfaceAgri,
-                                   context,
-                                   feedback, params['OUTPUT'])
+        steps += 1
+        feedback.setCurrentStep(steps)
+        soilArea = calculateArea(soilPerBlocks['OUTPUT'],
+                                  'area_soil',
+                                  context, feedback)
 
-      return surfaceAgri
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        soilAreaFixed = makeSureInside(soilArea['OUTPUT'],
+                                        context,
+                                        feedback)    
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        soilArea = joinByLocation(gridNetoAndSegments['OUTPUT'],
+                                                soilAreaFixed['OUTPUT'],
+                                                'area_soil',
+                                                [CONTIENE], [SUM],
+                                                UNDISCARD_NONMATCHING,                              
+                                                context,
+                                                feedback)
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaSurfaceAgri = 'coalesce((area_soil_sum/area_grid)*100, "")'
+        return calculateField(
+            soilArea['OUTPUT'],
+            NAMES_INDEX['IB07'][0],
+            formulaSurfaceAgri,
+            context,
+            feedback,
+            params['OUTPUT'],
+        )
 
 
         # Return the results of the algorithm. In this case our only result is

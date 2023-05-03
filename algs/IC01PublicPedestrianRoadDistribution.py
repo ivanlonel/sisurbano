@@ -117,91 +117,92 @@ class IC01PublicPedestrianRoadDistribution(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-      steps = 0
-      totalStpes = 13
-      # fieldPopulation = params['FIELD_POPULATION']
+        steps = 0
+        totalStpes = 13
+        # fieldPopulation = params['FIELD_POPULATION']
 
-      feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
+        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-      feedback.setCurrentStep(steps)
-      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['ROADS'],
-                                         params['STUDY_AREA_GRID'],
-                                         context, feedback)
-      gridNeto = grid  
+        feedback.setCurrentStep(steps)
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['ROADS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
+        gridNeto = grid  
 
-      # CALCULAR VIARIO
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(params['ROADS'], gridNeto['OUTPUT'],
-                              [],
-                              'id_grid;area_grid',
-                              context, feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsArea = calculateArea(segments['OUTPUT'], 'area_road', context,
-                                   feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsFixed = makeSureInside(segmentsArea['OUTPUT'],
-                                     context,
-                                     feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                           segmentsFixed['OUTPUT'],
-                                           [],
-                                           [CONTIENE], [SUM],    
-                                           UNDISCARD_NONMATCHING,                               
-                                           context,
-                                           feedback)
-      # CALCULAR AREA CAMINOS PEATONALES
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      walkRoads = intersection(params['WALK_ROAD'], gridNeto['OUTPUT'],
-                              [],
-                              [],
-                              context, feedback)    
-
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      walkArea = calculateArea(walkRoads['OUTPUT'],
-                                'area_walk',
+          # CALCULAR VIARIO
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segments = intersection(params['ROADS'], gridNeto['OUTPUT'],
+                                [],
+                                'id_grid;area_grid',
                                 context, feedback)
 
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'], 'area_road', context,
+                                     feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      walkAreaFixed = makeSureInside(walkArea['OUTPUT'],
-                                      context,
-                                      feedback)    
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsFixed = makeSureInside(segmentsArea['OUTPUT'],
+                                       context,
+                                       feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      walkAreaAndRoads = joinByLocation(gridNetoAndSegments['OUTPUT'],
-                                        walkAreaFixed['OUTPUT'],
-                                        'area_walk',
-                                        [CONTIENE], [SUM],
-                                        UNDISCARD_NONMATCHING,                              
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
+                                             segmentsFixed['OUTPUT'],
+                                             [],
+                                             [CONTIENE], [SUM],    
+                                             UNDISCARD_NONMATCHING,                               
+                                             context,
+                                             feedback)
+          # CALCULAR AREA CAMINOS PEATONALES
+        steps += 1
+        feedback.setCurrentStep(steps)
+        walkRoads = intersection(params['WALK_ROAD'], gridNeto['OUTPUT'],
+                                [],
+                                [],
+                                context, feedback)    
+
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        walkArea = calculateArea(walkRoads['OUTPUT'],
+                                  'area_walk',
+                                  context, feedback)
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        walkAreaFixed = makeSureInside(walkArea['OUTPUT'],
                                         context,
-                                        feedback)
+                                        feedback)    
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        walkAreaAndRoads = joinByLocation(gridNetoAndSegments['OUTPUT'],
+                                          walkAreaFixed['OUTPUT'],
+                                          'area_walk',
+                                          [CONTIENE], [SUM],
+                                          UNDISCARD_NONMATCHING,                              
+                                          context,
+                                          feedback)
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaSurfaceWalk = 'coalesce((area_walk_sum/area_road_sum)*100, "")'
-      surfaceWalk = calculateField(walkAreaAndRoads['OUTPUT'],
-                                     NAMES_INDEX['IC01'][0],
-                                     formulaSurfaceWalk,
-                                     context,
-                                     feedback, params['OUTPUT'])
-
-      return surfaceWalk
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaSurfaceWalk = 'coalesce((area_walk_sum/area_road_sum)*100, "")'
+        return calculateField(
+            walkAreaAndRoads['OUTPUT'],
+            NAMES_INDEX['IC01'][0],
+            formulaSurfaceWalk,
+            context,
+            feedback,
+            params['OUTPUT'],
+        )
 
 
     def icon(self):

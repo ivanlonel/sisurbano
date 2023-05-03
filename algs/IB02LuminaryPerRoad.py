@@ -139,92 +139,96 @@ class IB02LuminaryPerRoad(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-      steps = 0
-      totalStpes = 10
-      fieldPopulation = params['FIELD_POPULATION']
+        totalStpes = 10
+        fieldPopulation = params['FIELD_POPULATION']
 
-      feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
+        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
-                             feedback)
+        blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                               feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-                                         params['STUDY_AREA_GRID'],
-                                         context, feedback)
-      gridNeto = grid  
+        steps = 0 + 1
+        feedback.setCurrentStep(steps)
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
+        gridNeto = grid  
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                              'area_bloc;' + fieldPopulation,
-                              'id_grid;area_grid',
-                              context, feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segments = intersection(
+            blocks['OUTPUT'],
+            gridNeto['OUTPUT'],
+            f'area_bloc;{fieldPopulation}',
+            'id_grid;area_grid',
+            context,
+            feedback,
+        )
 
-      # Haciendo el buffer inverso aseguramos que los segmentos
-      # quden dentro de la malla
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsFixed = makeSureInside(segments['OUTPUT'],
-                                              context,
-                                              feedback)
+          # Haciendo el buffer inverso aseguramos que los segmentos
+          # quden dentro de la malla
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsFixed = makeSureInside(segments['OUTPUT'],
+                                                context,
+                                                feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                           segmentsFixed['OUTPUT'],
-                                           fieldPopulation,
-                                           [CONTIENE], [SUM],    
-                                           UNDISCARD_NONMATCHING,                               
-                                           context,
-                                           feedback)
-
-
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegmentsSumLines = sumLineLen(params['ROADS'],
-                                           gridNetoAndSegments['OUTPUT'],
-                                           'COUNT',
-                                           'LENGTH',                             
-                                           context,
-                                           feedback)
-
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      luminaryWithId = calculateField(params['LUMINARY'], 'idx', '$id', context,
-                                      feedback, type=1)      
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
+                                             segmentsFixed['OUTPUT'],
+                                             fieldPopulation,
+                                             [CONTIENE], [SUM],    
+                                             UNDISCARD_NONMATCHING,                               
+                                             context,
+                                             feedback)
 
 
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegmentsSumLinesLum = joinByLocation(gridNetoAndSegmentsSumLines['OUTPUT'],
-                                           luminaryWithId['OUTPUT'],
-                                           ['idx'],
-                                           [CONTIENE], [COUNT],    
-                                           UNDISCARD_NONMATCHING,                               
-                                           context,
-                                           feedback)      
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegmentsSumLines = sumLineLen(params['ROADS'],
+                                             gridNetoAndSegments['OUTPUT'],
+                                             'COUNT',
+                                             'LENGTH',                             
+                                             context,
+                                             feedback)
 
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaLumPerRoad = 'coalesce(coalesce(idx_count,0)/(LENGTH/1000), "")'
-      lumPerRoad = calculateField(gridNetoAndSegmentsSumLinesLum['OUTPUT'],
-                                     NAMES_INDEX['IB02'][0],
-                                     formulaLumPerRoad,
-                                     context,
-                                     feedback, params['OUTPUT'])
+        steps += 1
+        feedback.setCurrentStep(steps)
+        luminaryWithId = calculateField(params['LUMINARY'], 'idx', '$id', context,
+                                        feedback, type=1)      
 
-      return lumPerRoad
+
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegmentsSumLinesLum = joinByLocation(gridNetoAndSegmentsSumLines['OUTPUT'],
+                                             luminaryWithId['OUTPUT'],
+                                             ['idx'],
+                                             [CONTIENE], [COUNT],    
+                                             UNDISCARD_NONMATCHING,                               
+                                             context,
+                                             feedback)      
+
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaLumPerRoad = 'coalesce(coalesce(idx_count,0)/(LENGTH/1000), "")'
+        return calculateField(
+            gridNetoAndSegmentsSumLinesLum['OUTPUT'],
+            NAMES_INDEX['IB02'][0],
+            formulaLumPerRoad,
+            context,
+            feedback,
+            params['OUTPUT'],
+        )
 
 
         # Return the results of the algorithm. In this case our only result is

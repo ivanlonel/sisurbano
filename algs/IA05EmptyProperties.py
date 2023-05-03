@@ -134,7 +134,6 @@ class IA05EmptyProperties(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-        steps = 0
         totalStpes = 13
         # fieldPopulation = params['FIELD_POPULATION']
         # fieldHousing = params['FIELD_HOUSING']
@@ -144,21 +143,21 @@ class IA05EmptyProperties(QgsProcessingAlgorithm):
         blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
                                feedback)
 
-        steps = steps+1
+        steps = 0 + 1
         feedback.setCurrentStep(steps)
-        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE        
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
         grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
                                            params['STUDY_AREA_GRID'],
                                            context, feedback)
         gridNeto = grid
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
                                 'area_bloc;',
                                 'id_grid;area_grid',
                                 context, feedback)
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsArea = calculateArea(segments['OUTPUT'],
                                      'area_seg',
@@ -167,12 +166,12 @@ class IA05EmptyProperties(QgsProcessingAlgorithm):
 
         # Haciendo el buffer inverso aseguramos que los segmentos
         # quden dentro de la malla
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsFixed = makeSureInside(segmentsArea['OUTPUT'],
                                                  context,
                                                  feedback)
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                              segmentsFixed['OUTPUT'],
@@ -184,7 +183,7 @@ class IA05EmptyProperties(QgsProcessingAlgorithm):
 
 
         # CALCULAR AREA PREDIOS VACIOS
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         emptyPropertiesInGrid = intersection(params['EMPTY_PROPERTIES'], gridNeto['OUTPUT'],
                                     [],
@@ -193,20 +192,20 @@ class IA05EmptyProperties(QgsProcessingAlgorithm):
 
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         emptyArea = calculateArea(emptyPropertiesInGrid['OUTPUT'],
                                 'area_emp',
                                 context, feedback)
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         emptyAreaFixed = makeSureInside(emptyArea['OUTPUT'],
                                       context,
                                       feedback)    
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         emptyProperties = joinByLocation(gridNetoAndSegments['OUTPUT'],
                                               emptyAreaFixed['OUTPUT'],
@@ -216,18 +215,17 @@ class IA05EmptyProperties(QgsProcessingAlgorithm):
                                               context,
                                               feedback)
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         formulaEmptyPropertiesSurface = 'coalesce((area_emp_sum/area_seg_sum) * 100, 0)'
-        emptyPropertiesSurface = calculateField(emptyProperties['OUTPUT'],
-                                    NAMES_INDEX['IA05'][0],
-                                   formulaEmptyPropertiesSurface,
-                                   context,
-                                   feedback, params['OUTPUT'])
-
-
-
-        return emptyPropertiesSurface
+        return calculateField(
+            emptyProperties['OUTPUT'],
+            NAMES_INDEX['IA05'][0],
+            formulaEmptyPropertiesSurface,
+            context,
+            feedback,
+            params['OUTPUT'],
+        )
 
         # Return the results of the algorithm. In this case our only result is
         # the feature sink which contains the processed features, but some

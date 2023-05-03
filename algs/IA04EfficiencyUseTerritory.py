@@ -172,7 +172,6 @@ class IA04EfficiencyUseTerritory(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-        steps = 0
         totalStpes = 24
         fieldPopulationLast = params['FIELD_POPULATION_LAST']
         fieldPopulationBegin = params['FIELD_POPULATION_BEGIN']
@@ -183,7 +182,7 @@ class IA04EfficiencyUseTerritory(QgsProcessingAlgorithm):
 
         blocksBegin = params['BLOCKS_BEGIN']
 
-        steps = steps+1
+        steps = 0 + 1
         feedback.setCurrentStep(steps)
         if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
         grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS_BEGIN'],
@@ -191,25 +190,25 @@ class IA04EfficiencyUseTerritory(QgsProcessingAlgorithm):
                                            context, feedback)
         gridNeto = grid
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
-        formula = fieldPopulationBegin+'* 1'
+        formula = f'{fieldPopulationBegin}* 1'
         blocksBegin = calculateField(blocksBegin, 'pop_begin',
                                         formula,
                                         context,
                                         feedback)   
-      
+
         blocksBegin =  blocksBegin['OUTPUT']    
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)        
+        steps += 1
+        feedback.setCurrentStep(steps)
         blocksBegin = calculateArea(blocksBegin, 'area_bloc', context,
                              feedback)
 
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsBegin = intersection(blocksBegin['OUTPUT'], gridNeto['OUTPUT'],
                                 ['pop_begin','area_bloc'],
@@ -217,14 +216,14 @@ class IA04EfficiencyUseTerritory(QgsProcessingAlgorithm):
                                 context, feedback) 
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsBeginArea = calculateArea(segmentsBegin['OUTPUT'],
                                    'area_seg',
                                    context, feedback)
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         formulaLastPopulationSegments = '(area_seg/area_bloc) * pop_begin'
         beginHousingForSegments = calculateField(segmentsBeginArea['OUTPUT'], 'seg_pop_begin',
@@ -233,42 +232,42 @@ class IA04EfficiencyUseTerritory(QgsProcessingAlgorithm):
                                           feedback)        
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsBeginFixed = makeSureInside(beginHousingForSegments['OUTPUT'],
                                                     context,
-                                                    feedback)                                     
+                                                    feedback)
         blocks = params['BLOCKS_LAST']
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
-        formula = fieldPopulationLast+'* 1'
+        formula = f'{fieldPopulationLast}* 1'
         blocks = calculateField(blocks, 'pop_last',
                                         formula,
                                         context,
-                                        feedback)   
+                                        feedback)
         blocks =  blocks['OUTPUT'] 
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)        
+        steps += 1
+        feedback.setCurrentStep(steps)
         blocks = calculateArea(blocks, 'area_bloc', context,
                              feedback)
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsLast = intersection(blocks['OUTPUT'] , gridNeto['OUTPUT'],
                                 ['area_bloc','pop_last'],
                                 'id_grid',
                                 context, feedback)     
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsLastArea = calculateArea(segmentsLast['OUTPUT'],
                                    'area_seg',
                                    context, feedback)    
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         formulaLastPopulationSegments = '(area_seg/area_bloc) * pop_last'
         lastHousingForSegments = calculateField(segmentsLastArea['OUTPUT'], 'seg_pop_last',
@@ -277,14 +276,14 @@ class IA04EfficiencyUseTerritory(QgsProcessingAlgorithm):
                                           feedback)                                                                  
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsLastFixed = makeSureInside(lastHousingForSegments['OUTPUT'],
                                                     context,
                                                     feedback)
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         gridNetoAndSegmentsLast = joinByLocation(gridNeto['OUTPUT'],
                                              segmentsLastFixed['OUTPUT'],
@@ -298,49 +297,49 @@ class IA04EfficiencyUseTerritory(QgsProcessingAlgorithm):
         builtLast =  params['BUILT_LAST']
         builtBegin =  params['BUILT_BEGIN']
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsBuiltLast = intersection(builtLast, gridNeto['OUTPUT'],
                                         [],
                                         [],
                                         context, feedback)
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsBuiltBegin = intersection(builtBegin, gridNeto['OUTPUT'],
                                         [],
                                         [],
                                         context, feedback)        
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsBuiltLastArea = calculateArea(segmentsBuiltLast['OUTPUT'],
                                      'area_last',
                                      context, feedback)   
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsBuiltLastBeginArea = calculateArea(segmentsBuiltBegin['OUTPUT'],
                                      'area_begin',
                                      context, feedback)      
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsBuiltLastAreaFixed = makeSureInside(segmentsBuiltLastArea['OUTPUT'],
                                                     context,
                                                     feedback)
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsBuiltLastBeginAreaFixed = makeSureInside(segmentsBuiltLastBeginArea['OUTPUT'],
                                                     context,
                                                     feedback)        
 
-      
 
-        steps = steps+1
+
+        steps += 1
         feedback.setCurrentStep(steps)
         populations = joinByLocation(gridNetoAndSegmentsLast['OUTPUT'],
                                      segmentsBeginFixed['OUTPUT'],
@@ -351,7 +350,7 @@ class IA04EfficiencyUseTerritory(QgsProcessingAlgorithm):
                                       feedback)  
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         populationsArea = joinByLocation(populations['OUTPUT'],
                                      segmentsBuiltLastAreaFixed['OUTPUT'],
@@ -362,7 +361,7 @@ class IA04EfficiencyUseTerritory(QgsProcessingAlgorithm):
                                       feedback)  
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         populationsArea = joinByLocation(populationsArea['OUTPUT'],
                                      segmentsBuiltLastBeginAreaFixed['OUTPUT'],
@@ -374,22 +373,26 @@ class IA04EfficiencyUseTerritory(QgsProcessingAlgorithm):
 
 
 
-        numerador = '(area_last_sum - area_begin_sum) / (area_begin_sum ^ (1 /'+years+'))'
-        denominador = '(seg_pop_last_sum - seg_pop_begin_sum) / (seg_pop_begin_sum ^ (1 /'+ years+'))'
-        formula = 'coalesce(coalesce(' + numerador + ', 0) / ' + 'coalesce(' + denominador + ', ""),"")'
+        numerador = (
+            f'(area_last_sum - area_begin_sum) / (area_begin_sum ^ (1 /{years}))'
+        )
+        denominador = f'(seg_pop_last_sum - seg_pop_begin_sum) / (seg_pop_begin_sum ^ (1 /{years}))'
+        formula = (
+            f'coalesce(coalesce({numerador}, 0) / coalesce({denominador}, ""),"")'
+        )
 
         print(formula)
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
-        result = calculateField(populationsArea['OUTPUT'], NAMES_INDEX['IA04'][0],
-                                        formula,
-                                        context,
-                                        feedback,  params['OUTPUT'])        
-
-
-
-        return result
+        return calculateField(
+            populationsArea['OUTPUT'],
+            NAMES_INDEX['IA04'][0],
+            formula,
+            context,
+            feedback,
+            params['OUTPUT'],
+        )
 
         # Return the results of the algorithm. In this case our only result is
         # the feature sink which contains the processed features, but some
