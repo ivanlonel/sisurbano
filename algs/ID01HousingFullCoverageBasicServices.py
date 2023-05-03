@@ -142,7 +142,6 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
         
 
     def processAlgorithm(self, params, context, feedback):
-        steps = 0
         totalStpes = 17
         fieldDpaMan = params['DPA_MAN']
         # fieldHab = params['NUMBER_HABITANTS']
@@ -156,7 +155,7 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
         gridNeto = grid  
 
 
-        steps = steps+1
+        steps = 0 + 1
         feedback.setCurrentStep(steps)
 
 
@@ -189,7 +188,7 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
         df.loc[df['I10'].str.len() < 2, 'I10'] = "0" + df['I10']
 
         df['codman'] = df['I01'].astype(str) + df['I02'].astype(str) + df['I03'].astype(str) \
-                  + df['I04'].astype(str) + df['I05'].astype(str) + df['I06'].astype(str)
+                      + df['I04'].astype(str) + df['I05'].astype(str) + df['I06'].astype(str)
 
 
 
@@ -227,33 +226,32 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
 
         df = resManzanas     
 
-        
-        steps = steps+1
+
+        steps += 1
         feedback.setCurrentStep(steps)
 
         outputCsv = self.CURRENT_PATH+'/pobconserv.csv'
-        feedback.pushConsoleInfo(str(('pobconserv en ' + outputCsv)))    
+        feedback.pushConsoleInfo(str(('pobconserv en ' + outputCsv)))
         df.to_csv(outputCsv, index=False)
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
 
-        exitCsv = os.path.exists(outputCsv)
-        if(exitCsv):
+        if exitCsv := os.path.exists(outputCsv):
             print("El archivo CSV existe")
         else:
             print("No se encuentra CSV")
 
-        CSV =  QgsVectorLayer(outputCsv, "csv", "ogr") 
+        CSV =  QgsVectorLayer(outputCsv, "csv", "ogr")
         featuresCSV = CSV.getFeatures()
         # fields = layer.dataProvider().fields()
-        field_names = [field.name() for field in CSV.fields()]       
+        field_names = [field.name() for field in CSV.fields()]
         print(field_names)            
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         result = joinByAttr2(params['BLOCKS'], fieldDpaMan,
                                 outputCsv, 'codman',
@@ -264,13 +262,13 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
                                 context,
                                 feedback)
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
-        expressionNotNull = "pobconserv IS NOT '' AND pobconserv is NOT NULL"    
+        expressionNotNull = "pobconserv IS NOT '' AND pobconserv is NOT NULL"
         notNull =   filterByExpression(result['OUTPUT'], expressionNotNull, context, feedback) 
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         formulaDummy = 'pobconserv * 1.0'
         result = calculateField(notNull['OUTPUT'], 
@@ -281,8 +279,8 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
 
 
   # ----------------------CONVERTIR A NUMERICOS --------------------     
-  
-        steps = steps+1
+
+        steps += 1
         feedback.setCurrentStep(steps)
         formulaDummy = 'vivservicios * 1.0'
         result = calculateField(result['OUTPUT'], 
@@ -291,7 +289,7 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
                                  context,
                                  feedback)  
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         formulaDummy = 'pt * 1.0'
         result = calculateField(result['OUTPUT'], 
@@ -302,20 +300,20 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
 
 
        # ----------------------PROPORCIONES AREA--------------------------
-       
-        steps = steps+1
-        feedback.setCurrentStep(steps)        
+
+        steps += 1
+        feedback.setCurrentStep(steps)
         blocks = calculateArea(result['OUTPUT'], 'area_bloc', context,
                                feedback)     
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
                                 ['vivservicios_n','pt_n','area_bloc'],
                                 ['id_grid','area_grid'],
                                 context, feedback)        
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsArea = calculateArea(segments['OUTPUT'],
                                      'area_seg',
@@ -323,24 +321,24 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
 
         # -------------------------PROPORCIONES VALORES-------------------------
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * vivservicios_n' 
+        formulaDummy = '(area_seg/area_bloc) * vivservicios_n'
         result = calculateField(segmentsArea['OUTPUT'], 'vivservicios_n_seg',
                                                formulaDummy,
                                                context,
                                                feedback)     
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(area_seg/area_bloc) * pt_n' 
+        formulaDummy = '(area_seg/area_bloc) * pt_n'
         result = calculateField(result['OUTPUT'], 'pt_n_seg',
                                formulaDummy,
                                context,
                                feedback)   
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         result = makeSureInside(result['OUTPUT'],
                                 context,
@@ -348,7 +346,7 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
 
         #----------------------------------------------------------------------   
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         result = joinByLocation(gridNeto['OUTPUT'],
                              result['OUTPUT'],
@@ -359,9 +357,9 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
                               feedback)  
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
-        formulaDummy = '(vivservicios_n_seg_sum/pt_n_seg_sum) * 100' 
+        formulaDummy = '(vivservicios_n_seg_sum/pt_n_seg_sum) * 100'
         result = calculateField(result['OUTPUT'], NAMES_INDEX['ID01'][0],
                                formulaDummy,
                                context,
@@ -378,14 +376,14 @@ class ID01HousingFullCoverageBasicServices(QgsProcessingAlgorithm):
         #                       UNDISCARD_NONMATCHING,
         #                       context,
         #                       feedback)         
- 
+
 
         # fieldsMapping = [
         #     {'expression': '"id_grid"', 'length': 10, 'name': 'id_grid', 'precision': 0, 'type': 4}, 
         #     {'expression': '"area_grid"', 'length': 16, 'name': 'area_grid', 'precision': 3, 'type': 6}, 
         #     {'expression': '"acceso_inter_n_mean"', 'length': 20, 'name': NAMES_INDEX['ID01'][0], 'precision': 2, 'type': 6}
         # ]      
-        
+
         # steps = steps+1
         # feedback.setCurrentStep(steps)
         # result = refactorFields(fieldsMapping, gridNeto['OUTPUT'], 

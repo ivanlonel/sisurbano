@@ -121,7 +121,6 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-        steps = 0
         totalStpes = 11
         # fieldPopulation = params['FIELD_POPULATION']
         fieldHousing = params['FIELD_HOUSING']
@@ -129,36 +128,40 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
 
-        steps = steps+1
+        steps = 0 + 1
         feedback.setCurrentStep(steps)
-        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE        
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
         grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
                                            params['STUDY_AREA_GRID'],
                                            context, feedback)
         gridNeto = grid
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)        
+        steps += 1
+        feedback.setCurrentStep(steps)
         blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
                                feedback)
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
-        segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                                'area_bloc;' + fieldHousing,
-                                'id_grid;area_grid',
-                                context, feedback)
+        segments = intersection(
+            blocks['OUTPUT'],
+            gridNeto['OUTPUT'],
+            f'area_bloc;{fieldHousing}',
+            'id_grid;area_grid',
+            context,
+            feedback,
+        )
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsArea = calculateArea(segments['OUTPUT'],
                                      'area_seg',
                                      context, feedback)
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
-        formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
+        formulaHousingSegments = f'(area_seg/area_bloc) * {fieldHousing}'
         housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
                                             formulaHousingSegments,
                                             context,
@@ -166,12 +169,12 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
 
         # Haciendo el buffer inverso aseguramos que los segmentos
         # quden dentro de la malla
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         housingForSegmentsFixed = makeSureInside(housingForSegments['OUTPUT'],
                                                  context,
                                                  feedback)
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
                                              housingForSegmentsFixed['OUTPUT'],
@@ -181,7 +184,7 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
                                               context,
                                               feedback)  
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         formulaNetDensityHousingPerHa = 'coalesce((hou_seg_sum/area_seg_sum)*10000,0)'
         densities = calculateField(gridNetoAndSegments['OUTPUT'],
@@ -190,7 +193,7 @@ class IA02DensityHousing(QgsProcessingAlgorithm):
                                    context,
                                    feedback)
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         formulaGrossDensityHousingPerHa = 'coalesce((hou_seg_sum/area_grid)*10000,0)'
         densities = calculateField(densities['OUTPUT'],

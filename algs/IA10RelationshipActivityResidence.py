@@ -131,91 +131,95 @@ class IA10RelationshipActivityResidence(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-      steps = 0
-      totalStpes = 9
-      fieldHousing = params['FIELD_HOUSING']
+        totalStpes = 9
+        fieldHousing = params['FIELD_HOUSING']
 
-      feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
+        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
-                             feedback)
+        blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                               feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-                                         params['STUDY_AREA_GRID'],
-                                         context, feedback)
-      gridNeto = grid  
+        steps = 0 + 1
+        feedback.setCurrentStep(steps)
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
+        gridNeto = grid  
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                              'area_bloc;'+ fieldHousing,
-                              'id_grid',
-                              context, feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segments = intersection(
+            blocks['OUTPUT'],
+            gridNeto['OUTPUT'],
+            f'area_bloc;{fieldHousing}',
+            'id_grid',
+            context,
+            feedback,
+        )
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsArea = calculateArea(segments['OUTPUT'],
-                                   'area_seg',
-                                   context, feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                     'area_seg',
+                                     context, feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
-      housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
-                                          formulaHousingSegments,
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaHousingSegments = f'(area_seg/area_bloc) * {fieldHousing}'
+        housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
+                                            formulaHousingSegments,
+                                            context,
+                                            feedback)
+
+
+          # Haciendo el buffer inverso aseguramos que los segmentos
+          # quden dentro de la malla
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsFixed = makeSureInside(housingForSegments['OUTPUT'],
+                                                context,
+                                                feedback)
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
+                                             segmentsFixed['OUTPUT'],
+                                             'hou_seg',
+                                             [CONTIENE], [SUM],    
+                                             UNDISCARD_NONMATCHING,                               
+                                             context,
+                                             feedback)
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        layerTertiary = calculateField(params['TERTIARYUSES'], 'idx', '$id', context,
+                                     feedback, type=1) 
+
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridAndTertiary = joinByLocation(gridNetoAndSegments['OUTPUT'],
+                                          layerTertiary['OUTPUT'],
+                                          'idx', [CONTIENE, INTERSECTA], [COUNT],
+                                          UNDISCARD_NONMATCHING,
                                           context,
-                                          feedback)
+                                          feedback)      
 
-
-      # Haciendo el buffer inverso aseguramos que los segmentos
-      # quden dentro de la malla
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsFixed = makeSureInside(housingForSegments['OUTPUT'],
-                                              context,
-                                              feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                           segmentsFixed['OUTPUT'],
-                                           'hou_seg',
-                                           [CONTIENE], [SUM],    
-                                           UNDISCARD_NONMATCHING,                               
-                                           context,
-                                           feedback)
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      layerTertiary = calculateField(params['TERTIARYUSES'], 'idx', '$id', context,
-                                   feedback, type=1) 
-
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridAndTertiary = joinByLocation(gridNetoAndSegments['OUTPUT'],
-                                        layerTertiary['OUTPUT'],
-                                        'idx', [CONTIENE, INTERSECTA], [COUNT],
-                                        UNDISCARD_NONMATCHING,
-                                        context,
-                                        feedback)      
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaRelationship = 'coalesce(coalesce(idx_count,0)/hou_seg_sum, "")'
-      relationship = calculateField(gridAndTertiary['OUTPUT'],
-                                     NAMES_INDEX['IA10'][0],
-                                     formulaRelationship,
-                                     context,
-                                     feedback, params['OUTPUT'])
-
-      return relationship
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaRelationship = 'coalesce(coalesce(idx_count,0)/hou_seg_sum, "")'
+        return calculateField(
+            gridAndTertiary['OUTPUT'],
+            NAMES_INDEX['IA10'][0],
+            formulaRelationship,
+            context,
+            feedback,
+            params['OUTPUT'],
+        )
 
 
         # Return the results of the algorithm. In this case our only result is

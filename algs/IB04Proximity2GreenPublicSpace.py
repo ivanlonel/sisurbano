@@ -146,221 +146,225 @@ class IB04Proximity2GreenPublicSpace(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-      steps = 0
-      totalStpes = 14
-      fieldPopulation = params['FIELD_POPULATION']
-      fieldHousing = fieldPopulation
-      DISTANCE_WALKABILITY = 300
+        totalStpes = 14
+        fieldPopulation = params['FIELD_POPULATION']
+        fieldHousing = fieldPopulation
+        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-      feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
-
-      """
+        """
       -----------------------------------------------------------------
       Calcular las facilidades a espacios pubicos abiertos
       -----------------------------------------------------------------
       """
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-                                         params['STUDY_AREA_GRID'],
-                                         context, feedback)
-      gridNeto = grid  
+        steps = 0 + 1
+        feedback.setCurrentStep(steps)
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
+        gridNeto = grid  
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)        
-      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
-                             feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                               feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                              'area_bloc;' + fieldPopulation,
-                              'id_grid',
-                              context, feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segments = intersection(
+            blocks['OUTPUT'],
+            gridNeto['OUTPUT'],
+            f'area_bloc;{fieldPopulation}',
+            'id_grid',
+            context,
+            feedback,
+        )
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsArea = calculateArea(segments['OUTPUT'],
-                                   'area_seg',
-                                   context, feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                     'area_seg',
+                                     context, feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
-      populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
-                                          formulaPopulationSegments,
-                                          context,
-                                          feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaPopulationSegments = f'(area_seg/area_bloc) * {fieldPopulation}'
+        populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
+                                            formulaPopulationSegments,
+                                            context,
+                                            feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      blocksWithId = calculateField(populationForSegments['OUTPUT'], 'id_block', '$id', context,
-                                    feedback, type=1)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      equipmentWithId = calculateField(params['EQUIPMENT_GREEN'], 'idx', '$id', context,
+        steps += 1
+        feedback.setCurrentStep(steps)
+        blocksWithId = calculateField(populationForSegments['OUTPUT'], 'id_block', '$id', context,
                                       feedback, type=1)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      centroidsBlocks = createCentroids(blocksWithId['OUTPUT'], context,
-                                        feedback)
-
-      result = []
-
-      print(params['DISTANCE_OPTIONS'] )
-
-      if(params['DISTANCE_OPTIONS'] == 0):
-        steps = steps+1
-        feedback.setCurrentStep(steps)        
-        feedback.pushConsoleInfo(str(('Cálculo de áreas de servicio'))) 
-        serviceArea = bufferIsocrono(params['ROADS'], equipmentWithId['OUTPUT'], TIME_TRAVEL_COST, STRATEGY_TIME, context, feedback)
-
-
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
-        housingServed = intersection(segmentsArea['OUTPUT'], serviceArea['OUTPUT'],
-                                [fieldHousing,'area_bloc'],
-                                ['id_grid'],
-                                context, feedback)
+        equipmentWithId = calculateField(params['EQUIPMENT_GREEN'], 'idx', '$id', context,
+                                        feedback, type=1)
 
-
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
-        areaHousingServed = calculateArea(housingServed['OUTPUT'],
-                                     'area_served',
-                                     context, feedback)                
+        centroidsBlocks = createCentroids(blocksWithId['OUTPUT'], context,
+                                          feedback)
+
+        result = []
+
+        print(params['DISTANCE_OPTIONS'] )
+
+        steps += 1
+        if (params['DISTANCE_OPTIONS'] == 0):
+            feedback.setCurrentStep(steps)
+            feedback.pushConsoleInfo('Cálculo de áreas de servicio')
+            serviceArea = bufferIsocrono(params['ROADS'], equipmentWithId['OUTPUT'], TIME_TRAVEL_COST, STRATEGY_TIME, context, feedback)
 
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaHousingSegmentsServed = '(area_served/area_bloc) * ' + fieldHousing
-        housingSegmentsServed = calculateField(areaHousingServed['OUTPUT'], 'has',
-                                            formulaHousingSegmentsServed,
-                                            context,
-                                            feedback)    
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        housingSegmentsServedFixed = makeSureInside(housingSegmentsServed['OUTPUT'],
-                                                    context,
-                                                    feedback)    
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNetoAndSegmentsServed = joinByLocation(gridNeto['OUTPUT'],
-                                             housingSegmentsServedFixed['OUTPUT'],
-                                             'has',
-                                             [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
-                                             context,
-                                             feedback)
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        housingForSegmentsFixed = makeSureInside(populationForSegments['OUTPUT'],
-                                                    context,
-                                                    feedback)    
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNetoAndSegmentsServed = joinByLocation(gridNetoAndSegmentsServed['OUTPUT'],
-                                             housingForSegmentsFixed['OUTPUT'],
-                                             'pop_seg',
-                                             [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
-                                             context,
-                                             feedback)
-
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaProximity = 'coalesce((coalesce(has_sum,0) /  coalesce(pop_seg_sum,""))*100, "")'
-        proximity2OpenSpace = calculateField(gridNetoAndSegmentsServed['OUTPUT'], NAMES_INDEX['IB04'][0],
-                                          formulaProximity,
-                                          context,
-                                          feedback,  params['OUTPUT'])        
+            steps += 1
+            feedback.setCurrentStep(steps)
+            housingServed = intersection(segmentsArea['OUTPUT'], serviceArea['OUTPUT'],
+                                    [fieldHousing,'area_bloc'],
+                                    ['id_grid'],
+                                    context, feedback)
 
 
-        result = proximity2OpenSpace
-    
-      else:      
-        feedback.pushConsoleInfo(str(('Cálculo de buffer radial')))   
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blockBuffer4GreenSapace = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_WALKABILITY,
+            steps += 1
+            feedback.setCurrentStep(steps)
+            areaHousingServed = calculateArea(housingServed['OUTPUT'],
+                                         'area_served',
+                                         context, feedback)                
+
+
+            steps += 1
+            feedback.setCurrentStep(steps)
+            formulaHousingSegmentsServed = f'(area_served/area_bloc) * {fieldHousing}'
+            housingSegmentsServed = calculateField(areaHousingServed['OUTPUT'], 'has',
+                                                formulaHousingSegmentsServed,
+                                                context,
+                                                feedback)    
+
+            steps += 1
+            feedback.setCurrentStep(steps)
+            housingSegmentsServedFixed = makeSureInside(housingSegmentsServed['OUTPUT'],
+                                                        context,
+                                                        feedback)
+            steps += 1
+            feedback.setCurrentStep(steps)
+            gridNetoAndSegmentsServed = joinByLocation(gridNeto['OUTPUT'],
+                                                 housingSegmentsServedFixed['OUTPUT'],
+                                                 'has',
+                                                 [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
+                                                 context,
+                                                 feedback)
+
+            steps += 1
+            feedback.setCurrentStep(steps)
+            housingForSegmentsFixed = makeSureInside(populationForSegments['OUTPUT'],
+                                                        context,
+                                                        feedback)    
+
+            steps += 1
+            feedback.setCurrentStep(steps)
+            gridNetoAndSegmentsServed = joinByLocation(gridNetoAndSegmentsServed['OUTPUT'],
+                                                 housingForSegmentsFixed['OUTPUT'],
+                                                 'pop_seg',
+                                                 [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
+                                                 context,
+                                                 feedback)
+
+            steps += 1
+            feedback.setCurrentStep(steps)
+            formulaProximity = 'coalesce((coalesce(has_sum,0) /  coalesce(pop_seg_sum,""))*100, "")'
+            return calculateField(
+                gridNetoAndSegmentsServed['OUTPUT'],
+                NAMES_INDEX['IB04'][0],
+                formulaProximity,
+                context,
+                feedback,
+                params['OUTPUT'],
+            )        
+
+
+        else:  
+            feedback.pushConsoleInfo('Cálculo de buffer radial')
+            feedback.setCurrentStep(steps)
+            DISTANCE_WALKABILITY = 300
+
+            blockBuffer4GreenSapace = createBuffer(centroidsBlocks['OUTPUT'], DISTANCE_WALKABILITY,
+                                                  context,
+                                                  feedback)
+
+            steps += 1
+            feedback.setCurrentStep(steps)
+            counterGreenSpace = joinByLocation(blockBuffer4GreenSapace['OUTPUT'],
+                                              equipmentWithId['OUTPUT'],
+                                              'idx',[CONTIENE, INTERSECTA], [COUNT],
+                                              False,
                                               context,
                                               feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        counterGreenSpace = joinByLocation(blockBuffer4GreenSapace['OUTPUT'],
-                                          equipmentWithId['OUTPUT'],
-                                          'idx',[CONTIENE, INTERSECTA], [COUNT],
-                                          False,
-                                          context,
-                                          feedback)
+            steps += 1
+            feedback.setCurrentStep(steps)
+            blocksJoined = joinByAttr(blocksWithId['OUTPUT'], 'id_block',
+                                      counterGreenSpace['OUTPUT'], 'id_block',
+                                      'idx_count',
+                                      False,
+                                      'gsp_',
+                                      context,
+                                      feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        blocksJoined = joinByAttr(blocksWithId['OUTPUT'], 'id_block',
-                                  counterGreenSpace['OUTPUT'], 'id_block',
-                                  'idx_count',
-                                  False,
-                                  'gsp_',
-                                  context,
-                                  feedback)
-
-        """
+            """
         -----------------------------------------------------------------
         Calcular numero de viviendas por hexagano
         -----------------------------------------------------------------
         """
 
 
-        # Haciendo el buffer inverso aseguramos que los segmentos
-        # quden dentro de la malla
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        facilitiesForSegmentsFixed = makeSureInside(blocksJoined['OUTPUT'],
-                                                    context,
-                                                    feedback)
+                # Haciendo el buffer inverso aseguramos que los segmentos
+                # quden dentro de la malla
+            steps += 1
+            feedback.setCurrentStep(steps)
+            facilitiesForSegmentsFixed = makeSureInside(blocksJoined['OUTPUT'],
+                                                        context,
+                                                        feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                             facilitiesForSegmentsFixed['OUTPUT'],
-                                             'gsp_idx_count;pop_seg',
-                                             [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
-                                             context,
-                                             feedback)
+            steps += 1
+            feedback.setCurrentStep(steps)
+            gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
+                                                 facilitiesForSegmentsFixed['OUTPUT'],
+                                                 'gsp_idx_count;pop_seg',
+                                                 [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
+                                                 context,
+                                                 feedback)
 
-        #descartar NULL para obtener el total de viviendas que cumple
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        facilitiesNotNullForSegmentsFixed = filter(facilitiesForSegmentsFixed['OUTPUT'],
-                                                   'gsp_idx_count', NOT_NULL,
-                                                   '', context, feedback)
+                #descartar NULL para obtener el total de viviendas que cumple
+            steps += 1
+            feedback.setCurrentStep(steps)
+            facilitiesNotNullForSegmentsFixed = filter(facilitiesForSegmentsFixed['OUTPUT'],
+                                                       'gsp_idx_count', NOT_NULL,
+                                                       '', context, feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        gridNetoAndSegmentsNotNull = joinByLocation(gridNetoAndSegments['OUTPUT'],
-                                                    facilitiesNotNullForSegmentsFixed['OUTPUT'],
-                                                    'pop_seg',
-                                                    [CONTIENE], [SUM], UNDISCARD_NONMATCHING,               
-                                                    context,
-                                                    feedback)
+            steps += 1
+            feedback.setCurrentStep(steps)
+            gridNetoAndSegmentsNotNull = joinByLocation(gridNetoAndSegments['OUTPUT'],
+                                                        facilitiesNotNullForSegmentsFixed['OUTPUT'],
+                                                        'pop_seg',
+                                                        [CONTIENE], [SUM], UNDISCARD_NONMATCHING,               
+                                                        context,
+                                                        feedback)
 
-        steps = steps+1
-        feedback.setCurrentStep(steps)
-        formulaProximity = 'coalesce((coalesce(pop_seg_sum_2,0) /  coalesce(pop_seg_sum,""))*100,"")'
-        proximity2OpenSpace = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['IB04'][0],
-                                          formulaProximity,
-                                          context,
-                                          feedback,  params['OUTPUT'])
-
-        result = proximity2OpenSpace
-
-      return proximity2OpenSpace
+            steps += 1
+            feedback.setCurrentStep(steps)
+            formulaProximity = 'coalesce((coalesce(pop_seg_sum_2,0) /  coalesce(pop_seg_sum,""))*100,"")'
+            return calculateField(
+                gridNetoAndSegmentsNotNull['OUTPUT'],
+                NAMES_INDEX['IB04'][0],
+                formulaProximity,
+                context,
+                feedback,
+                params['OUTPUT'],
+            )
 
 
 

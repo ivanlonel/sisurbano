@@ -120,81 +120,84 @@ class IC05ParkedVehicles(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-      steps = 0
-      totalStpes = 10
-      areaPerParking = str(params['AREA_PER_PARKING'])
+        steps = 0
+        totalStpes = 10
+        areaPerParking = str(params['AREA_PER_PARKING'])
 
-      feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
+        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-      feedback.setCurrentStep(steps)
-      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['ROADS'],
-                                         params['STUDY_AREA_GRID'],
-                                         context, feedback)
-      gridNeto = grid  
+        feedback.setCurrentStep(steps)
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['ROADS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
+        gridNeto = grid  
 
- 
-      # CALCULAR VIARIO
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(params['ROADS'], gridNeto['OUTPUT'],
-                              [],
-                              'id_grid;area_grid',
-                              context, feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsArea = calculateArea(segments['OUTPUT'], 'area_road', context,
-                                   feedback)
+          # CALCULAR VIARIO
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segments = intersection(params['ROADS'], gridNeto['OUTPUT'],
+                                [],
+                                'id_grid;area_grid',
+                                context, feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsFixed = makeSureInside(segmentsArea['OUTPUT'],
-                                     context,
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'], 'area_road', context,
                                      feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                           segmentsFixed['OUTPUT'],
-                                           [],
-                                           [CONTIENE], [SUM],    
-                                           UNDISCARD_NONMATCHING,                               
-                                           context,
-                                           feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsFixed = makeSureInside(segmentsArea['OUTPUT'],
+                                       context,
+                                       feedback)
 
-      # CONTAR Y CALCULAR DE LOS PARQUEOS
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
+                                             segmentsFixed['OUTPUT'],
+                                             [],
+                                             [CONTIENE], [SUM],    
+                                             UNDISCARD_NONMATCHING,                               
+                                             context,
+                                             feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      parkingWithId = calculateField(params['PARKING'], 'idx', '$id', context,
-                                      feedback, type=1)      
+          # CONTAR Y CALCULAR DE LOS PARQUEOS
 
-
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegmentsSumLinesLum = joinByLocation(gridNetoAndSegments['OUTPUT'],
-                                           parkingWithId['OUTPUT'],
-                                           ['idx'],
-                                           [CONTIENE], [COUNT],    
-                                           UNDISCARD_NONMATCHING,                               
-                                           context,
-                                           feedback)      
+        steps += 1
+        feedback.setCurrentStep(steps)
+        parkingWithId = calculateField(params['PARKING'], 'idx', '$id', context,
+                                        feedback, type=1)      
 
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaParkingRoad = 'coalesce((idx_count*'+ areaPerParking+')/(area_road_sum), "")'
-      parkingPerRoad = calculateField(gridNetoAndSegmentsSumLinesLum['OUTPUT'],
-                                     NAMES_INDEX['IC05'][0],
-                                     formulaParkingRoad,
-                                     context,
-                                     feedback, params['OUTPUT'])
 
-      return parkingPerRoad
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegmentsSumLinesLum = joinByLocation(gridNetoAndSegments['OUTPUT'],
+                                             parkingWithId['OUTPUT'],
+                                             ['idx'],
+                                             [CONTIENE], [COUNT],    
+                                             UNDISCARD_NONMATCHING,                               
+                                             context,
+                                             feedback)      
+
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaParkingRoad = (
+            f'coalesce((idx_count*{areaPerParking})/(area_road_sum), "")'
+        )
+        return calculateField(
+            gridNetoAndSegmentsSumLinesLum['OUTPUT'],
+            NAMES_INDEX['IC05'][0],
+            formulaParkingRoad,
+            context,
+            feedback,
+            params['OUTPUT'],
+        )
 
 
         # Return the results of the algorithm. In this case our only result is

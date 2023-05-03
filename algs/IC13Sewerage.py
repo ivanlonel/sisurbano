@@ -124,72 +124,75 @@ class IC13Sewerage(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-      steps = 0
-      totalStpes = 13
-      fieldHousing = params['FIELD_HOUSING']
+        totalStpes = 13
+        fieldHousing = params['FIELD_HOUSING']
 
-      feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-                                         params['STUDY_AREA_GRID'],
-                                         context, feedback)
-      gridNeto = grid      
+        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)        
-      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
-                             feedback)
+        steps = 0 + 1
+        feedback.setCurrentStep(steps)
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
+        gridNeto = grid      
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                              'area_bloc;' + fieldHousing,
-                              'id_grid',
-                              context, feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                               feedback)
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsArea = calculateArea(segments['OUTPUT'],
-                                   'area_seg',
-                                   context, feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segments = intersection(
+            blocks['OUTPUT'],
+            gridNeto['OUTPUT'],
+            f'area_bloc;{fieldHousing}',
+            'id_grid',
+            context,
+            feedback,
+        )
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaHousingSegments = '(area_seg/area_bloc) * ' + fieldHousing
-      housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
-                                          formulaHousingSegments,
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                     'area_seg',
+                                     context, feedback)
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaHousingSegments = f'(area_seg/area_bloc) * {fieldHousing}'
+        housingForSegments = calculateField(segmentsArea['OUTPUT'], 'hou_seg',
+                                            formulaHousingSegments,
+                                            context,
+                                            feedback)
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        blocksWithId = calculateField(housingForSegments['OUTPUT'], 'id_block', '$id', context,
+                                      feedback, type=1)
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        seweragetWithId = calculateField(params['SEWERAGE'], 'idx', '$id', context,
+                                        feedback, type=1)      
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        blocksWithSewerage = joinByLocation(blocksWithId['OUTPUT'],
+                                          seweragetWithId['OUTPUT'],
+                                          'idx', [INTERSECTA], [COUNT],
+                                          UNDISCARD_NONMATCHING,
                                           context,
                                           feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      blocksWithId = calculateField(housingForSegments['OUTPUT'], 'id_block', '$id', context,
-                                    feedback, type=1)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      seweragetWithId = calculateField(params['SEWERAGE'], 'idx', '$id', context,
-                                      feedback, type=1)      
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      blocksWithSewerage = joinByLocation(blocksWithId['OUTPUT'],
-                                        seweragetWithId['OUTPUT'],
-                                        'idx', [INTERSECTA], [COUNT],
-                                        UNDISCARD_NONMATCHING,
-                                        context,
-                                        feedback)
-
-
-      """
+        """
       -----------------------------------------------------------------
       Calcular numero de viviendas por hexagano
       -----------------------------------------------------------------
@@ -198,48 +201,50 @@ class IC13Sewerage(QgsProcessingAlgorithm):
 
 
 
-      # Haciendo el buffer inverso aseguramos que los segmentos
-      # quden dentro de la malla
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      sewerageForSegmentsFixed = makeSureInside(blocksWithSewerage['OUTPUT'],
-                                                  context,
-                                                  feedback)
-      # Con esto se saca el total de viviendas
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
-                                           sewerageForSegmentsFixed['OUTPUT'],
-                                           'idx_count;hou_seg',
-                                           [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
-                                           context,
-                                           feedback)
+          # Haciendo el buffer inverso aseguramos que los segmentos
+          # quden dentro de la malla
+        steps += 1
+        feedback.setCurrentStep(steps)
+        sewerageForSegmentsFixed = makeSureInside(blocksWithSewerage['OUTPUT'],
+                                                    context,
+                                                    feedback)
+          # Con esto se saca el total de viviendas
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegments = joinByLocation(gridNeto['OUTPUT'],
+                                             sewerageForSegmentsFixed['OUTPUT'],
+                                             'idx_count;hou_seg',
+                                             [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
+                                             context,
+                                             feedback)
 
-      #descartar NULL para obtener el total de viviendas que cumple
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      sewerageNotNullForSegmentsFixed = filter(sewerageForSegmentsFixed['OUTPUT'],
-                                                 'idx_count', NOT_NULL,
-                                                 '', context, feedback)
+          #descartar NULL para obtener el total de viviendas que cumple
+        steps += 1
+        feedback.setCurrentStep(steps)
+        sewerageNotNullForSegmentsFixed = filter(sewerageForSegmentsFixed['OUTPUT'],
+                                                   'idx_count', NOT_NULL,
+                                                   '', context, feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegmentsNotNull = joinByLocation(gridNetoAndSegments['OUTPUT'],
-                                                  sewerageNotNullForSegmentsFixed['OUTPUT'],
-                                                  'hou_seg',
-                                                  [CONTIENE], [SUM], UNDISCARD_NONMATCHING,               
-                                                  context,
-                                                  feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegmentsNotNull = joinByLocation(gridNetoAndSegments['OUTPUT'],
+                                                    sewerageNotNullForSegmentsFixed['OUTPUT'],
+                                                    'hou_seg',
+                                                    [CONTIENE], [SUM], UNDISCARD_NONMATCHING,               
+                                                    context,
+                                                    feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaSewer = 'coalesce((coalesce(hou_seg_sum_2,0) /  coalesce(hou_seg_sum,""))*100, "")'
-      sewer = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['IC13'][0],
-                                        formulaSewer,
-                                        context,
-                                        feedback,  params['OUTPUT'])
-
-      return sewer
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaSewer = 'coalesce((coalesce(hou_seg_sum_2,0) /  coalesce(hou_seg_sum,""))*100, "")'
+        return calculateField(
+            gridNetoAndSegmentsNotNull['OUTPUT'],
+            NAMES_INDEX['IC13'][0],
+            formulaSewer,
+            context,
+            feedback,
+            params['OUTPUT'],
+        )
 
         # Return the results of the algorithm. In this case our only result is
         # the feature sink which contains the processed features, but some

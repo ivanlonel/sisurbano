@@ -121,7 +121,6 @@ class IA03Compactness(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-        steps = 0
         totalStpes = 8
         fieldConstructionArea = str('"'+params['CONSTRUCTION_AREA']+'"')
         # todos tienen un piso. El area de contruccion esta tomado por pisos
@@ -130,9 +129,9 @@ class IA03Compactness(QgsProcessingAlgorithm):
 
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-        steps = steps+1
+        steps = 0 + 1
         feedback.setCurrentStep(steps)
-        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE        
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
         grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['CADASTRE'],
                                            params['STUDY_AREA_GRID'],
                                            context, feedback)
@@ -140,9 +139,9 @@ class IA03Compactness(QgsProcessingAlgorithm):
 
         # multiplicar area de contruccion por la altura
         # base del area de cada piso (al parecer porque el ac > at)
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
-        formulaBuiltVolume = 'coalesce(' + fieldConstructionArea + ' * ' + heightFloor + ' * ' + fieldFloorsNumber + ', 0)'
+        formulaBuiltVolume = f'coalesce({fieldConstructionArea} * {heightFloor} * {fieldFloorsNumber}, 0)'
         print(formulaBuiltVolume)
         cadastreBuiltVolume = calculateField(params['CADASTRE'], 'built_volume',
                                              formulaBuiltVolume,
@@ -151,13 +150,13 @@ class IA03Compactness(QgsProcessingAlgorithm):
 
 
         # obtener la proporción del constucción en base al área del segmento
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         blocks = calculateArea(cadastreBuiltVolume['OUTPUT'], 'area_bloc', context,
                                feedback)
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
                                 'area_bloc;built_volume',
@@ -165,13 +164,13 @@ class IA03Compactness(QgsProcessingAlgorithm):
                                 context, feedback)
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         segmentsArea = calculateArea(segments['OUTPUT'],
                                    'area_seg',
                                    context, feedback)
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         formulaPopulationSegments = '(area_seg/area_bloc) * built_volume'
         compactnessForSegments = calculateField(segmentsArea['OUTPUT'], 'compact_seg',
@@ -180,7 +179,7 @@ class IA03Compactness(QgsProcessingAlgorithm):
                                           feedback)
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         gridIntersectCadaster = joinByLocation(gridNeto['OUTPUT'],
                                                compactnessForSegments['OUTPUT'],
@@ -188,16 +187,18 @@ class IA03Compactness(QgsProcessingAlgorithm):
                                                [INTERSECTA], [SUM],
                                                UNDISCARD_NONMATCHING,
                                                context,
-                                               feedback)  
-        steps = steps+1
+                                               feedback)
+        steps += 1
         feedback.setCurrentStep(steps)
         formulaCompactness = 'coalesce(compact_seg_sum / area_grid, 0)'
-        compactness = calculateField(gridIntersectCadaster['OUTPUT'], NAMES_INDEX['IA03'][0],
-                                   formulaCompactness,
-                                   context,
-                                   feedback, params['OUTPUT'])
-
-        return compactness
+        return calculateField(
+            gridIntersectCadaster['OUTPUT'],
+            NAMES_INDEX['IA03'][0],
+            formulaCompactness,
+            context,
+            feedback,
+            params['OUTPUT'],
+        )
 
         # Return the results of the algorithm. In this case our only result is
         # the feature sink which contains the processed features, but some

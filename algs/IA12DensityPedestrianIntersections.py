@@ -122,14 +122,13 @@ class IA12DensityPedestrianIntersections(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-        steps = 0
         totalStpes = 10
         # fieldSintaxis = params['FIELD_SINTAXIS']
 
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
 
-        steps = steps+1
+        steps = 0 + 1
         feedback.setCurrentStep(steps)
         if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
         grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['ROADS'],
@@ -138,17 +137,21 @@ class IA12DensityPedestrianIntersections(QgsProcessingAlgorithm):
         gridNeto = grid
 
         results = {}
-        outputs = {}
-
-
         # Dividir con líneas
         alg_params = {
             'INPUT': params['ROADS'],
             'LINES': params['ROADS'],
             'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
         }
-        outputs['DividirConLneas'] = processing.run('native:splitwithlines', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
-
+        outputs = {
+            'DividirConLneas': processing.run(
+                'native:splitwithlines',
+                alg_params,
+                context=context,
+                feedback=feedback,
+                is_child_algorithm=True,
+            )
+        }
         feedback.setCurrentStep(1)
         if feedback.isCanceled():
             return {}
@@ -271,7 +274,7 @@ class IA12DensityPedestrianIntersections(QgsProcessingAlgorithm):
         outputs['ExtraerLosObjetosEspacialesSeleccionados'] = processing.run('native:saveselectedfeatures', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         result = joinByLocation(gridNeto['OUTPUT'],
                                  outputs['ExtraerLosObjetosEspacialesSeleccionados']['OUTPUT'],
@@ -281,7 +284,7 @@ class IA12DensityPedestrianIntersections(QgsProcessingAlgorithm):
                                   context,
                                   feedback)   
 
-        steps = steps+1
+        steps += 1
         feedback.setCurrentStep(steps)
         formulaDummy = 'idx_count_count / (area_grid / 1000000)'
         result = calculateField(result['OUTPUT'],

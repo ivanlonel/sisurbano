@@ -364,23 +364,23 @@ class IB00WrapB(QgsProcessingAlgorithm):
         results = {}
         feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
-        isValid = lambda x: False if x is None else True
+        isValid = lambda x: x is not None
 
-        isBlocks = isValid(params['BLOCKS'])        
+        isBlocks = isValid(params['BLOCKS'])
         isFieldPopulation = isValid(params['FIELD_POPULATION'])
         isFieldHousing = isValid(params['FIELD_HOUSING'])
         isStudyArea = isValid(params['STUDY_AREA_GRID']) 
 
-        isNo2 = isValid(params['NO2'])     
-        isO3 = isValid(params['O3'])     
-        isPS = isValid(params['PS'])     
+        isNo2 = isValid(params['NO2'])
+        isO3 = isValid(params['O3'])
+        isPS = isValid(params['PS'])
         isSO2 = isValid(params['SO2'])    
 
 
         if isBlocks and isFieldPopulation and isNo2 and isO3 and isPS and isSO2:
             # B01 Calidad del aire
-            steps = steps+1
-            feedback.setCurrentStep(steps)  
+            steps += 1
+            feedback.setCurrentStep(steps)
             if feedback.isCanceled():
                 return {}
             alg_params = {
@@ -398,16 +398,16 @@ class IB00WrapB(QgsProcessingAlgorithm):
 
 
 
-        isLuminary = isValid(params['LUMINARY'])    
+        isLuminary = isValid(params['LUMINARY'])
         isRoads = isValid(params['ROADS'])    
 
 
         if isBlocks and isFieldPopulation and isLuminary and isRoads:
             # B02 Luminación nocturna del viario público
-            steps = steps+1
-            feedback.setCurrentStep(steps)  
+            steps += 1
+            feedback.setCurrentStep(steps)
             if feedback.isCanceled():
-                return {}        
+                return {}
             alg_params = {
                 'BLOCKS': params['BLOCKS'],
                 'FIELD_POPULATION': params['FIELD_POPULATION'],
@@ -422,16 +422,16 @@ class IB00WrapB(QgsProcessingAlgorithm):
 
 
 
-        isNoiseDay = isValid(params['NOISE_DAY'])    
+        isNoiseDay = isValid(params['NOISE_DAY'])
         isNoiseNight = isValid(params['NOISE_NIGHT'])    
 
 
         if isBlocks and isFieldPopulation and isNoiseDay and isNoiseNight:
             # B03 Confort acústico
-            steps = steps+1
-            feedback.setCurrentStep(steps)  
+            steps += 1
+            feedback.setCurrentStep(steps)
             if feedback.isCanceled():
-                return {}            
+                return {}
             alg_params = {
                 'BLOCKS': params['BLOCKS'],
                 'FIELD_POPULATION': params['FIELD_POPULATION'],
@@ -444,17 +444,17 @@ class IB00WrapB(QgsProcessingAlgorithm):
             results['OUTPUT_B03'] = outputs['B03ConfortAcstico']['OUTPUT']  
 
 
-        
-        isEquipementGreen = isValid(params['EQUIPMENT_GREEN'])    
+
+        isEquipementGreen = isValid(params['EQUIPMENT_GREEN'])
         isDistanceOptions = isValid(params['DISTANCE_OPTIONS'])    
-               
-        
-        if isBlocks and isEquipementGreen and isRoads and isDistanceOptions and isFieldPopulation:                   
+
+
+        if isBlocks and isEquipementGreen and isRoads and isDistanceOptions and isFieldPopulation:               
             # B04 Proximidad al espacio verde público más cercano
-            steps = steps+1
-            feedback.setCurrentStep(steps)  
+            steps += 1
+            feedback.setCurrentStep(steps)
             if feedback.isCanceled():
-                return {}            
+                return {}
             alg_params = {
                 'BLOCKS': params['BLOCKS'],
                 'EQUIPMENT_GREEN': params['EQUIPMENT_GREEN'],
@@ -472,10 +472,10 @@ class IB00WrapB(QgsProcessingAlgorithm):
 
         if isBlocks and isFieldPopulation and isGreen:
             # B05 Superficie verde por habitante
-            steps = steps+1
-            feedback.setCurrentStep(steps)  
+            steps += 1
+            feedback.setCurrentStep(steps)
             if feedback.isCanceled():
-                return {}          
+                return {}
             alg_params = {
                 'BLOCKS': params['BLOCKS'],
                 'FIELD_POPULATION': params['FIELD_POPULATION'],
@@ -490,13 +490,13 @@ class IB00WrapB(QgsProcessingAlgorithm):
 
         isAgricultural = isValid(params['AGRICULTRURAL'])           
 
-        
+
         if isAgricultural and isBlocks:
             # B06 Superficie agrícola y huertos
-            steps = steps+1
-            feedback.setCurrentStep(steps)  
+            steps += 1
+            feedback.setCurrentStep(steps)
             if feedback.isCanceled():
-                return {}            
+                return {}
             alg_params = {
                 'AGRICULTRURAL': params['AGRICULTRURAL'],
                 'BLOCKS': params['BLOCKS'],
@@ -511,10 +511,10 @@ class IB00WrapB(QgsProcessingAlgorithm):
 
         if isBlocks and isSoil:
             # B07 Permeabilidad del suelo
-            steps = steps+1
-            feedback.setCurrentStep(steps)  
+            steps += 1
+            feedback.setCurrentStep(steps)
             if feedback.isCanceled():
-                return {}            
+                return {}
             alg_params = {
                 'BLOCKS': params['BLOCKS'],
                 'SOIL': params['SOIL'],

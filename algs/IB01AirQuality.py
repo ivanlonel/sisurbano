@@ -163,161 +163,155 @@ class IB01AirQuality(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-      steps = 0
-      totalStpes = 14
-      # fieldPopulation = params['FIELD_POPULATION']
-      fieldPopulation = params['FIELD_POPULATION']
-      maxO3 = str(100)
-      maxNO2 = str(40)
-      maxSO2 = str(60)
-      maxPS = str(1)
+        totalStpes = 14
+        # fieldPopulation = params['FIELD_POPULATION']
+        fieldPopulation = params['FIELD_POPULATION']
+        maxO3 = str(100)
+        maxNO2 = str(40)
+        maxSO2 = str(60)
+        maxPS = str(1)
 
-      feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
+        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
 
-      """
+        """
       -----------------------------------------------------------------
       Calcular numero de viviendas por hexagano
       -----------------------------------------------------------------
       """
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-                                         params['STUDY_AREA_GRID'],
-                                         context, feedback)
-      gridNeto = grid  
+        steps = 0 + 1
+        feedback.setCurrentStep(steps)
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
+        gridNeto = grid  
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)        
-      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
-                             feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                               feedback)
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                              ['area_bloc',fieldPopulation],
-                              'id_grid',
-                              context, feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                                ['area_bloc',fieldPopulation],
+                                'id_grid',
+                                context, feedback)
 
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsArea = calculateArea(segments['OUTPUT'],
-                                   'area_seg',
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                     'area_seg',
+                                     context, feedback)
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaPopulationSegments = f'(area_seg/area_bloc) * {fieldPopulation}'
+        populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
+                                            formulaPopulationSegments,
+                                            context,
+                                            feedback)
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        blocks = calculateField(populationForSegments['OUTPUT'], 'id_blocks', '$id', context,
+                                      feedback, type=1)          
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        stByZona(params['O3'], blocks['OUTPUT'],
+                                   1, [2], 'o3_', 
                                    context, feedback)
 
+        steps += 1
+        feedback.setCurrentStep(steps)
+        stByZona(params['NO2'], blocks['OUTPUT'],
+                                   1, [2], 'no2_', 
+                                   context, feedback)    
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
-      populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
-                                          formulaPopulationSegments,
+        steps += 1
+        feedback.setCurrentStep(steps)
+        stByZona(params['SO2'], blocks['OUTPUT'],
+                                   1, [2], 'so2_', 
+                                   context, feedback)                                    
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        stByZona(params['PS'], blocks['OUTPUT'],
+                                   1, [2], 'ps_', 
+                                   context, feedback)  
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        expression = 'id_blocks != -100'
+
+
+        comodin = filterByExpression(blocks['OUTPUT'], expression, context, feedback)
+
+
+
+        condition = f"CASE WHEN (o3_mean > {maxO3} OR no2_mean > {maxNO2} OR so2_mean > {maxSO2} OR ps_mean > {maxPS}) THEN 1 ELSE 0 END"         
+
+
+          # print(condition)
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        blocksPull = calculateField(comodin['OUTPUT'], 'is_pull',
+                                          condition,
                                           context,
-                                          feedback)
+                                          feedback, type=1)     
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      blocks = calculateField(populationForSegments['OUTPUT'], 'id_blocks', '$id', context,
-                                    feedback, type=1)          
+          # Haciendo el buffer inverso aseguramos que los segmentos
+          # quden dentro de la malla
+        steps += 1
+        feedback.setCurrentStep(steps)
+        pullForSegmentsFixed = makeSureInside(blocksPull['OUTPUT'],
+                                                    context,
+                                                    feedback)
+          # Con esto se saca el total de viviendas
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegmentsPull = joinByLocation(gridNeto['OUTPUT'],
+                                             pullForSegmentsFixed['OUTPUT'],
+                                             ['pop_seg'],
+                                             [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
+                                             context,
+                                             feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      stByZona(params['O3'], blocks['OUTPUT'],
-                                 1, [2], 'o3_', 
-                                 context, feedback)
+          #descartar NULL para obtener el total de viviendas que cumple
+        steps += 1
+        feedback.setCurrentStep(steps)
+        pullActiveForSegmentsFixed = filter(pullForSegmentsFixed['OUTPUT'],
+                                                   'is_pull', IGUAL,
+                                                   '0', context, feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      stByZona(params['NO2'], blocks['OUTPUT'],
-                                 1, [2], 'no2_', 
-                                 context, feedback)    
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegmentsNotNull = joinByLocation(gridNetoAndSegmentsPull['OUTPUT'],
+                                                    pullActiveForSegmentsFixed['OUTPUT'],
+                                                    ['pop_seg', 'is_pull'],
+                                                    [CONTIENE], [SUM], UNDISCARD_NONMATCHING,               
+                                                    context,
+                                                    feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      stByZona(params['SO2'], blocks['OUTPUT'],
-                                 1, [2], 'so2_', 
-                                 context, feedback)                                    
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      stByZona(params['PS'], blocks['OUTPUT'],
-                                 1, [2], 'ps_', 
-                                 context, feedback)  
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      expression = 'id_blocks != -100'
-
-
-      comodin = filterByExpression(blocks['OUTPUT'], expression, context, feedback)
-                   
-
- 
-      condition = "CASE WHEN (o3_mean > "+maxO3 + \
-                  " OR no2_mean > "+maxNO2 + \
-                  " OR so2_mean > "+maxSO2 + \
-                  " OR ps_mean > "+maxPS + \
-                  ") THEN 1" + \
-                  " ELSE 0" + \
-                  " END"         
-
-
-      # print(condition)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      blocksPull = calculateField(comodin['OUTPUT'], 'is_pull',
-                                        condition,
-                                        context,
-                                        feedback, type=1)     
-                                                                                      
-      # Haciendo el buffer inverso aseguramos que los segmentos
-      # quden dentro de la malla
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      pullForSegmentsFixed = makeSureInside(blocksPull['OUTPUT'],
-                                                  context,
-                                                  feedback)
-      # Con esto se saca el total de viviendas
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegmentsPull = joinByLocation(gridNeto['OUTPUT'],
-                                           pullForSegmentsFixed['OUTPUT'],
-                                           ['pop_seg'],
-                                           [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
-                                           context,
-                                           feedback)
-
-      #descartar NULL para obtener el total de viviendas que cumple
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      pullActiveForSegmentsFixed = filter(pullForSegmentsFixed['OUTPUT'],
-                                                 'is_pull', IGUAL,
-                                                 '0', context, feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegmentsNotNull = joinByLocation(gridNetoAndSegmentsPull['OUTPUT'],
-                                                  pullActiveForSegmentsFixed['OUTPUT'],
-                                                  ['pop_seg', 'is_pull'],
-                                                  [CONTIENE], [SUM], UNDISCARD_NONMATCHING,               
-                                                  context,
-                                                  feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaPull = 'coalesce((coalesce(pop_seg_sum_2,0) /  coalesce(pop_seg_sum,""))*100, "")'
-      pull = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['IB01'][0],
-                                        formulaPull,
-                                        context,
-                                        feedback,  params['OUTPUT'])
-
-
-      return pull
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaPull = 'coalesce((coalesce(pop_seg_sum_2,0) /  coalesce(pop_seg_sum,""))*100, "")'
+        return calculateField(
+            gridNetoAndSegmentsNotNull['OUTPUT'],
+            NAMES_INDEX['IB01'][0],
+            formulaPull,
+            context,
+            feedback,
+            params['OUTPUT'],
+        )
 
 
     def icon(self):

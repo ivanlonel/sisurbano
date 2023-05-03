@@ -132,143 +132,139 @@ class IB03AcousticComfort(QgsProcessingAlgorithm):
         )
 
     def processAlgorithm(self, params, context, feedback):
-      steps = 0
-      totalStpes = 14
-      # fieldPopulation = params['FIELD_POPULATION']
-      fieldPopulation = params['FIELD_POPULATION']
-      maxDay = str(70)
-      maxNight = str(65)
+        totalStpes = 14
+        # fieldPopulation = params['FIELD_POPULATION']
+        fieldPopulation = params['FIELD_POPULATION']
+        maxDay = str(70)
+        maxNight = str(65)
 
-      feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
+        feedback = QgsProcessingMultiStepFeedback(totalStpes, feedback)
 
 
-      """
+        """
       -----------------------------------------------------------------
       Calcular numero de viviendas por hexagano
       -----------------------------------------------------------------
       """
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
-      grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
-                                         params['STUDY_AREA_GRID'],
-                                         context, feedback)
-      gridNeto = grid  
+        steps = 0 + 1
+        feedback.setCurrentStep(steps)
+        if not OPTIONAL_GRID_INPUT: params['CELL_SIZE'] = P_CELL_SIZE
+        grid, isStudyArea = buildStudyArea(params['CELL_SIZE'], params['BLOCKS'],
+                                           params['STUDY_AREA_GRID'],
+                                           context, feedback)
+        gridNeto = grid  
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)        
-      blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
-                             feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        blocks = calculateArea(params['BLOCKS'], 'area_bloc', context,
+                               feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
-                              ['area_bloc',fieldPopulation],
-                              'id_grid',
-                              context, feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segments = intersection(blocks['OUTPUT'], gridNeto['OUTPUT'],
+                                ['area_bloc',fieldPopulation],
+                                'id_grid',
+                                context, feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      segmentsArea = calculateArea(segments['OUTPUT'],
-                                   'area_seg',
+        steps += 1
+        feedback.setCurrentStep(steps)
+        segmentsArea = calculateArea(segments['OUTPUT'],
+                                     'area_seg',
+                                     context, feedback)
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaPopulationSegments = f'(area_seg/area_bloc) * {fieldPopulation}'
+        populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
+                                            formulaPopulationSegments,
+                                            context,
+                                            feedback)
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        blocks = calculateField(populationForSegments['OUTPUT'], 'id_blocks', '$id', context,
+                                      feedback, type=1)     
+
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        stByZona(params['NOISE_DAY'], blocks['OUTPUT'],
+                                   1, [2], 'nd_', 
                                    context, feedback)
 
+        steps += 1
+        feedback.setCurrentStep(steps)
+        stByZona(params['NOISE_NIGHT'], blocks['OUTPUT'],
+                                   1, [2], 'nn_', 
+                                   context, feedback)    
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaPopulationSegments = '(area_seg/area_bloc) * ' + fieldPopulation
-      populationForSegments = calculateField(segmentsArea['OUTPUT'], 'pop_seg',
-                                          formulaPopulationSegments,
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        expression = 'id_blocks != -100'
+
+
+        comodin = filterByExpression(blocks['OUTPUT'], expression, context, feedback)
+
+
+
+        condition = f"CASE WHEN (nd_mean > {maxDay} OR nn_mean > {maxNight}) THEN 1 ELSE 0 END"         
+
+
+          # print(condition)
+
+        steps += 1
+        feedback.setCurrentStep(steps)
+        blocksNoise = calculateField(comodin['OUTPUT'], 'is_noise',
+                                          condition,
                                           context,
-                                          feedback)
+                                          feedback, type=1)  
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      blocks = calculateField(populationForSegments['OUTPUT'], 'id_blocks', '$id', context,
-                                    feedback, type=1)     
+          # Haciendo el buffer inverso aseguramos que los segmentos
+          # quden dentro de la malla
+        steps += 1
+        feedback.setCurrentStep(steps)
+        noiseForSegmentsFixed = makeSureInside(blocksNoise['OUTPUT'],
+                                                    context,
+                                                    feedback)
+          # Con esto se saca el total de viviendas
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegmentsNoise = joinByLocation(gridNeto['OUTPUT'],
+                                             noiseForSegmentsFixed['OUTPUT'],
+                                             ['pop_seg'],
+                                             [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
+                                             context,
+                                             feedback)
 
+          #descartar NULL para obtener el total de viviendas que cumple
+        steps += 1
+        feedback.setCurrentStep(steps)
+        pullActiveForSegmentsFixed = filter(noiseForSegmentsFixed['OUTPUT'],
+                                                   'is_noise', IGUAL,
+                                                   '0', context, feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      stByZona(params['NOISE_DAY'], blocks['OUTPUT'],
-                                 1, [2], 'nd_', 
-                                 context, feedback)
+        steps += 1
+        feedback.setCurrentStep(steps)
+        gridNetoAndSegmentsNotNull = joinByLocation(gridNetoAndSegmentsNoise['OUTPUT'],
+                                                    pullActiveForSegmentsFixed['OUTPUT'],
+                                                    ['pop_seg', 'is_noise'],
+                                                    [CONTIENE], [SUM], UNDISCARD_NONMATCHING,               
+                                                    context,
+                                                    feedback)
 
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      stByZona(params['NOISE_NIGHT'], blocks['OUTPUT'],
-                                 1, [2], 'nn_', 
-                                 context, feedback)    
-
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      expression = 'id_blocks != -100'
-
-
-      comodin = filterByExpression(blocks['OUTPUT'], expression, context, feedback)
-                   
-
- 
-      condition = "CASE WHEN (nd_mean > "+maxDay + \
-                  " OR nn_mean > "+maxNight + \
-                  ") THEN 1" + \
-                  " ELSE 0" + \
-                  " END"         
-
-
-      # print(condition)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      blocksNoise = calculateField(comodin['OUTPUT'], 'is_noise',
-                                        condition,
-                                        context,
-                                        feedback, type=1)  
- 
-      # Haciendo el buffer inverso aseguramos que los segmentos
-      # quden dentro de la malla
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      noiseForSegmentsFixed = makeSureInside(blocksNoise['OUTPUT'],
-                                                  context,
-                                                  feedback)
-      # Con esto se saca el total de viviendas
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegmentsNoise = joinByLocation(gridNeto['OUTPUT'],
-                                           noiseForSegmentsFixed['OUTPUT'],
-                                           ['pop_seg'],
-                                           [CONTIENE], [SUM], UNDISCARD_NONMATCHING,                 
-                                           context,
-                                           feedback)
-
-      #descartar NULL para obtener el total de viviendas que cumple
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      pullActiveForSegmentsFixed = filter(noiseForSegmentsFixed['OUTPUT'],
-                                                 'is_noise', IGUAL,
-                                                 '0', context, feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      gridNetoAndSegmentsNotNull = joinByLocation(gridNetoAndSegmentsNoise['OUTPUT'],
-                                                  pullActiveForSegmentsFixed['OUTPUT'],
-                                                  ['pop_seg', 'is_noise'],
-                                                  [CONTIENE], [SUM], UNDISCARD_NONMATCHING,               
-                                                  context,
-                                                  feedback)
-
-      steps = steps+1
-      feedback.setCurrentStep(steps)
-      formulaNoise = 'coalesce((coalesce(pop_seg_sum_2,0) /  coalesce(pop_seg_sum,0))*100, "")'
-      noise = calculateField(gridNetoAndSegmentsNotNull['OUTPUT'], NAMES_INDEX['IB03'][0],
-                                        formulaNoise,
-                                        context,
-                                        feedback,  params['OUTPUT'])
-
-
-      return noise
+        steps += 1
+        feedback.setCurrentStep(steps)
+        formulaNoise = 'coalesce((coalesce(pop_seg_sum_2,0) /  coalesce(pop_seg_sum,0))*100, "")'
+        return calculateField(
+            gridNetoAndSegmentsNotNull['OUTPUT'],
+            NAMES_INDEX['IB03'][0],
+            formulaNoise,
+            context,
+            feedback,
+            params['OUTPUT'],
+        )
 
 
     def icon(self):
